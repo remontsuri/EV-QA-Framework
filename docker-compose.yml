@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  ev-qa-tests:
+    build: .
+    container_name: ev_qa_framework
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./tests:/app/tests
+      - ./results:/app/results
+    command: pytest tests/ -v --cov=ev_qa_framework --cov-report=html
+    ports:
+      - "8080:8080"
+
+  ev-qa-dashboard:
+    image: python:3.8-slim
+    container_name: ev_qa_dashboard
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: python -m http.server 8080 --directory /app/results
