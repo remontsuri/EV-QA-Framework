@@ -1,0 +1,72 @@
+# GitLab CI/CD Pipeline for EV-QA-Framework
+# Automated testing, linting, and deployment
+
+image: python:3.10
+
+stages:
+  - lint
+  - test
+  - coverage
+  - build
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+before_script:
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+
+lint:flake8:
+  stage: lint
+  script:
+    - pip install flake8
+    - flake8 ev_qa_framework.py --max-line-length=120
+  allow_failure: true
+
+lint:black:
+  stage: lint
+  script:
+    - pip install black
+    - black --check ev_qa_framework.py
+  allow_failure: true
+
+test:pytest:
+  stage: test
+  script:
+    - pytest -v --tb=short
+  artifacts:
+    reports:
+      junit: report.xml
+    when: always
+
+coverage:report:
+  stage: coverage
+  script:
+    - pip install pytest-cov
+    - pytest --cov=ev_qa_framework --cov-report=xml --cov-report=html
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    paths:
+      - htmlcov/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+build:docker:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t $CI_PROJECT_NAME:$CI_COMMIT_SHA .
+    - echo "Docker image built successfully"
+  only:
+    - main
