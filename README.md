@@ -5,15 +5,20 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-64%2B-brightgreen.svg)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)]()
+[![pytest](https://img.shields.io/badge/framework-pytest-orange.svg)](https://pytest.org)
+[![ML](https://img.shields.io/badge/ML-Isolation%20Forest-blueviolet.svg)](https://scikit-learn.org)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 
 ---
 
 ## 🚀 Why This Matters for EV Industry
 
-Modern electric vehicles generate **millions of telemetry points daily** from battery management systems. This framework provides:
+**Battery failures cost the EV industry $5B+ annually** in warranty claims, recalls, and safety incidents. Modern electric vehicles generate **millions of telemetry points daily** from battery management systems, but manual QA can't scale.
+
+This framework provides enterprise-grade testing tools to the open-source community:
 
 - ✅ **Automated quality assurance** for battery telemetry (voltage, current, temperature, SOC)
-- ✅ **ML-powered anomaly detection** using Isolation Forest (scikit-learn)
+- ✅ **ML-powered anomaly detection** using Isolation Forest (200 estimators, scikit-learn)
 - ✅ **64+ comprehensive tests** covering safety boundaries and edge cases
 - ✅ **Pydantic data validation** ensuring data integrity
 - ✅ **CI/CD ready** with Docker and GitLab CI
@@ -68,6 +73,26 @@ This framework automates detection of:
        │  + Anomaly Report│
        └──────────────────┘
 ```
+
+---
+
+## 🆚 Comparison with Existing Tools
+
+| Feature | EV-QA-Framework | [Battery-Emulator](https://github.com/dalathegreat/Battery-Emulator) | [BatteryML](https://github.com/microsoft/BatteryML) | BATLab |
+|---------|----------------|------------------|-----------|---------|
+| **ML Anomaly Detection** | ✅ Isolation Forest | ❌ Rule-based only | ✅ Research models | ❌ Manual analysis |
+| **Real-time Telemetry** | ✅ Pytest automation | ✅ CAN bus | ❌ Offline datasets | ✅ Serial monitor |
+| **CI/CD Integration** | ✅ Docker/GitLab | ❌ | ❌ | ❌ |
+| **License** | **MIT** (Commercial OK) | GPL-3.0 | MIT | Proprietary |
+| **Language** | Python | C++ | Python | C# |
+| **Test Coverage** | **64+ automated tests** | Hardware integration | Dataset analysis | Manual 10hr tests |
+| **Production Ready** | ✅ Docker + Pydantic | ⚠️ Hardware-dependent | ❌ Research only | ⚠️ Windows-only |
+
+**Our Competitive Advantages:**
+- 🧠 **ML-first approach** — catches unknown anomalies traditional rules miss
+- 🐍 **Python ecosystem** — integrates with pandas, NumPy, scikit-learn
+- 🔒 **Type safety** — Pydantic models prevent data corruption
+- 🚀 **Modern DevOps** — GitLab CI, Docker, pytest
 
 ---
 
