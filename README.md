@@ -3,7 +3,7 @@
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-64%2B-brightgreen.svg)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-85%2B-brightgreen.svg)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)]()
 [![pytest](https://img.shields.io/badge/framework-pytest-orange.svg)](https://pytest.org)
 [![ML](https://img.shields.io/badge/ML-Isolation%20Forest-blueviolet.svg)](https://scikit-learn.org)
@@ -19,7 +19,7 @@ This framework provides enterprise-grade testing tools to the open-source commun
 
 - ✅ **Automated quality assurance** for battery telemetry (voltage, current, temperature, SOC)
 - ✅ **ML-powered anomaly detection** using Isolation Forest (200 estimators, scikit-learn)
-- ✅- **64+ Automated Tests:** Extensive coverage for safety boundaries.
+- ✅- **85+ Automated Tests:** Extensive coverage for safety boundaries.
 - **ML Anomaly Detection:** Outlier detection using `IsolationForest`.
 - **Real-time Dashboard:** Live telemetry monitoring with FastAPI and WebSockets.
 - **CAN Bus Emulation:** Simulate physical vehicle network communication.
@@ -41,7 +41,7 @@ This framework provides enterprise-grade testing tools to the open-source commun
 
 This framework automates detection of:
 - Temperature spikes (>5°C jumps)
-- Voltage anomalies (out of 3.0-4.3V range)
+- Voltage anomalies (out of 200-900V range)
 - Invalid SOC readings
 - ML-detected outliers in multidimensional space
 
@@ -160,11 +160,11 @@ predictions, scores = detector.detect(new_telemetry_df)
 
 | Category | Tests | Coverage |
 |----------|-------|----------|
-| Boundary Tests (Voltage/Temp/SOC) | 23+ | Temperature: >60°C, Voltage: 3.0-4.3V, SOC: 0-100% |
+| Boundary Tests (Voltage/Temp/SOC) | 40+ | Temperature: >60°C, Voltage: 200-900V, SOC: 0-100% |
 | Anomaly Detection | 15+ | Temperature jumps, multiple anomalies |
 | ML Analyzer | 12+ | Isolation Forest, severity classification |
 | Pydantic Models | 14+ | VIN validation, type checking, edge cases |
-| **TOTAL** | **64+** | **~85% code coverage** |
+| **TOTAL** | **85+** | **~90% code coverage** |
 
 ---
 
