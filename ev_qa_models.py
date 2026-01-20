@@ -3,7 +3,7 @@ Pydantic модели для строгой валидации телеметр�
 Автор: Remontsuri
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional
 
@@ -30,7 +30,8 @@ class BatteryTelemetryModel(BaseModel):
     soh: float = Field(..., ge=0.0, le=100.0, description="Состояние батареи (0-100%)")
     timestamp: Optional[datetime] = Field(default_factory=datetime.now, description="Временная метка")
     
-    @validator('vin')
+    @field_validator('vin')
+    @classmethod
     def validate_vin_format(cls, v):
         """Проверка формата VIN (только буквы и цифры, без I, O, Q)"""
         if not v.isalnum():
@@ -40,7 +41,8 @@ class BatteryTelemetryModel(BaseModel):
             raise ValueError('VIN не может содержать буквы I, O, Q')
         return v.upper()
     
-    @validator('temperature')
+    @field_validator('temperature')
+    @classmethod
     def check_temperature_safety(cls, v):
         """Предупреждение о критических температурах"""
         if v > 60:
@@ -50,17 +52,17 @@ class BatteryTelemetryModel(BaseModel):
             print(f"⚠️ ПРЕДУПРЕЖДЕНИЕ: Отрицательная температура {v}°C")
         return v
     
-    @validator('soc', 'soh')
-    def check_percentage_range(cls, v, field):
+    @field_validator('soc', 'soh')
+    @classmethod
+    def check_percentage_range(cls, v):
         """Дополнительная проверка процентных значений"""
         if not (0 <= v <= 100):
-            raise ValueError(f'{field.name} должен быть в диапазоне 0-100%')
+            raise ValueError('Значение должно быть в диапазоне 0-100%')
         return v
     
-    class Config:
-        """Конфигурация модели"""
-        validate_assignment = True  # Валидация при изменении полей
-        json_schema_extra = {
+    model_config = {
+        "validate_assignment": True,  # Валидация при изменении полей
+        "json_schema_extra": {
             "example": {
                 "vin": "1HGBH41JXMN109186",
                 "voltage": 396.5,
@@ -71,6 +73,7 @@ class BatteryTelemetryModel(BaseModel):
                 "timestamp": "2026-01-19T23:00:00"
             }
         }
+    }
 
 
 def validate_telemetry(data: dict) -> BatteryTelemetryModel:

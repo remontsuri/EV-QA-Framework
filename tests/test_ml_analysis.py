@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from ev_qa_analysis import EVBatteryAnalyzer
+from ev_qa_framework.analysis import EVBatteryAnalyzer
 
 
 class TestEVBatteryAnalyzer:

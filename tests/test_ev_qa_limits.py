@@ -1,5 +1,5 @@
 import pytest
-from ev_qa_framework import BatteryTelemetry, EVQAFramework
+from ev_qa_framework.framework import BatteryTelemetry, EVQAFramework
 
 class TestEVQAFrameworkLimts:
     
@@ -18,10 +18,6 @@ class TestEVQAFrameworkLimts:
     ])
     def test_temperature_limits(self, temp, expected):
         """Boundary tests for Temperature"""
-        t = BatteryTelemetry(volume=3.9, current=10, temperature=temp, soc=50, soh=100)
-        # Note: I made a typo in 'volume' instead of 'voltage' purposefully to check if I can catch it? 
-        # No, wait, I should write correct code. 
-        # BatteryTelemetry(voltage, current, temperature, soc, soh)
         t = BatteryTelemetry(3.9, 10, temp, 50, 100)
         assert self.qa.validate_telemetry(t) == expected
 

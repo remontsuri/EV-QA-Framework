@@ -1,7 +1,7 @@
 """Расширенные тесты для детекции аномалий в EV-QA-Framework"""
 
 import pytest
-from ev_qa_framework import BatteryTelemetry, EVQAFramework
+from ev_qa_framework.framework import BatteryTelemetry, EVQAFramework
 
 
 class TestAnomalyDetection:

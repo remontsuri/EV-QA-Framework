@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Battery Monitor</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🔋 EV Battery Real-time Monitor</h1>
+        
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>Voltage</h3>
+                <span id="voltage">--</span>V
+            </div>
+            <div class="status-card">
+                <h3>Current</h3>
+                <span id="current">--</span>A
+            </div>
+            <div class="status-card">
+                <h3>Temperature</h3>
+                <span id="temperature">--</span>°C
+            </div>
+            <div class="status-card">
+                <h3>SOC</h3>
+                <span id="soc">--</span>%
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="telemetryChart"></canvas>
+        </div>
+
+        <div class="alerts" id="alerts"></div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

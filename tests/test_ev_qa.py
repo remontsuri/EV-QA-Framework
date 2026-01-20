@@ -6,7 +6,7 @@ and QA framework functionality.
 
 import pytest
 import asyncio
-from ev_qa_framework import BatteryTelemetry, EVQAFramework
+from ev_qa_framework.framework import BatteryTelemetry, EVQAFramework
 
 
 class TestBatteryTelemetry:

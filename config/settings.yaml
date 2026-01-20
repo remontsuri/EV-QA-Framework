@@ -1,0 +1,27 @@
+battery:
+  voltage_min: 3.0
+  voltage_max: 4.3
+  temperature_max: 60.0
+  temperature_min: -20.0
+  soc_min: 0.0
+  soc_max: 100.0
+  soh_min: 70.0
+
+ml:
+  contamination: 0.1
+  n_estimators: 200
+  random_state: 42
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8000
+  max_data_points: 50
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+can:
+  channel: "vcan0"
+  bustype: "virtual"
+  bitrate: 500000

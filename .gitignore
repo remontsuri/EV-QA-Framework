@@ -1,22 +1,35 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Virtual environments
 venv/
 env/
-.venv/
 ENV/
-.env
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*.sublime-project
-*.sublime-workspace
 
 # Testing
 .pytest_cache/
@@ -24,15 +37,14 @@ ENV/
 htmlcov/
 .tox/
 
-# Build
-build/
-dist/
-*.egg-info/
+# Logs
+*.log
+logs/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Results
-results/
-*.log
+# Project specific
+tesla_battery_report.json
+results.json
