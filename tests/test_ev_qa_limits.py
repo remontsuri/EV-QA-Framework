@@ -1,62 +1,57 @@
+from typing import Literal
 import pytest
-from ev_qa_framework.framework import BatteryTelemetry, EVQAFramework
+from pydantic import ValidationError
+from ev_qa_framework.framework import EVQAFramework
+from ev_qa_framework.models import BatteryTelemetryModel
 
 class TestEVQAFrameworkLimts:
     
     def setup_method(self):
         self.qa = EVQAFramework("Limit-Tester")
+        self.vin = "TESTVEHCLE0123456"
 
     @pytest.mark.parametrize("temp, expected", [
         (59.9, True),
-        (60.0, True),  # Boundary logic check: code says > 60 is warning, so 60 is OK?
-        # Code: if telemetry.temperature > 60: return False
-        # So 60 is True (Valid), 60.1 is False (Invalid)
+        (60.0, True),
         (60.1, False),
         (100.0, False),
-        (-20.0, True), # Assuming cold is ok for now, code only checks > 60
+        (-20.0, True),
         (25.0, True)
     ])
-    def test_temperature_limits(self, temp, expected):
+    def test_temperature_limits(self, temp: float, expected: bool):
         """Boundary tests for Temperature"""
-        t = BatteryTelemetry(3.9, 10, temp, 50, 100)
+        # Voltage must be safe (e.g. 390)
+        t = BatteryTelemetryModel(vin=self.vin, voltage=390.0, current=10, temperature=temp, soc=50, soh=100)
         assert self.qa.validate_telemetry(t) == expected
 
     @pytest.mark.parametrize("voltage, expected", [
-        (3.0, True),
-        (2.99, False),
-        (2.9, False),
-        (3.01, True),
-        (4.3, True),
-        (4.31, False),
-        (4.4, False),
-        (3.7, True)
+        (200.0, True),
+        (199.9, False),
+        (100.0, False),
+        (390.0, True),
+        (900.0, True),
+        (900.1, False),
+        (950.0, False),
+        (800.0, True)
     ])
-    def test_voltage_limits(self, voltage, expected):
-        """Boundary tests for Voltage"""
-        t = BatteryTelemetry(voltage, 10, 25, 50, 100)
+    def test_voltage_limits(self, voltage: float, expected: bool):
+        """Boundary tests for Voltage (200V - 900V is safe)"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=voltage, current=10, temperature=25, soc=50, soh=100)
         assert self.qa.validate_telemetry(t) == expected
 
-    @pytest.mark.parametrize("soc, expected", [
-        (0, True),
-        (-0.1, False),
-        (-1, False),
-        (0.1, True),
-        (100, True),
-        (100.1, False),
-        (101, False),
-        (50, True)
-    ])
-    def test_soc_limits(self, soc, expected):
-        """Boundary tests for SOC"""
-        t = BatteryTelemetry(3.9, 10, 25, soc, 100)
-        assert self.qa.validate_telemetry(t) == expected
+    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    def test_soc_valid(self, soc):
+        """Valid SOC values"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=390.0, current=10, temperature=25, soc=soc, soh=100)
+        assert self.qa.validate_telemetry(t) is True
+
+    @pytest.mark.parametrize("soc", [-0.1, -1, 100.1, 101])
+    def test_soc_invalid(self, soc):
+        """Invalid SOC values should raise ValidationError"""
+        with pytest.raises(ValidationError):
+             BatteryTelemetryModel(vin=self.vin, voltage=390.0, current=10, temperature=25, soc=soc, soh=100)
 
     def test_invalid_telemetry_types(self):
         """Negative test for invalid types"""
-        # Python doesn't enforce types at runtime, but operations might fail
-        # The Validate method uses comparison operators
-        # Comparing string ">" int in Python 3 raises TypeError
-        with pytest.raises(TypeError):
-            t = BatteryTelemetry("high", 10, 25, 50, 100)
-            self.qa.validate_telemetry(t)
-
+        with pytest.raises(ValidationError):
+            BatteryTelemetryModel(vin=self.vin, voltage="high", current=10, temperature=25, soc=50, soh=100)

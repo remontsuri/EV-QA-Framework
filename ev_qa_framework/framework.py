@@ -20,71 +20,55 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class BatteryTelemetry:
-    """Represents EV battery telemetry data"""
-    def __init__(self, voltage: float, current: float, temperature: float,
-                 soc: float, soh: float):
-        self.voltage = voltage
-        self.current = current
-        self.temperature = temperature
-        self.soc = soc  # State of Charge
-        self.soh = soh  # State of Health
-        self.timestamp = datetime.now()
-    
-    def to_dict(self) -> Dict:
-        return {
-            'voltage': self.voltage,
-            'current': self.current,
-            'temperature': self.temperature,
-            'soc': self.soc,
-            'soh': self.soh,
-            'timestamp': self.timestamp.isoformat()
-        }
-
+from .models import BatteryTelemetryModel
 
 class EVQAFramework:
     """Main QA Framework for EV & IoT testing"""
     
+    # Default VIN for testing legacy data without VINs
+    DEFAULT_TEST_VIN = "TESTVEHCLE0123456"
+    
     def __init__(self, name: str = "EV-QA-Tester"):
         self.name = name
-        self.telemetry_data: List[BatteryTelemetry] = []
+        self.telemetry_data: List[BatteryTelemetryModel] = []
         self.test_results: Dict = {}
         self.ml_analyzer = EVBatteryAnalyzer()
         logger.info(f"Initialized {self.name} with ML analyzer")
     
-    def validate_telemetry(self, telemetry: BatteryTelemetry) -> bool:
-        """Validate battery telemetry against safety thresholds"""
-        # Safety thresholds for EV batteries
+    def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
+        """
+        Валидация телеметрии батареи относительно порогов безопасности.
+        """
+        # Пороги безопасности для батарей EV
         if telemetry.temperature > 60:
-            logger.warning(f"Temperature WARNING: {telemetry.temperature}°C")
+            logger.warning(f"ПРЕДУПРЕЖДЕНИЕ Температуры: {telemetry.temperature}°C")
             return False
         
-        if telemetry.voltage < 3.0 or telemetry.voltage > 4.3:
-            logger.warning(f"Voltage WARNING: {telemetry.voltage}V")
-            return False
-        
-        if telemetry.soc > 100 or telemetry.soc < 0:
-            logger.error(f"Invalid SOC: {telemetry.soc}%")
+        if telemetry.voltage < 200.0 or telemetry.voltage > 900.0:
+            logger.warning(f"ПРЕДУПРЕЖДЕНИЕ Напряжения: {telemetry.voltage}V")
             return False
         
         return True
     
-    def detect_anomalies(self, telemetry_list: List[BatteryTelemetry]) -> List[str]:
-        """ML-based anomaly detection using simple statistical analysis"""
+    def detect_anomalies(self, telemetry_list: List[BatteryTelemetryModel]) -> List[str]:
+        """ML-детектирование аномалий с использованием простого статистического анализа"""
         anomalies = []
         
         if len(telemetry_list) < 2:
             return anomalies
         
-        # Calculate average temperature
+        # Расчет средней температуры
         temps = [t.temperature for t in telemetry_list]
+        if not temps:
+             return anomalies
+             
         avg_temp = sum(temps) / len(temps)
         
-        # Detect sudden temperature changes
+        # Обнаружение резких скачков температуры
         for i in range(1, len(telemetry_list)):
             temp_change = abs(telemetry_list[i].temperature - telemetry_list[i-1].temperature)
-            if temp_change > 5:  # 5°C sudden change
-                anomalies.append(f"Sudden temp change: {temp_change}°C")
+            if temp_change > 5:  # Резкий скачок более 5°C
+                anomalies.append(f"Резкий скачок температуры: {temp_change}°C")
         
         return anomalies
     
@@ -100,20 +84,30 @@ class EVQAFramework:
         
         telemetries = []
         for data in telemetry_data:
-            telemetry = BatteryTelemetry(**data)
-            telemetries.append(telemetry)
-            
-            if self.validate_telemetry(telemetry):
-                results['passed'] += 1
-            else:
+            # Compatibility layer: Inject VIN if missing
+            if 'vin' not in data:
+                data['vin'] = self.DEFAULT_TEST_VIN
+                
+            try:
+                # Use Pydantic for validation
+                telemetry = BatteryTelemetryModel(**data)
+                telemetries.append(telemetry)
+                
+                if self.validate_telemetry(telemetry):
+                    results['passed'] += 1
+                else:
+                    results['failed'] += 1
+            except Exception as e:
+                logger.error(f"Validation Error: {e}")
                 results['failed'] += 1
-        
+                
         # Rule-based anomaly detection
         results['anomalies'] = self.detect_anomalies(telemetries)
         
         # ML-based analysis
         if telemetries:
-            df = pd.DataFrame([t.to_dict() for t in telemetries])
+            # Convert Pydantic models to dicts for DataFrame
+            df = pd.DataFrame([t.model_dump() for t in telemetries])
             df.rename(columns={'temperature': 'temp'}, inplace=True)
             ml_results = self.ml_analyzer.analyze_telemetry(df)
             results['ml_analysis'] = ml_results

@@ -1,0 +1,406 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\vladc\Desktop\code\EV-QA-Framework
+configfile: pytest.ini
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 85 items
+
+tests\test_ev_qa.py ...........                                          [ 12%]
+tests\test_ev_qa_anomalies.py .............FFF                           [ 31%]
+tests\test_ev_qa_limits.py FF..FFF..FF..FFFFFF.....                      [ 60%]
+tests\test_ml_analysis.py ..........                                     [ 71%]
+tests\test_pydantic_models.py ........................                   [100%]
+
+================================== FAILURES ===================================
+_________________ TestAsyncTestSuite.test_all_valid_telemetry _________________
+
+self = <tests.test_ev_qa_anomalies.TestAsyncTestSuite object at 0x0000023781200290>
+
+    async def test_all_valid_telemetry(self):
+        """┬ёх фрээ√х трышфэ√"""
+        test_data = [
+            {'voltage': 3.7, 'current': 50, 'temperature': 30, 'soc': 75, 'soh': 98},
+            {'voltage': 3.8, 'current': 45, 'temperature': 31, 'soc': 78, 'soh': 98},
+            {'voltage': 3.9, 'current': 40, 'temperature': 32, 'soc': 80, 'soh': 98},
+        ]
+        results = await self.qa.run_test_suite(test_data)
+        assert results['total_tests'] == 3
+        # ┼ёыш фрээ√х трышфэ√ ш VIN фюсртшыё  ртЄюьрЄшўхёъш
+>       assert results['passed'] == 3
+E       assert 0 == 3
+
+tests\test_ev_qa_anomalies.py:137: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.7V
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.8V
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+_________________ TestAsyncTestSuite.test_mixed_valid_invalid _________________
+
+self = <tests.test_ev_qa_anomalies.TestAsyncTestSuite object at 0x00000237FFD05E90>
+
+    async def test_mixed_valid_invalid(self):
+        """╤ьх°рээ√х трышфэ√х ш эхтрышфэ√х фрээ√х"""
+        test_data = [
+            {'voltage': 3.9, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},  # OK
+            {'voltage': 5.0, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},  # voltage too high (warning)
+            {'voltage': 3.9, 'current': 50, 'temperature': 70, 'soc': 80, 'soh': 98},  # temp too high (warning)
+            {'voltage': 3.9, 'current': 50, 'temperature': 35, 'soc': 105, 'soh': 98}, # SOC invalid (pydantic error)
+        ]
+        results = await self.qa.run_test_suite(test_data)
+        assert results['total_tests'] == 4
+>       assert results['passed'] == 1
+E       assert 0 == 1
+
+tests\test_ev_qa_anomalies.py:150: AssertionError
+---------------------------- Captured stdout call -----------------------------
+\u26a0\ufe0f \u041f\u0420\u0415\u0414\u0423\u041f\u0420\u0415\u0416\u0414\u0415\u041d\u0418\u0415: \u0412\u044b\u0441\u043e\u043a\u0430\u044f \u0442\u0435\u043c\u043f\u0435\u0440\u0430\u0442\u0443\u0440\u0430 70.0\xb0C
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 5.0V
+WARNING  ev_qa_framework.framework:framework.py:44 ╧╨┼─╙╧╨┼╞─┼═╚┼ ╥хьяхЁрЄєЁ√: 70.0░C
+ERROR    ev_qa_framework.framework:framework.py:101 Validation Error: 1 validation error for BatteryTelemetryModel
+soc
+  Input should be less than or equal to 100 [type=less_than_equal, input_value=105, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.12/v/less_than_equal
+___________________ TestAsyncTestSuite.test_with_anomalies ____________________
+
+self = <tests.test_ev_qa_anomalies.TestAsyncTestSuite object at 0x00000237811CC4D0>
+
+    async def test_with_anomalies(self):
+        """─рээ√х ё фхЄхъЄшЁєхь√ьш рэюьрыш ьш"""
+        test_data = [
+            {'voltage': 3.9, 'current': 50, 'temperature': 30, 'soc': 80, 'soh': 98},
+            {'voltage': 3.9, 'current': 50, 'temperature': 40, 'soc': 80, 'soh': 98},  # +10░C jump
+        ]
+        results = await self.qa.run_test_suite(test_data)
+>       assert results['passed'] == 2  # ╬ср трышфэ√ яю юЄфхы№эюёЄш
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 0 == 2
+
+tests\test_ev_qa_anomalies.py:160: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+__________ TestEVQAFrameworkLimts.test_temperature_limits[59.9-True] __________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811D9E90>
+temp = 59.9, expected = True
+
+    @pytest.mark.parametrize("temp, expected", [
+        (59.9, True),
+        (60.0, True),
+        (60.1, False),
+        (100.0, False),
+        (-20.0, True),
+        (25.0, True)
+    ])
+    def test_temperature_limits(self, temp: float, expected: bool):
+        """Boundary tests for Temperature"""
+        # Note: -20, 25, 59.9, 60.0 are valid Pydantic (-50 to 150)
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=temp, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=59.9, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 285093)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x000002378142F9D0>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x000002378142F9D0> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811D9E90>.qa
+
+tests\test_ev_qa_limits.py:25: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+__________ TestEVQAFrameworkLimts.test_temperature_limits[60.0-True] __________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811F4490>
+temp = 60.0, expected = True
+
+    @pytest.mark.parametrize("temp, expected", [
+        (59.9, True),
+        (60.0, True),
+        (60.1, False),
+        (100.0, False),
+        (-20.0, True),
+        (25.0, True)
+    ])
+    def test_temperature_limits(self, temp: float, expected: bool):
+        """Boundary tests for Temperature"""
+        # Note: -20, 25, 59.9, 60.0 are valid Pydantic (-50 to 150)
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=temp, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=60.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 288598)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x00000237813F89D0>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x00000237813F89D0> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811F4490>.qa
+
+tests\test_ev_qa_limits.py:25: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+_________ TestEVQAFrameworkLimts.test_temperature_limits[-20.0-True] __________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811F6850>
+temp = -20.0, expected = True
+
+    @pytest.mark.parametrize("temp, expected", [
+        (59.9, True),
+        (60.0, True),
+        (60.1, False),
+        (100.0, False),
+        (-20.0, True),
+        (25.0, True)
+    ])
+    def test_temperature_limits(self, temp: float, expected: bool):
+        """Boundary tests for Temperature"""
+        # Note: -20, 25, 59.9, 60.0 are valid Pydantic (-50 to 150)
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=temp, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=-20.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 295639)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x000002378167A210>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x000002378167A210> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811F6850>.qa
+
+tests\test_ev_qa_limits.py:25: AssertionError
+---------------------------- Captured stdout call -----------------------------
+\u26a0\ufe0f \u041f\u0420\u0415\u0414\u0423\u041f\u0420\u0415\u0416\u0414\u0415\u041d\u0418\u0415: \u041e\u0442\u0440\u0438\u0446\u0430\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u0442\u0435\u043c\u043f\u0435\u0440\u0430\u0442\u0443\u0440\u0430 -20.0\xb0C
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+__________ TestEVQAFrameworkLimts.test_temperature_limits[25.0-True] __________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811F5390>
+temp = 25.0, expected = True
+
+    @pytest.mark.parametrize("temp, expected", [
+        (59.9, True),
+        (60.0, True),
+        (60.1, False),
+        (100.0, False),
+        (-20.0, True),
+        (25.0, True)
+    ])
+    def test_temperature_limits(self, temp: float, expected: bool):
+        """Boundary tests for Temperature"""
+        # Note: -20, 25, 59.9, 60.0 are valid Pydantic (-50 to 150)
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=temp, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=25.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 299152)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x0000023781653490>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x0000023781653490> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237811F5390>.qa
+
+tests\test_ev_qa_limits.py:25: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+____________ TestEVQAFrameworkLimts.test_voltage_limits[3.0-True] _____________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781200050>
+voltage = 3.0, expected = True
+
+    @pytest.mark.parametrize("voltage, expected", [
+        (3.0, True),
+        (2.99, False),
+        (2.9, False),
+        (3.01, True),
+        (4.3, True),
+        (4.31, False),
+        (4.4, False),
+        (3.7, True)
+    ])
+    def test_voltage_limits(self, voltage: float, expected: bool):
+        """Boundary tests for Voltage"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=voltage, current=10, temperature=25, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.0, current=10.0, temperature=25.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 302850)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x0000023781445610>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x0000023781445610> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781200050>.qa
+
+tests\test_ev_qa_limits.py:40: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.0V
+____________ TestEVQAFrameworkLimts.test_voltage_limits[3.01-True] ____________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781200E90>
+voltage = 3.01, expected = True
+
+    @pytest.mark.parametrize("voltage, expected", [
+        (3.0, True),
+        (2.99, False),
+        (2.9, False),
+        (3.01, True),
+        (4.3, True),
+        (4.31, False),
+        (4.4, False),
+        (3.7, True)
+    ])
+    def test_voltage_limits(self, voltage: float, expected: bool):
+        """Boundary tests for Voltage"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=voltage, current=10, temperature=25, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.01, current=10.0, temperature=25.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 309000)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x00000237816AAB50>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x00000237816AAB50> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781200E90>.qa
+
+tests\test_ev_qa_limits.py:40: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.01V
+____________ TestEVQAFrameworkLimts.test_voltage_limits[4.3-True] _____________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781201110>
+voltage = 4.3, expected = True
+
+    @pytest.mark.parametrize("voltage, expected", [
+        (3.0, True),
+        (2.99, False),
+        (2.9, False),
+        (3.01, True),
+        (4.3, True),
+        (4.31, False),
+        (4.4, False),
+        (3.7, True)
+    ])
+    def test_voltage_limits(self, voltage: float, expected: bool):
+        """Boundary tests for Voltage"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=voltage, current=10, temperature=25, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=4.3, current=10.0, temperature=25.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 313018)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x0000023781650550>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x0000023781650550> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781201110>.qa
+
+tests\test_ev_qa_limits.py:40: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 4.3V
+____________ TestEVQAFrameworkLimts.test_voltage_limits[3.7-True] _____________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781201890>
+voltage = 3.7, expected = True
+
+    @pytest.mark.parametrize("voltage, expected", [
+        (3.0, True),
+        (2.99, False),
+        (2.9, False),
+        (3.01, True),
+        (4.3, True),
+        (4.31, False),
+        (4.4, False),
+        (3.7, True)
+    ])
+    def test_voltage_limits(self, voltage: float, expected: bool):
+        """Boundary tests for Voltage"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=voltage, current=10, temperature=25, soc=50, soh=100)
+>       assert self.qa.validate_telemetry(t) == expected
+E       AssertionError: assert False == True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.7, current=10.0, temperature=25.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 318560)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x00000237816B6310>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x00000237816B6310> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781201890>.qa
+
+tests\test_ev_qa_limits.py:40: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.7V
+__________________ TestEVQAFrameworkLimts.test_soc_valid[0] ___________________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202150>
+soc = 0
+
+    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    def test_soc_valid(self, soc):
+        """Valid SOC values"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=25, soc=soc, soh=100)
+>       assert self.qa.validate_telemetry(t) is True
+E       AssertionError: assert False is True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=25.0, soc=0.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 323139)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x0000023781604E90>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x0000023781604E90> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202150>.qa
+
+tests\test_ev_qa_limits.py:46: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+_________________ TestEVQAFrameworkLimts.test_soc_valid[0.1] __________________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202290>
+soc = 0.1
+
+    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    def test_soc_valid(self, soc):
+        """Valid SOC values"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=25, soc=soc, soh=100)
+>       assert self.qa.validate_telemetry(t) is True
+E       AssertionError: assert False is True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=25.0, soc=0.1, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 327160)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x000002378154E5D0>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x000002378154E5D0> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202290>.qa
+
+tests\test_ev_qa_limits.py:46: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+__________________ TestEVQAFrameworkLimts.test_soc_valid[50] __________________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237812023D0>
+soc = 50
+
+    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    def test_soc_valid(self, soc):
+        """Valid SOC values"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=25, soc=soc, soh=100)
+>       assert self.qa.validate_telemetry(t) is True
+E       AssertionError: assert False is True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=25.0, soc=50.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 330177)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x00000237816B7C50>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x00000237816B7C50> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x00000237812023D0>.qa
+
+tests\test_ev_qa_limits.py:46: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+_________________ TestEVQAFrameworkLimts.test_soc_valid[99.9] _________________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202510>
+soc = 99.9
+
+    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    def test_soc_valid(self, soc):
+        """Valid SOC values"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=25, soc=soc, soh=100)
+>       assert self.qa.validate_telemetry(t) is True
+E       AssertionError: assert False is True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=25.0, soc=99.9, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 333703)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x0000023781445D90>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x0000023781445D90> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202510>.qa
+
+tests\test_ev_qa_limits.py:46: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+_________________ TestEVQAFrameworkLimts.test_soc_valid[100] __________________
+
+self = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202690>
+soc = 100
+
+    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    def test_soc_valid(self, soc):
+        """Valid SOC values"""
+        t = BatteryTelemetryModel(vin=self.vin, voltage=3.9, current=10, temperature=25, soc=soc, soh=100)
+>       assert self.qa.validate_telemetry(t) is True
+E       AssertionError: assert False is True
+E        +  where False = validate_telemetry(BatteryTelemetryModel(vin='TESTVEHCLE0123456', voltage=3.9, current=10.0, temperature=25.0, soc=100.0, soh=100.0, timestamp=datetime.datetime(2026, 1, 20, 23, 21, 36, 338724)))
+E        +    where validate_telemetry = <ev_qa_framework.framework.EVQAFramework object at 0x0000023781447950>.validate_telemetry
+E        +      where <ev_qa_framework.framework.EVQAFramework object at 0x0000023781447950> = <tests.test_ev_qa_limits.TestEVQAFrameworkLimts object at 0x0000023781202690>.qa
+
+tests\test_ev_qa_limits.py:46: AssertionError
+------------------------------ Captured log call ------------------------------
+WARNING  ev_qa_framework.framework:framework.py:48 ╧╨┼─╙╧╨┼╞─┼═╚┼ ═ряЁ цхэш : 3.9V
+=========================== short test summary info ===========================
+FAILED tests/test_ev_qa_anomalies.py::TestAsyncTestSuite::test_all_valid_telemetry
+FAILED tests/test_ev_qa_anomalies.py::TestAsyncTestSuite::test_mixed_valid_invalid
+FAILED tests/test_ev_qa_anomalies.py::TestAsyncTestSuite::test_with_anomalies
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_temperature_limits[59.9-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_temperature_limits[60.0-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_temperature_limits[-20.0-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_temperature_limits[25.0-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_voltage_limits[3.0-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_voltage_limits[3.01-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_voltage_limits[4.3-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_voltage_limits[3.7-True]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_soc_valid[0]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_soc_valid[0.1]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_soc_valid[50]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_soc_valid[99.9]
+FAILED tests/test_ev_qa_limits.py::TestEVQAFrameworkLimts::test_soc_valid[100]
+======================== 16 failed, 69 passed in 4.58s ========================

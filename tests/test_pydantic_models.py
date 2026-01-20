@@ -4,7 +4,7 @@
 
 import pytest
 from pydantic import ValidationError
-from ev_qa_models import BatteryTelemetryModel, validate_telemetry
+from ev_qa_framework.models import BatteryTelemetryModel, validate_telemetry
 
 
 class TestSOCValidation:

@@ -1,0 +1,213 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\vladc\Desktop\code\EV-QA-Framework
+configfile: pytest.ini
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 11 items
+
+tests\test_ev_qa.py FF.FFF.FFFF                                          [100%]
+
+================================== FAILURES ===================================
+____________ TestBatteryTelemetry.test_battery_telemetry_creation _____________
+
+self = <tests.test_ev_qa.TestBatteryTelemetry object at 0x000001DC7043BF50>
+
+    def test_battery_telemetry_creation(self):
+        """Test creation of battery telemetry object"""
+>       telemetry = BatteryTelemetryModel(
+            vin="TESTVEHICLE012345",
+            voltage=390.0, # ╚ёяюы№чєхь Ёхры№э√х чэрўхэш  (300V-400V) Єръ ъръ ьюфхы№ трышфшЁєхЄ 0-1000
+            current=50,
+            temperature=35,
+            soc=80,
+            soh=98
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:18: ValidationError
+_____________ TestBatteryTelemetry.test_battery_telemetry_to_dict _____________
+
+self = <tests.test_ev_qa.TestBatteryTelemetry object at 0x000001DC73479450>
+
+    def test_battery_telemetry_to_dict(self):
+        """Test conversion to dictionary"""
+>       telemetry = BatteryTelemetryModel(
+            vin="TESTVEHICLE012345",
+            voltage=390.0,
+            current=50,
+            temperature=35,
+            soc=80,
+            soh=98
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:35: ValidationError
+_______________ TestEVQAFramework.test_validate_valid_telemetry _______________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC7347B210>
+
+    def test_validate_valid_telemetry(self):
+        """Test validation of valid telemetry"""
+>       telemetry = BatteryTelemetryModel(
+            vin="TESTVEHICLE012345",
+            voltage=4.0, # ┬эшьрэшх: Pydantic яючтюы хЄ 0-1000, эю Framework warning < 3.0
+                         # ╟фхё№ ёЄртшь 4.0 ўЄюс√ яЁющЄш warning check
+            current=50,
+            temperature=35,
+            soc=80,
+            soh=98
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:64: ValidationError
+______________ TestEVQAFramework.test_validate_high_temperature _______________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC7347B890>
+
+    def test_validate_high_temperature(self):
+        """Test rejection of high temperature"""
+>       telemetry = BatteryTelemetryModel(
+            vin="TESTVEHICLE012345",
+            voltage=4.0,
+            current=50,
+            temperature=65, # > 60 warning
+            soc=80,
+            soh=98
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:77: ValidationError
+---------------------------- Captured stdout call -----------------------------
+\u26a0\ufe0f \u041f\u0420\u0415\u0414\u0423\u041f\u0420\u0415\u0416\u0414\u0415\u041d\u0418\u0415: \u0412\u044b\u0441\u043e\u043a\u0430\u044f \u0442\u0435\u043c\u043f\u0435\u0440\u0430\u0442\u0443\u0440\u0430 65.0\xb0C
+_____________ TestEVQAFramework.test_validate_invalid_voltage_low _____________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC7347BF50>
+
+    def test_validate_invalid_voltage_low(self):
+        """Test rejection of low voltage"""
+>       telemetry = BatteryTelemetryModel(
+            vin="TESTVEHICLE012345",
+            voltage=2.5, # < 3.0 warning
+            current=50,
+            temperature=35,
+            soc=80,
+            soh=98
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:89: ValidationError
+_____________ TestEVQAFramework.test_detect_anomalies_single_item _____________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC73484C90>
+
+    def test_detect_anomalies_single_item(self):
+        """Test anomaly detection with single item"""
+>       telemetry = BatteryTelemetryModel(
+            vin="TESTVEHICLE012345",
+            voltage=390.0,
+            current=50,
+            temperature=35,
+            soc=80,
+            soh=98
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:107: ValidationError
+__________ TestEVQAFramework.test_detect_anomalies_temperature_jump ___________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC73485310>
+
+    def test_detect_anomalies_temperature_jump(self):
+        """Test detection of sudden temperature change"""
+        telemetries = [
+>           BatteryTelemetryModel(vin="TESTVEHICLE012345", voltage=390.0, current=50, temperature=35, soc=80, soh=98),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            BatteryTelemetryModel(vin="TESTVEHICLE012345", voltage=390.0, current=45, temperature=42, soc=85, soh=98),  # 7░C jump
+        ]
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for BatteryTelemetryModel
+E       vin
+E         Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.12/v/value_error
+
+tests\test_ev_qa.py:121: ValidationError
+_________________ TestEVQAFramework.test_run_test_suite_async _________________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC73485910>
+
+    @pytest.mark.asyncio
+    async def test_run_test_suite_async(self):
+        """Test async test suite execution"""
+        test_data = [
+            {'voltage': 3.9, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},
+            {'voltage': 3.95, 'current': 45, 'temperature': 36, 'soc': 85, 'soh': 98},
+        ]
+        results = await self.qa.run_test_suite(test_data)
+        assert results['total_tests'] == 2
+>       assert results['passed'] == 2
+E       assert 0 == 2
+
+tests\test_ev_qa.py:137: AssertionError
+------------------------------ Captured log call ------------------------------
+ERROR    ev_qa_framework.framework:framework.py:103 Validation Error: 1 validation error for BatteryTelemetryModel
+vin
+  Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+ERROR    ev_qa_framework.framework:framework.py:103 Validation Error: 1 validation error for BatteryTelemetryModel
+vin
+  Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+_____________ TestEVQAFramework.test_run_test_suite_with_failures _____________
+
+self = <tests.test_ev_qa.TestEVQAFramework object at 0x000001DC73486010>
+
+    @pytest.mark.asyncio
+    async def test_run_test_suite_with_failures(self):
+        """Test test suite with invalid data"""
+        test_data = [
+            {'voltage': 3.9, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},
+            {'voltage': 5.0, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},  # Invalid voltage
+        ]
+        results = await self.qa.run_test_suite(test_data)
+>       assert results['passed'] == 1
+E       assert 0 == 1
+
+tests\test_ev_qa.py:148: AssertionError
+------------------------------ Captured log call ------------------------------
+ERROR    ev_qa_framework.framework:framework.py:103 Validation Error: 1 validation error for BatteryTelemetryModel
+vin
+  Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+ERROR    ev_qa_framework.framework:framework.py:103 Validation Error: 1 validation error for BatteryTelemetryModel
+vin
+  Value error, VIN эх ьюцхЄ ёюфхЁцрЄ№ сєът√ I, O, Q [type=value_error, input_value='TESTVEHICLE012345', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/value_error
+=========================== short test summary info ===========================
+FAILED tests/test_ev_qa.py::TestBatteryTelemetry::test_battery_telemetry_creation
+FAILED tests/test_ev_qa.py::TestBatteryTelemetry::test_battery_telemetry_to_dict
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_validate_valid_telemetry
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_validate_high_temperature
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_validate_invalid_voltage_low
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_detect_anomalies_single_item
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_detect_anomalies_temperature_jump
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_run_test_suite_async - as...
+FAILED tests/test_ev_qa.py::TestEVQAFramework::test_run_test_suite_with_failures
+========================= 9 failed, 2 passed in 1.63s =========================
