@@ -19,9 +19,12 @@ This framework provides enterprise-grade testing tools to the open-source commun
 
 - ✅ **Automated quality assurance** for battery telemetry (voltage, current, temperature, SOC)
 - ✅ **ML-powered anomaly detection** using Isolation Forest (200 estimators, scikit-learn)
-- ✅ **64+ comprehensive tests** covering safety boundaries and edge cases
-- ✅ **Pydantic data validation** ensuring data integrity
-- ✅ **CI/CD ready** with Docker and GitLab CI
+- ✅- **64+ Automated Tests:** Extensive coverage for safety boundaries.
+- **ML Anomaly Detection:** Outlier detection using `IsolationForest`.
+- **Real-time Dashboard:** Live telemetry monitoring with FastAPI and WebSockets.
+- **CAN Bus Emulation:** Simulate physical vehicle network communication.
+- **Pydantic v2 Validation:** Ultra-fast, strict data modeling.
+- **Interactive Reports:** Jupyter Notebooks for post-test analysis.
 
 **Target Audience**: QA engineers at Tesla, Rivian, Lucid Motors, BYD, and automotive suppliers working on BMS (Battery Management Systems).
 
@@ -108,12 +111,18 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Run Tests
+### 🌐 Real-time Dashboard & CAN Demo
+Experience the framework as a live monitoring system:
 
+```powershell
+./run_dashboard_demo.ps1
+```
+*Requires `pip install fastapi uvicorn websockets jinja2 python-can`*
+
+### 🧪 Run Tests
 ```bash
-# All tests (64+)
-pytest -v
-
+pytest -v --cov=ev_qa_framework
+```
 # With coverage report
 pytest --cov=. --cov-report=html
 ```

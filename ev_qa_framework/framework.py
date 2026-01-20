@@ -12,6 +12,8 @@ import asyncio
 from typing import Dict, List, Optional
 from datetime import datetime
 import logging
+import pandas as pd
+from .analysis import EVBatteryAnalyzer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +49,8 @@ class EVQAFramework:
         self.name = name
         self.telemetry_data: List[BatteryTelemetry] = []
         self.test_results: Dict = {}
-        logger.info(f"Initialized {self.name}")
+        self.ml_analyzer = EVBatteryAnalyzer()
+        logger.info(f"Initialized {self.name} with ML analyzer")
     
     def validate_telemetry(self, telemetry: BatteryTelemetry) -> bool:
         """Validate battery telemetry against safety thresholds"""
@@ -86,12 +89,13 @@ class EVQAFramework:
         return anomalies
     
     async def run_test_suite(self, telemetry_data: List[Dict]) -> Dict:
-        """Run full QA test suite on telemetry data"""
+        """Run full QA test suite with ML analysis"""
         results = {
             'total_tests': len(telemetry_data),
             'passed': 0,
             'failed': 0,
-            'anomalies': []
+            'anomalies': [],
+            'ml_analysis': None
         }
         
         telemetries = []
@@ -104,7 +108,16 @@ class EVQAFramework:
             else:
                 results['failed'] += 1
         
+        # Rule-based anomaly detection
         results['anomalies'] = self.detect_anomalies(telemetries)
+        
+        # ML-based analysis
+        if telemetries:
+            df = pd.DataFrame([t.to_dict() for t in telemetries])
+            df.rename(columns={'temperature': 'temp'}, inplace=True)
+            ml_results = self.ml_analyzer.analyze_telemetry(df)
+            results['ml_analysis'] = ml_results
+        
         self.test_results = results
         logger.info(f"Test Results: {results}")
         return results
