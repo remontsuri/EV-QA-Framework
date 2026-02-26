@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 """
 EV-QA-Framework: Mini QA Framework for EV & IoT Testing
+
 Author: Remontsuri
 License: MIT
 
@@ -9,12 +12,11 @@ CAN protocol support, telemetry monitoring, and ML-based anomaly detection.
 
 import json
 import asyncio
-from typing import Dict, List, Optional
-from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
 import logging
 import pandas as pd
 from .analysis import EVBatteryAnalyzer
-from .config import FrameworkConfig, SafetyThresholds
+from .config import FrameworkConfig
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +41,8 @@ class EVQAFramework:
         """
         self.name = name
         self.telemetry_data: List[BatteryTelemetryModel] = []
-        self.test_results: Dict = {}
+        # generic results dictionary with mixed values
+        self.test_results: Dict[str, Any] = {}
         
         # Загрузка конфигурации
         self.config = config if config is not None else FrameworkConfig()
@@ -143,9 +146,9 @@ class EVQAFramework:
                     )
         return anomalies
     
-    async def run_test_suite(self, telemetry_data: List[Dict]) -> Dict:
+    async def run_test_suite(self, telemetry_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Run full QA test suite with ML analysis"""
-        results = {
+        results: Dict[str, Any] = {
             'total_tests': len(telemetry_data),
             'passed': 0,
             'failed': 0,
@@ -195,7 +198,7 @@ class EVQAFramework:
         # Optionally treat jumps as failures (configurable)
         if self.config.fail_on_anomaly:
             jump_threshold = self.config.safety_thresholds.max_temperature_jump
-            jump_indices = set()
+            jump_indices: Set[int] = set()
             for i in range(1, len(telemetries)):
                 # only consider jump if previous telemetry was not already failed
                 if i-1 < len(status) and not status[i-1]:
@@ -228,7 +231,7 @@ if __name__ == "__main__":
     qa = EVQAFramework("ChargePoint-QA")
     
     # Sample telemetry data
-    test_data = [
+    test_data: list[dict[str, Any]] = [
         {'voltage': 3.9, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},
         {'voltage': 3.95, 'current': 45, 'temperature': 36, 'soc': 85, 'soh': 98},
         {'voltage': 3.85, 'current': 60, 'temperature': 45, 'soc': 75, 'soh': 97},
