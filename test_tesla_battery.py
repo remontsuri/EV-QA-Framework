@@ -17,12 +17,12 @@ from ev_qa_framework.models import BatteryTelemetryModel as BatteryTelemetry
 from ev_qa_framework.analysis import EVBatteryAnalyzer
 from ev_qa_framework.models import validate_telemetry
 
-def analyze_tesla_battery():
+def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'):
     print("Tesla Model S Battery QA Analysis")
     print("=" * 50)
     
     # Загружаем данные
-    df = pd.read_csv('examples/tesla_model_s_defective.csv')
+    df = pd.read_csv(csv_path)
     print("Loaded {} telemetry points".format(len(df)))
     print("VIN: {}".format(df['vin'].iloc[0]))
     
