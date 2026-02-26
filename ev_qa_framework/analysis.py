@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 """EV QA Analysis: ML-based battery telemetry and quality assurance.
+
 Модуль машинного обучения для детекции аномалий в телеметрии батареи.
 """
 
@@ -6,9 +9,9 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Tuple, List
 import warnings
-import joblib
+import joblib  # type: ignore  # no stub available
 import os
 from datetime import datetime
 
@@ -63,14 +66,15 @@ class EVBatteryAnalyzer:
         self.scaler = StandardScaler()
         
         # Хранилище для обнаруженных аномалий (заполняется после analyze_telemetry)
-        self.anomalies: Optional[pd.DataFrame] = None
+        # anomalies stored as DataFrame; start empty
+        self.anomalies: pd.DataFrame = pd.DataFrame()
         
         # Сохраняем параметры для доступа извне
         self.contamination = contamination
         self.critical_threshold = critical_threshold
         self.warning_threshold = warning_threshold
         
-    def analyze_telemetry(self, df_telemetry: pd.DataFrame) -> Dict[str, any]:
+    def analyze_telemetry(self, df_telemetry: pd.DataFrame) -> Dict[str, Any]:
         """
         Анализ телеметрии батареи на предмет аномалий.
         
@@ -106,51 +110,51 @@ class EVBatteryAnalyzer:
         """
         # Шаг 1: Подготовка данных
         # Принимаем либо 'temp', либо более читаемую 'temperature' и преобразуем в 'temp'
-        df = df_telemetry.copy()
+        df: pd.DataFrame = df_telemetry.copy()
         if 'temperature' in df.columns and 'temp' not in df.columns:
             df = df.rename(columns={'temperature': 'temp'})
         
         # Шаг 2: Выбираем только числовые признаки для анализа
         # SOC не используем для детекции, так как это зависимая переменная
-        features = ['voltage', 'current', 'temp']
-        X = df[features]
+        features: List[str] = ['voltage', 'current', 'temp']
+        X: pd.DataFrame = df[features]
         
         # Шаг 2: Нормализация данных (mean=0, std=1)
         # Use existing scaler if already fitted, otherwise fit_transform
         if hasattr(self.scaler, 'mean_'):
-            X_scaled = self.scaler.transform(X)
+            X_scaled = self.scaler.transform(X)  # type: ignore
         else:
-            X_scaled = self.scaler.fit_transform(X)
+            X_scaled = self.scaler.fit_transform(X)  # type: ignore
         
         # Шаг 3: Обучение модели и предсказание аномалий
         if hasattr(self.model, 'estimators_'):
-            # модель уже обучена, просто делаем predict
-            predictions = self.model.predict(X_scaled)
+            predictions = self.model.predict(X_scaled)  # type: ignore
         else:
-            # обучаем впервые
-            predictions = self.model.fit_predict(X_scaled)
+            predictions = self.model.fit_predict(X_scaled)  # type: ignore
         
         # Шаг 4: Расчет anomaly scores (чем ниже, тем более аномальная точка)
         # score_samples работает и для предсказанной модели
-        anomaly_scores = self.model.score_samples(X_scaled)
+        anomaly_scores: np.ndarray = self.model.score_samples(X_scaled)  # type: ignore
         
         # Шаг 5: Фильтруем аномалии
         # Помимо стандартной предсказания (-1), также учитываем случаи, когда
         # score_samples упал ниже warning_threshold. Это помогает не пропустить
         # редкие выбросы на маленьких выборках (например, когда модель обучена
         # на одинаковых точках).
-        mask = (predictions == -1) | (anomaly_scores < self.warning_threshold)
-        self.anomalies = df_telemetry[mask].copy()
+        mask: np.ndarray = (predictions == -1) | (anomaly_scores < self.warning_threshold)
+        self.anomalies = df_telemetry[mask].copy()  # type: ignore
         
         # Добавляем anomaly scores в результаты для дальнейшего анализа
-        if len(self.anomalies) > 0:
+        if not self.anomalies.empty:
             self.anomalies['anomaly_score'] = anomaly_scores[mask]
         
         # Шаг 6: Формируем результат анализа
+        total = len(df_telemetry)
+        count = len(self.anomalies)
         return {
-            'total_samples': len(df_telemetry),
-            'anomalies_detected': len(self.anomalies),
-            'anomaly_percentage': (len(self.anomalies) / len(df_telemetry)) * 100,
+            'total_samples': total,
+            'anomalies_detected': count,
+            'anomaly_percentage': (count / total) * 100 if total else 0.0,
             'severity': self._assess_severity(anomaly_scores)
         }
     
@@ -184,7 +188,7 @@ class EVBatteryAnalyzer:
             return 'WARNING'   # Умеренная аномалия — предупреждение
         return 'INFO'          # Слабая аномалия или норма
     
-    def save_model(self, filepath: str, metadata: Optional[Dict] = None) -> None:
+    def save_model(self, filepath: str, metadata: Dict[str, Any] | None = None) -> None:
         """
         Сохранение обученной модели и scaler в файл.
         
@@ -296,7 +300,7 @@ class EVBatteryAnalyzer:
         except Exception as e:
             raise ValueError(f"Ошибка загрузки модели: {e}")
     
-    def get_model_info(self) -> Dict:
+    def get_model_info(self) -> Dict[str, Any]:
         """
         Получение информации о текущей модели.
         
@@ -305,7 +309,7 @@ class EVBatteryAnalyzer:
         """
         return {
             'contamination': self.contamination,
-            'n_estimators': self.model.n_estimators,
+            'n_estimators': getattr(self.model, 'n_estimators', None),
             'critical_threshold': self.critical_threshold,
             'warning_threshold': self.warning_threshold,
             'is_fitted': hasattr(self.scaler, 'mean_')

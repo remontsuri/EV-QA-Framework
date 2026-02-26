@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 EV-QA-Framework Configuration Module
 Настройки порогов безопасности и параметров анализа

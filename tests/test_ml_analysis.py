@@ -14,7 +14,9 @@ class TestEVBatteryAnalyzer:
         analyzer = EVBatteryAnalyzer(contamination=0.1)
         assert analyzer.model is not None
         assert analyzer.scaler is not None
-        assert analyzer.anomalies is None
+        # anomalies initialized as empty DataFrame
+        assert isinstance(analyzer.anomalies, pd.DataFrame)
+        assert analyzer.anomalies.empty
     
     def test_initialization_default_contamination(self):
         """Тест инициализации с параметрами по умолчанию"""
