@@ -160,6 +160,19 @@ class TestAsyncTestSuite:
         assert results['passed'] == 2  # Оба валидны по отдельности
         assert len(results['anomalies']) > 0  # Но есть аномалия
 
+    async def test_anomaly_flag_causes_failure(self):
+        """При включенном fail_on_anomaly телеметрия с аномалией считается проваленной"""
+        self.qa.config.fail_on_anomaly = True
+        test_data = [
+            {'voltage': 390.0, 'current': 50, 'temperature': 30, 'soc': 80, 'soh': 98},
+            {'voltage': 390.0, 'current': 50, 'temperature': 40, 'soc': 80, 'soh': 98},  # +10°C jump
+        ]
+        results = await self.qa.run_test_suite(test_data)
+        # первый элемент остался успешным, второй провален из-за скачка
+        assert results['passed'] == 1
+        assert results['failed'] == 1
+        assert len(results['anomalies']) > 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
