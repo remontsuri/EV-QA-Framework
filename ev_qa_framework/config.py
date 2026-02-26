@@ -160,6 +160,22 @@ class FrameworkConfig:
 # Глобальная дефолтная конфигурация
 DEFAULT_CONFIG = FrameworkConfig()
 
+# Специальный профиль для Tesla Potesti
+# Пороговые значения подобраны под реальные параметры батарей Tesla
+TESLA_CONFIG = FrameworkConfig(
+    safety_thresholds=SafetyThresholds(
+        max_temperature=55.0,
+        min_temperature=-20.0,
+        max_temperature_jump=8.0,
+        min_voltage=250.0,
+        max_voltage=450.0,
+        min_soc=20.0,
+        critical_soh=75.0
+    ),
+    default_vin="5YJSA1E26HF000337",  # пример валидного 17-символьного VIN
+    fail_on_anomaly=True
+)
+
 
 # Пример использования
 if __name__ == '__main__':
