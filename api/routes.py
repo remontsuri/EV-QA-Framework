@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 from pydantic import BaseModel
 from ev_qa_framework import EVQAFramework, EVBatteryAnalyzer
-from ev_qa_models import BatteryTelemetryModel
+from ev_qa_framework.models import BatteryTelemetryModel
 
 router = APIRouter()
 
