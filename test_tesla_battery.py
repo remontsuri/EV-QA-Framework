@@ -11,9 +11,11 @@ import sys
 import os
 sys.path.append('.')
 
-from ev_qa_framework.framework import EVQAFramework, BatteryTelemetry
+from ev_qa_framework.framework import EVQAFramework
+# Battery telemetry model now lives in models module
+from ev_qa_framework.models import BatteryTelemetryModel as BatteryTelemetry
 from ev_qa_framework.analysis import EVBatteryAnalyzer
-from ev_qa_models import validate_telemetry
+from ev_qa_framework.models import validate_telemetry
 
 def analyze_tesla_battery():
     print("Tesla Model S Battery QA Analysis")

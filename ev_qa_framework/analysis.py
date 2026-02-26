@@ -8,6 +8,9 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from typing import Dict, Optional, Tuple
 import warnings
+import joblib
+import os
+from datetime import datetime
 
 warnings.filterwarnings('ignore')
 
@@ -28,7 +31,8 @@ class EVBatteryAnalyzer:
         contamination: Доля аномалий в датасете (по умолчанию 0.1 = 10%)
     """
     
-    def __init__(self, contamination: float = 0.1, n_estimators: int = 200, random_state: int = 42):
+    def __init__(self, contamination: float = 0.1, n_estimators: int = 200, random_state: int = 42,
+                 critical_threshold: float = -0.8, warning_threshold: float = -0.5):
         """
         Инициализация анализатора телеметрии.
         
@@ -38,6 +42,8 @@ class EVBatteryAnalyzer:
             n_estimators: Количество деревьев в ансамбле (больше = точнее, но медленнее).
                          Рекомендуется 100-200 для баланса точности и скорости.
             random_state: Seed для воспроизводимости результатов.
+            critical_threshold: Порог для CRITICAL severity (по умолчанию -0.8)
+            warning_threshold: Порог для WARNING severity (по умолчанию -0.5)
         
         Примечание:
             - contamination влияет на чувствительность: меньше значение = меньше ложных срабатываний
@@ -59,8 +65,10 @@ class EVBatteryAnalyzer:
         # Хранилище для обнаруженных аномалий (заполняется после analyze_telemetry)
         self.anomalies: Optional[pd.DataFrame] = None
         
-        # Сохраняем contamination для доступа извне
+        # Сохраняем параметры для доступа извне
         self.contamination = contamination
+        self.critical_threshold = critical_threshold
+        self.warning_threshold = warning_threshold
         
     def analyze_telemetry(self, df_telemetry: pd.DataFrame) -> Dict[str, any]:
         """
@@ -96,31 +104,47 @@ class EVBatteryAnalyzer:
             >>> print(results['anomalies_detected'])
             1
         """
-        # Шаг 1: Выбираем только числовые признаки для анализа
+        # Шаг 1: Подготовка данных
+        # Принимаем либо 'temp', либо более читаемую 'temperature' и преобразуем в 'temp'
+        df = df_telemetry.copy()
+        if 'temperature' in df.columns and 'temp' not in df.columns:
+            df = df.rename(columns={'temperature': 'temp'})
+        
+        # Шаг 2: Выбираем только числовые признаки для анализа
         # SOC не используем для детекции, так как это зависимая переменная
         features = ['voltage', 'current', 'temp']
-        X = df_telemetry[features]
+        X = df[features]
         
         # Шаг 2: Нормализация данных (mean=0, std=1)
-        # Это критически важно для IsolationForest, чтобы все фичи имели одинаковый вес
-        X_scaled = self.scaler.fit_transform(X)
+        # Use existing scaler if already fitted, otherwise fit_transform
+        if hasattr(self.scaler, 'mean_'):
+            X_scaled = self.scaler.transform(X)
+        else:
+            X_scaled = self.scaler.fit_transform(X)
         
         # Шаг 3: Обучение модели и предсказание аномалий
-        # fit_predict возвращает: 1 для нормальных точек, -1 для аномалий
-        predictions = self.model.fit_predict(X_scaled)
+        if hasattr(self.model, 'estimators_'):
+            # модель уже обучена, просто делаем predict
+            predictions = self.model.predict(X_scaled)
+        else:
+            # обучаем впервые
+            predictions = self.model.fit_predict(X_scaled)
         
         # Шаг 4: Расчет anomaly scores (чем ниже, тем более аномальная точка)
-        # score_samples возвращает средний path length в деревьях
-        # Нормальные точки: score ближе к 0
-        # Аномалии: score << 0 (например, -0.5, -1.0)
+        # score_samples работает и для предсказанной модели
         anomaly_scores = self.model.score_samples(X_scaled)
         
-        # Шаг 5: Фильтруем аномалии (где prediction == -1)
-        self.anomalies = df_telemetry[predictions == -1].copy()
+        # Шаг 5: Фильтруем аномалии
+        # Помимо стандартной предсказания (-1), также учитываем случаи, когда
+        # score_samples упал ниже warning_threshold. Это помогает не пропустить
+        # редкие выбросы на маленьких выборках (например, когда модель обучена
+        # на одинаковых точках).
+        mask = (predictions == -1) | (anomaly_scores < self.warning_threshold)
+        self.anomalies = df_telemetry[mask].copy()
         
         # Добавляем anomaly scores в результаты для дальнейшего анализа
         if len(self.anomalies) > 0:
-            self.anomalies['anomaly_score'] = anomaly_scores[predictions == -1]
+            self.anomalies['anomaly_score'] = anomaly_scores[mask]
         
         # Шаг 6: Формируем результат анализа
         return {
@@ -135,11 +159,11 @@ class EVBatteryAnalyzer:
         Оценка уровня серьезности обнаруженных аномалий.
         
         Логика оценки:
-        - CRITICAL: Есть экстремальные выбросы (score < -0.8)
+        - CRITICAL: Есть экстремальные выбросы (score < critical_threshold)
                    Требуется немедленное внимание — возможна критическая неисправность
-        - WARNING: Умеренные аномалии (score < -0.5)
+        - WARNING: Умеренные аномалии (score < warning_threshold)
                   Требуется проверка — возможна деградация системы
-        - INFO: Слабые аномалии или их отсутствие (score >= -0.5)
+        - INFO: Слабые аномалии или их отсутствие (score >= warning_threshold)
                Система в норме, аномалии незначительны
         
         Args:
@@ -149,16 +173,143 @@ class EVBatteryAnalyzer:
             Строка с уровнем серьезности: 'CRITICAL', 'WARNING' или 'INFO'
         
         Примечание:
-            Пороги (-0.8, -0.5) подобраны эмпирически и могут корректироваться
+            Пороги настраиваются через параметры конструктора и могут корректироваться
             под конкретную систему на основе исторических данных.
         """
         min_score = np.min(scores)
         
-        if min_score < -0.8:
+        if min_score < self.critical_threshold:
             return 'CRITICAL'  # Экстремальная аномалия — критический уровень
-        elif min_score < -0.5:
+        elif min_score < self.warning_threshold:
             return 'WARNING'   # Умеренная аномалия — предупреждение
         return 'INFO'          # Слабая аномалия или норма
+    
+    def save_model(self, filepath: str, metadata: Optional[Dict] = None) -> None:
+        """
+        Сохранение обученной модели и scaler в файл.
+        
+        Сохраняет:
+        - Обученную модель IsolationForest
+        - Обученный StandardScaler
+        - Параметры модели (contamination, thresholds, etc.)
+        - Метаданные (дата обучения, версия, комментарии)
+        
+        Args:
+            filepath: Путь для сохранения модели (без расширения, добавится .joblib)
+            metadata: Опциональные метаданные (комментарии, версия, dataset info)
+        
+        Пример:
+            >>> analyzer = EVBatteryAnalyzer()
+            >>> analyzer.analyze_telemetry(df)
+            >>> analyzer.save_model('models/battery_analyzer_v1', 
+            ...                     metadata={'version': '1.0', 'dataset': 'Tesla_2024'})
+        
+        Raises:
+            ValueError: Если модель не обучена (не был вызван analyze_telemetry)
+        """
+        # Проверка, что модель обучена (scaler должен быть fitted)
+        if not hasattr(self.scaler, 'mean_'):
+            raise ValueError(
+                "Модель не обучена! Сначала вызовите analyze_telemetry() или train()"
+            )
+        
+        # Подготовка данных для сохранения
+        model_data = {
+            'model': self.model,
+            'scaler': self.scaler,
+            'contamination': self.contamination,
+            'critical_threshold': self.critical_threshold,
+            'warning_threshold': self.warning_threshold,
+            'save_timestamp': datetime.now().isoformat(),
+            'metadata': metadata or {}
+        }
+        
+        # Добавляем расширение .joblib если его нет
+        if not filepath.endswith('.joblib'):
+            filepath = filepath + '.joblib'
+        
+        # Создаем директорию если не существует
+        os.makedirs(os.path.dirname(filepath), exist_ok=True) if os.path.dirname(filepath) else None
+        
+        # Сохранение
+        joblib.dump(model_data, filepath, compress=3)
+        print(f"✅ Модель сохранена: {filepath}")
+        
+        if metadata:
+            print(f"   Метаданные: {metadata}")
+    
+    @classmethod
+    def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
+        """
+        Загрузка сохраненной модели из файла.
+        
+        Загружает все компоненты модели и создает новый экземпляр EVBatteryAnalyzer
+        с восстановленным состоянием.
+        
+        Args:
+            filepath: Путь к сохраненной модели (.joblib)
+        
+        Returns:
+            Новый экземпляр EVBatteryAnalyzer с загруженной моделью
+        
+        Пример:
+            >>> analyzer = EVBatteryAnalyzer.load_model('models/battery_analyzer_v1.joblib')
+            >>> results = analyzer.analyze_telemetry(new_data)
+        
+        Raises:
+            FileNotFoundError: Если файл не найден
+            ValueError: Если файл поврежден или имеет неверный формат
+        """
+        # Добавляем расширение если нет
+        if not filepath.endswith('.joblib'):
+            filepath = filepath + '.joblib'
+        
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Файл модели не найден: {filepath}")
+        
+        try:
+            # Загрузка данных
+            model_data = joblib.load(filepath)
+            
+            # Создание нового экземпляра
+            analyzer = cls(
+                contamination=model_data['contamination'],
+                critical_threshold=model_data.get('critical_threshold', -0.8),
+                warning_threshold=model_data.get('warning_threshold', -0.5)
+            )
+            
+            # Восстановление модели и scaler
+            analyzer.model = model_data['model']
+            analyzer.scaler = model_data['scaler']
+            
+            # Вывод информации о загруженной модели
+            save_time = model_data.get('save_timestamp', 'Unknown')
+            metadata = model_data.get('metadata', {})
+            
+            print(f"✅ Модель загружена: {filepath}")
+            print(f"   Сохранена: {save_time}")
+            if metadata:
+                print(f"   Метаданные: {metadata}")
+            
+            return analyzer
+            
+        except Exception as e:
+            raise ValueError(f"Ошибка загрузки модели: {e}")
+    
+    def get_model_info(self) -> Dict:
+        """
+        Получение информации о текущей модели.
+        
+        Returns:
+            Словарь с параметрами модели
+        """
+        return {
+            'contamination': self.contamination,
+            'n_estimators': self.model.n_estimators,
+            'critical_threshold': self.critical_threshold,
+            'warning_threshold': self.warning_threshold,
+            'is_fitted': hasattr(self.scaler, 'mean_')
+        }
 
 
 class AnomalyDetector(EVBatteryAnalyzer):
