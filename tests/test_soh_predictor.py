@@ -1,3 +1,6 @@
+"""
+Test module for SOH Predictor.
+"""
 import pandas as pd
 import numpy as np
 from ev_qa_framework.soh_predictor import SOHPredictor

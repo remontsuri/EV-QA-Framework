@@ -1,3 +1,6 @@
+"""
+SOH Predictor Module: LSTM-based battery health degradation forecasting.
+"""
 from __future__ import annotations
 import os
 from typing import Optional, Tuple
@@ -50,23 +53,24 @@ class SOHPredictor:
         # Scale data
         scaled_data = self.scaler.fit_transform(data)
 
-        X, y = [], []
+        x_seq, y_seq = [], []
         for i in range(len(scaled_data) - self.sequence_length):
-            X.append(scaled_data[i:i + self.sequence_length, :-1])
-            y.append(scaled_data[i + self.sequence_length, -1])
+            x_seq.append(scaled_data[i:i + self.sequence_length, :-1])
+            y_seq.append(scaled_data[i + self.sequence_length, -1])
 
-        return np.array(X), np.array(y)
+        return np.array(x_seq), np.array(y_seq)
 
     def train(self, df: pd.DataFrame, epochs: int = 10, batch_size: int = 32):
         """
         Train the LSTM model on historical data.
         """
-        X, y = self.prepare_data(df)
-        if len(X) == 0:
+        x_train, y_train = self.prepare_data(df)
+        if len(x_train) == 0:
             raise ValueError("Not enough data to create sequences for LSTM")
 
-        self.model = self._build_model((X.shape[1], X.shape[2]))
-        self.model.fit(X, y, epochs=epochs, batch_size=batch_size, verbose=0)
+        self.model = self._build_model((x_train.shape[1], x_train.shape[2]))
+        self.model.fit(x_train, y_train, epochs=epochs,
+                       batch_size=batch_size, verbose=0)
         self.is_trained = True
 
     def predict_next(self, recent_telemetry: pd.DataFrame) -> float:
@@ -89,8 +93,8 @@ class SOHPredictor:
             np.hstack([data, np.zeros((len(data), 1))])
         )[:, :-1]
 
-        X = np.expand_dims(scaled_feat, axis=0)
-        prediction_scaled = self.model.predict(X, verbose=0)
+        x_input = np.expand_dims(scaled_feat, axis=0)
+        prediction_scaled = self.model.predict(x_input, verbose=0)
 
         # Inverse scale prediction
         # Create a dummy array for inverse transform

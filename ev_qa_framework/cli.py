@@ -21,19 +21,19 @@ def analyze_csv(file_path: str, output: str = None):
     results = analyzer.analyze_telemetry(df)
 
     print("✅ Analysis complete:")
-    print("   Total samples: {}".format(results['total_samples']))
-    print("   Anomalies: {}".format(results['anomalies_detected']))
-    print("   Severity: {}".format(results['severity']))
+    print(f"   Total samples: {results['total_samples']}")
+    print(f"   Anomalies: {results['anomalies_detected']}")
+    print(f"   Severity: {results['severity']}")
 
     if output:
         with open(output, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
-        print("📄 Results saved to {}".format(output))
+        print(f"📄 Results saved to {output}")
 
 
 def run_can_demo(duration: int = 10):
     """Run a live CAN bus emulation demo"""
-    print("🚗 Starting CAN Bus Emulation Demo ({}s)...".format(duration))
+    print(f"🚗 Starting CAN Bus Emulation Demo ({duration}s)...")
     sim = CANBatterySimulator()
     receiver = CANTelemetryReceiver()
 
@@ -47,10 +47,10 @@ def run_can_demo(duration: int = 10):
             i_val = data['current']
             t_val = data['temperature']
             s_val = data['soc']
-            print("📡 CAN Telemetry: V={:.1f}V | ".format(v_val) +
-                  "I={:.1f}A | ".format(i_val) +
-                  "T={:.0f}°C | ".format(t_val) +
-                  "SOC={:.0f}%".format(s_val))
+            print(f"📡 CAN Telemetry: V={v_val:.1f}V | "
+                  f"I={i_val:.1f}A | "
+                  f"T={t_val:.0f}°C | "
+                  f"SOC={s_val:.0f}%")
             time.sleep(1)
     finally:
         sim.stop()
@@ -60,12 +60,12 @@ def run_can_demo(duration: int = 10):
 
 def train_soh_model(csv_path: str, model_path: str):
     """Train SOH LSTM model from historical CSV data"""
-    print("🧠 Training SOH Predictor from {}...".format(csv_path))
+    print(f"🧠 Training SOH Predictor from {csv_path}...")
     df = pd.read_csv(csv_path)
     predictor = SOHPredictor()
     predictor.train(df, epochs=5)
     predictor.save(model_path)
-    print("✅ Model saved to {}".format(model_path))
+    print(f"✅ Model saved to {model_path}")
 
 
 def main():
@@ -96,9 +96,9 @@ def main():
 
     if args.command == 'dashboard':
         print("🌐 Starting dashboard...")
-        import uvicorn
-        from dashboard.app import app
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        import uvicorn  # pylint: disable=C0415
+        from dashboard.app import app as dash_app  # pylint: disable=C0415
+        uvicorn.run(dash_app, host="0.0.0.0", port=8000)
     elif args.command == 'analyze':
         analyze_csv(args.input, args.output)
     elif args.command == 'can-demo':

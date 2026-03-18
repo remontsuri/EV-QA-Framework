@@ -45,7 +45,7 @@ async def run_advanced_demo():
 
     # 3. Main Loop
     print("\n--- Starting Real-time Monitoring Loop ---")
-    telemetry_buffer = pd.DataFrame(hist_data).tail(5)  # Start with history
+    tele_buf = pd.DataFrame(hist_data).tail(5)  # Start with history
 
     try:
         for i in range(10):
@@ -53,13 +53,13 @@ async def run_advanced_demo():
             raw_data = receiver.get_telemetry()
             raw_data['vin'] = "DEMOVEHICLE001XYZ".replace('I', '1') \
                 .replace('O', '0')
-            raw_data['soh'] = telemetry_buffer['soh'].iloc[-1]
+            raw_data['soh'] = tele_buf['soh'].iloc[-1]
 
             # Pydantic Validation
             try:
                 telemetry = BatteryTelemetryModel(**raw_data)
                 is_safe = qa.validate_telemetry(telemetry)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"❌ Validation Error: {e}")
                 continue
 
@@ -67,21 +67,19 @@ async def run_advanced_demo():
             # Add new data to buffer
             new_row = pd.DataFrame([raw_data])[['voltage', 'current',
                                                 'temperature', 'soh']]
-            telemetry_buffer = pd.concat([telemetry_buffer, new_row]).tail(10)
+            tele_buf = pd.concat([tele_buf, new_row]).tail(10)
 
             # SOH Prediction (LSTM)
-            next_soh = predictor.predict_next(telemetry_buffer)
+            next_soh = predictor.predict_next(tele_buf)
 
             # Report Status
             status = "✅ SAFE" if is_safe else "⚠️ WARNING"
-            v_val = telemetry.voltage
-            t_val = telemetry.temperature
-            s_val = telemetry.soh
-            print("[{:02d}] V={:.1f}V | ".format(i, v_val) +
-                  "T={:.1f}°C | ".format(t_val) +
-                  "SOH={:.2f}% | ".format(s_val) +
-                  "Next SOH Pred={:.2f}% | ".format(next_soh) +
-                  "Status: {}".format(status))
+            v_v = telemetry.voltage
+            t_v = telemetry.temperature
+            s_v = telemetry.soh
+            print(f"[{i:02d}] V={v_v:.1f}V | T={t_v:.1f}°C | "
+                  f"SOH={s_v:.2f}% | Next SOH Pred={next_soh:.2f}% | "
+                  f"Status: {status}")
 
             await asyncio.sleep(1)
 

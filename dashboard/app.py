@@ -1,3 +1,6 @@
+"""
+Dashboard Application: FastAPI-based real-time telemetry visualization.
+"""
 import json
 import asyncio
 import random
@@ -12,7 +15,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-sys.path.append('..')
+# Setup system path to include parent directory
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# pylint: disable=wrong-import-position
 from ev_qa_framework import SOHPredictor  # noqa: E402
 from api.routes import router  # noqa: E402
 
@@ -37,17 +42,20 @@ class ConnectionManager:
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
+        """Accept connection"""
         await websocket.accept()
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
+        """Remove connection"""
         self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
+        """Broadcast message to all connected clients"""
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except Exception:
+            except (WebSocketDisconnect, RuntimeError):
                 pass
 
 
@@ -56,11 +64,13 @@ manager = ConnectionManager()
 
 @app.get("/", response_class=HTMLResponse)
 async def get(request: Request):
+    """Serve the main dashboard page"""
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    """Handle WebSocket endpoint"""
     await manager.connect(websocket)
     try:
         while True:
@@ -123,7 +133,7 @@ async def telemetry_streamer():
             # In simulation, we'll slowly decrease real SOH based on temp
             degradation = 0.001 if data['temperature'] < 45 else 0.005
             current_soh -= degradation
-        except Exception:
+        except (ValueError, RuntimeError):
             pass
 
         await manager.broadcast(json.dumps(data))
@@ -132,6 +142,7 @@ async def telemetry_streamer():
 
 @app.on_event("startup")
 async def startup_event():
+    """Initialize background tasks"""
     asyncio.create_task(telemetry_streamer())
 
 
