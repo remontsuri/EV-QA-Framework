@@ -1,10 +1,10 @@
-import pytest
 import pandas as pd
 import numpy as np
-import os
 from ev_qa_framework.soh_predictor import SOHPredictor
 
+
 def test_soh_predictor_training():
+    """Test LSTM training"""
     predictor = SOHPredictor(sequence_length=5)
 
     # Generate mock data
@@ -20,7 +20,9 @@ def test_soh_predictor_training():
     assert predictor.is_trained
     assert predictor.model is not None
 
+
 def test_soh_predictor_inference():
+    """Test LSTM inference"""
     predictor = SOHPredictor(sequence_length=5)
     data = {
         'voltage': np.random.normal(400, 10, 50),
@@ -37,7 +39,9 @@ def test_soh_predictor_inference():
     assert isinstance(prediction, float)
     assert 0 <= prediction <= 100
 
+
 def test_soh_predictor_persistence(tmp_path):
+    """Test saving and loading the model"""
     predictor = SOHPredictor(sequence_length=5)
     data = {
         'voltage': np.random.normal(400, 10, 50),
