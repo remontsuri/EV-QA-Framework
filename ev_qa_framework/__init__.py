@@ -8,9 +8,9 @@ from .config import FrameworkConfig, SafetyThresholds, MLConfig
 
 __version__ = "1.0.0"
 __all__ = [
-    "EVQAFramework", 
-    "BatteryTelemetryModel", 
-    "EVBatteryAnalyzer", 
+    "EVQAFramework",
+    "BatteryTelemetryModel",
+    "EVBatteryAnalyzer",
     "AnomalyDetector",
     "SOHPredictor",
     "CANBatterySimulator",

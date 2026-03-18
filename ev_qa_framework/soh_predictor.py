@@ -1,16 +1,16 @@
 from __future__ import annotations
+import os
+from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, List, Optional, Tuple
-import os
-
-# Suppress tensorflow warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import tensorflow as tf
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from sklearn.preprocessing import MinMaxScaler
 import joblib
+
+# Suppress tensorflow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 class SOHPredictor:
     """
@@ -28,7 +28,8 @@ class SOHPredictor:
 
     def _build_model(self, input_shape: Tuple[int, int]) -> Sequential:
         model = Sequential([
-            LSTM(64, activation='relu', input_shape=input_shape, return_sequences=True),
+            LSTM(64, activation='relu', input_shape=input_shape,
+                 return_sequences=True),
             Dropout(0.2),
             LSTM(32, activation='relu'),
             Dropout(0.2),
@@ -38,7 +39,8 @@ class SOHPredictor:
         model.compile(optimizer='adam', loss='mse')
         return model
 
-    def prepare_data(self, df: pd.DataFrame, target_col: str = 'soh') -> Tuple[np.ndarray, np.ndarray]:
+    def prepare_data(self, df: pd.DataFrame,
+                     target_col: str = 'soh') -> Tuple[np.ndarray, np.ndarray]:
         """
         Prepare time-series sequences for LSTM.
         """
@@ -75,25 +77,12 @@ class SOHPredictor:
             raise ValueError("Model is not trained yet")
 
         features = ['voltage', 'current', 'temperature']
-        # We need a dummy SOH column to use the scaler properly if we scaled everything
-        # Actually, it's better to have separate scalers for features and target
-        # but for simplicity in this demo we'll just use the last few rows
 
         if len(recent_telemetry) < self.sequence_length:
-            raise ValueError(f"Need at least {self.sequence_length} data points")
+            raise ValueError(f"Need at least {self.sequence_length} "
+                             "data points")
 
         data = recent_telemetry[features].values[-self.sequence_length:]
-        # Use a temporary scaler for features only for prediction if we don't want to mess up
-        # or just use the fitted scaler's feature part.
-
-        # Re-fitting a simplified version for inference in this demo
-        feat_scaler = MinMaxScaler()
-        # In a real scenario, you'd save and load the exact scaler used in training
-        # For the sake of the demo, we'll assume the inputs are already somewhat normalized
-        # or we use the scaler from training.
-
-        # Scaling features part (first 3 columns of our original scaler)
-        # This is a bit hacky for a demo, ideally we have self.feature_scaler and self.target_scaler
 
         # Let's fix the scaler logic in a real implementation
         scaled_feat = self.scaler.transform(
@@ -112,6 +101,7 @@ class SOHPredictor:
         return float(prediction)
 
     def save(self, path: str):
+        """Save the model and scaler"""
         if not self.is_trained or self.model is None:
             return
         os.makedirs(path, exist_ok=True)
@@ -119,6 +109,7 @@ class SOHPredictor:
         joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
 
     def load(self, path: str):
+        """Load the model and scaler"""
         self.model = load_model(os.path.join(path, "soh_lstm.keras"))
         self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
         self.is_trained = True

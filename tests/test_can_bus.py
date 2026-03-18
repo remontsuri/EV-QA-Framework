@@ -1,12 +1,13 @@
-import pytest
 import time
-import os
 from ev_qa_framework.can_bus import CANBatterySimulator, CANTelemetryReceiver
 
+
 def test_can_sim_receiver():
-    # Test on a virtual interface (simulated internally if vcan0 not supported by system)
+    """Test CAN simulation and reception"""
+    # Test on a virtual interface
     sim = CANBatterySimulator(interface='virtual', channel='test_channel')
-    receiver = CANTelemetryReceiver(interface='virtual', channel='test_channel')
+    receiver = CANTelemetryReceiver(interface='virtual',
+                                    channel='test_channel')
 
     sim.start()
     receiver.start()

@@ -1,8 +1,9 @@
-import can
 import time
 import random
 import threading
 from typing import Dict, Any, Optional
+import can
+
 
 class CANBatterySimulator:
     """
@@ -21,8 +22,10 @@ class CANBatterySimulator:
         self._thread: Optional[threading.Thread] = None
 
     def start(self):
+        """Start simulation"""
         try:
-            self.bus = can.interface.Bus(channel=self.channel, interface=self.interface)
+            self.bus = can.interface.Bus(channel=self.channel,
+                                         interface=self.interface)
         except Exception as e:
             # Fallback for systems without virtual CAN support in kernel
             print(f"Virtual CAN not supported, using simple emulation: {e}")
@@ -34,6 +37,7 @@ class CANBatterySimulator:
         self._thread.start()
 
     def stop(self):
+        """Stop simulation"""
         self.running = False
         if self._thread:
             self._thread.join()
@@ -60,20 +64,23 @@ class CANBatterySimulator:
                 (c_scaled >> 8) & 0xFF, c_scaled & 0xFF,
                 0, 0, 0, 0
             ]
-            msg1 = can.Message(arbitration_id=0x101, data=data1, is_extended_id=False)
+            msg1 = can.Message(arbitration_id=0x101, data=data1,
+                               is_extended_id=False)
 
             # Pack 0x102: Temperature (1 byte), SOC (1 byte)
             data2 = [temp & 0xFF, soc & 0xFF, 0, 0, 0, 0, 0, 0]
-            msg2 = can.Message(arbitration_id=0x102, data=data2, is_extended_id=False)
+            msg2 = can.Message(arbitration_id=0x102, data=data2,
+                               is_extended_id=False)
 
             if self.bus:
                 try:
                     self.bus.send(msg1)
                     self.bus.send(msg2)
-                except:
+                except Exception:
                     pass
 
             time.sleep(1.0)
+
 
 class CANTelemetryReceiver:
     """
@@ -94,9 +101,11 @@ class CANTelemetryReceiver:
         self._thread: Optional[threading.Thread] = None
 
     def start(self):
+        """Start receiver"""
         try:
-            self.bus = can.interface.Bus(channel=self.channel, interface=self.interface)
-        except:
+            self.bus = can.interface.Bus(channel=self.channel,
+                                         interface=self.interface)
+        except Exception:
             self.bus = None
 
         self.running = True
@@ -105,6 +114,7 @@ class CANTelemetryReceiver:
         self._thread.start()
 
     def stop(self):
+        """Stop receiver"""
         self.running = False
         if self._thread:
             self._thread.join()
@@ -134,4 +144,5 @@ class CANTelemetryReceiver:
                     self.latest_data['soc'] = float(msg.data[1])
 
     def get_telemetry(self) -> Dict[str, Any]:
+        """Return latest telemetry"""
         return self.latest_data.copy()
