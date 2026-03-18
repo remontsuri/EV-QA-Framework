@@ -19,12 +19,12 @@ This framework provides enterprise-grade testing tools to the open-source commun
 
 - ✅ **Automated quality assurance** for battery telemetry (voltage, current, temperature, SOC)
 - ✅ **ML-powered anomaly detection** using Isolation Forest (200 estimators, scikit-learn)
-- ✅- **85+ Automated Tests:** Extensive coverage for safety boundaries.
-- **ML Anomaly Detection:** Outlier detection using `IsolationForest`.
-- **Real-time Dashboard:** Live telemetry monitoring with FastAPI and WebSockets.
-- **CAN Bus Emulation:** Simulate physical vehicle network communication.
-- **Pydantic v2 Validation:** Ultra-fast, strict data modeling.
-- **Interactive Reports:** Jupyter Notebooks for post-test analysis.
+- ✅ **LSTM-based SOH Prediction:** Predict battery degradation using time-series deep learning.
+- ✅ **125+ Automated Tests:** Extensive coverage for safety, ML, and integration.
+- ✅ **CAN Bus Emulation:** Simulate physical vehicle network communication (0x101, 0x102 messages).
+- ✅ **Advanced Dashboard:** Real-time visualization with Chart.js and anomaly logging.
+- ✅ **Pydantic v2 Validation:** Ultra-fast, strict data modeling.
+- ✅ **Interactive Reports:** Jupyter Notebooks for post-test analysis.
 
 **Target Audience**: QA engineers at Tesla, Rivian, Lucid Motors, BYD, and automotive suppliers working on BMS (Battery Management Systems).
 
