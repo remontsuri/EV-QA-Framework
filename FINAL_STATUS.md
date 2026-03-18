@@ -10,10 +10,12 @@
 - ✅ **Tag v1.0.0** создан и запушен
 
 ### 2. Код и Тесты
-- ✅ **64+ тестов** (test_ev_qa_limits.py, test_ev_qa_anomalies.py, test_ml_analysis.py, test_pydantic_models.py)
-- ✅ **Pydantic модели** (ev_qa_models.py) с VIN валидацией
-- ✅ **ML улучшения** (ev_qa_analysis.py) - 200 estimators, docstrings на русском
-- ✅ **Примеры** (examples/simple_demo.py, sample_telemetry.csv)
+- ✅ **125+ тестов** (Pydantic, ML, CAN, SOH, Integration)
+- ✅ **LSTM Predictor** (soh_predictor.py) для прогнозирования деградации
+- ✅ **CAN Bus Emulator** (can_bus.py) для 0x101/0x102 протоколов
+- ✅ **Advanced Dashboard** с визуализацией Chart.js
+- ✅ **Pydantic модели** (models.py) с VIN валидацией
+- ✅ **Примеры** (examples/advanced_integration_demo.py)
 
 ### 3. Документация
 - ✅ README.md - Professional с comparison table
