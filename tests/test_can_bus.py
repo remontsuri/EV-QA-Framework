@@ -1,3 +1,6 @@
+"""
+Test module for CAN Bus integration.
+"""
 import time
 from ev_qa_framework.can_bus import CANBatterySimulator, CANTelemetryReceiver
 

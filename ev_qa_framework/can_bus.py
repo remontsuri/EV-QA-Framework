@@ -1,3 +1,6 @@
+"""
+CAN Bus Module: Hardware-level battery telemetry simulation and reception.
+"""
 import time
 import random
 import threading
@@ -26,7 +29,7 @@ class CANBatterySimulator:
         try:
             self.bus = can.interface.Bus(channel=self.channel,
                                          interface=self.interface)
-        except Exception as e:
+        except (can.CanError, OSError, ValueError) as e:
             # Fallback for systems without virtual CAN support in kernel
             print(f"Virtual CAN not supported, using simple emulation: {e}")
             self.bus = None
@@ -45,6 +48,7 @@ class CANBatterySimulator:
             self.bus.shutdown()
 
     def _run(self):
+        """Internal simulation loop"""
         base_voltage = 396.0
         base_current = 50.0
         base_temp = 35
@@ -76,7 +80,7 @@ class CANBatterySimulator:
                 try:
                     self.bus.send(msg1)
                     self.bus.send(msg2)
-                except Exception:
+                except can.CanError:
                     pass
 
             time.sleep(1.0)
@@ -105,7 +109,7 @@ class CANTelemetryReceiver:
         try:
             self.bus = can.interface.Bus(channel=self.channel,
                                          interface=self.interface)
-        except Exception:
+        except (can.CanError, OSError, ValueError):
             self.bus = None
 
         self.running = True
@@ -122,6 +126,7 @@ class CANTelemetryReceiver:
             self.bus.shutdown()
 
     def _run(self):
+        """Internal receiver loop"""
         if not self.bus:
             return
 
