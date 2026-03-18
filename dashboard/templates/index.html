@@ -3,40 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Battery Monitor</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>EV Battery Monitor Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .main-container { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; padding: 1rem; flex-grow: 1; overflow: hidden; }
+        .charts-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; overflow-y: auto; }
+        .sidebar { display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 1rem; }
+        .chart-container { height: 250px; position: relative; }
+        .status-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; }
+        .status-ok { background: #2ecc71; color: white; }
+        .status-warning { background: #f1c40f; color: black; }
+        .status-critical { background: #e74c3c; color: white; }
+        .log-container { flex-grow: 1; font-family: monospace; font-size: 0.8rem; height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5rem; }
+        .anomaly-item { border-left: 4px solid #e74c3c; padding-left: 0.5rem; margin-bottom: 0.5rem; background: #fdf2f2; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔋 EV Battery Real-time Monitor</h1>
-        
-        <div class="status-grid">
-            <div class="status-card">
-                <h3>Voltage</h3>
-                <span id="voltage">--</span>V
+    <header>
+        <h1>🔋 EV-QA Dashboard</h1>
+        <div id="connection-status">
+            Connection: <span id="ws-status" class="status-badge status-warning">Connecting...</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="charts-panel">
+            <div class="card">
+                <h3>Voltage (V)</h3>
+                <div class="chart-container"><canvas id="voltageChart"></canvas></div>
             </div>
-            <div class="status-card">
-                <h3>Current</h3>
-                <span id="current">--</span>A
+            <div class="card">
+                <h3>Current (A)</h3>
+                <div class="chart-container"><canvas id="currentChart"></canvas></div>
             </div>
-            <div class="status-card">
-                <h3>Temperature</h3>
-                <span id="temperature">--</span>°C
+            <div class="card">
+                <h3>Temperature (°C)</h3>
+                <div class="chart-container"><canvas id="tempChart"></canvas></div>
             </div>
-            <div class="status-card">
-                <h3>SOC</h3>
-                <span id="soc">--</span>%
+            <div class="card">
+                <h3>SOC (%) & SOH (%)</h3>
+                <div class="chart-container"><canvas id="socSohChart"></canvas></div>
             </div>
         </div>
 
-        <div class="chart-container">
-            <canvas id="telemetryChart"></canvas>
+        <div class="sidebar">
+            <div class="card">
+                <h3>System Summary</h3>
+                <p>Latest Voltage: <b id="val-voltage">-</b> V</p>
+                <p>Latest Current: <b id="val-current">-</b> A</p>
+                <p>Latest Temp: <b id="val-temp">-</b> °C</p>
+                <p>State of Health: <b id="val-soh">-</b> %</p>
+                <p>Severity: <span id="val-severity" class="status-badge status-ok">NORMAL</span></p>
+            </div>
+            <div class="card">
+                <h3>Anomaly Log</h3>
+                <div id="anomaly-log" class="log-container"></div>
+            </div>
         </div>
-
-        <div class="alerts" id="alerts"></div>
     </div>
 
-    <script src="/static/js/dashboard.js"></script>
+    <script>
+        const maxDataPoints = 30;
+        const labels = [];
+        const voltageData = [];
+        const currentData = [];
+        const tempData = [];
+        const socData = [];
+        const sohData = [];
+
+        function createChart(id, label, data, color, min, max) {
+            return new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '22',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: min, max: max } },
+                    animation: false
+                }
+            });
+        }
+
+        const vChart = createChart('voltageChart', 'Voltage', voltageData, '#3498db', 300, 500);
+        const iChart = createChart('currentChart', 'Current', currentData, '#e67e22', -200, 200);
+        const tChart = createChart('tempChart', 'Temperature', tempData, '#e74c3c', 0, 100);
+
+        const socSohChart = new Chart(document.getElementById('socSohChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'SOC', data: socData, borderColor: '#2ecc71', tension: 0.4 },
+                    { label: 'SOH', data: sohData, borderColor: '#9b59b6', tension: 0.4 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, animation: false }
+        });
+
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        const wsStatus = document.getElementById('ws-status');
+
+        ws.onopen = () => {
+            wsStatus.textContent = 'Connected';
+            wsStatus.className = 'status-badge status-ok';
+        };
+
+        ws.onclose = () => {
+            wsStatus.textContent = 'Disconnected';
+            wsStatus.className = 'status-badge status-critical';
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const time = data.timestamp;
+
+            if (labels.length >= maxDataPoints) {
+                labels.shift();
+                voltageData.shift();
+                currentData.shift();
+                tempData.shift();
+                socData.shift();
+                sohData.shift();
+            }
+
+            labels.push(time);
+            voltageData.push(data.voltage);
+            currentData.push(data.current);
+            tempData.push(data.temperature);
+            socData.push(data.soc);
+            sohData.push(data.soh || 100);
+
+            document.getElementById('val-voltage').textContent = data.voltage;
+            document.getElementById('val-current').textContent = data.current;
+            document.getElementById('val-temp').textContent = data.temperature;
+            document.getElementById('val-soh').textContent = data.soh || 100;
+
+            const severityEl = document.getElementById('val-severity');
+            severityEl.textContent = data.is_anomaly ? 'CRITICAL' : 'NORMAL';
+            severityEl.className = 'status-badge ' + (data.is_anomaly ? 'status-critical' : 'status-ok');
+
+            if (data.is_anomaly) {
+                const log = document.getElementById('anomaly-log');
+                const item = document.createElement('div');
+                item.className = 'anomaly-item';
+                item.innerHTML = `[${time}] Anomaly Detected! V:${data.voltage} T:${data.temperature}`;
+                log.prepend(item);
+            }
+
+            vChart.update();
+            iChart.update();
+            tChart.update();
+            socSohChart.update();
+        };
+    </script>
 </body>
 </html>
