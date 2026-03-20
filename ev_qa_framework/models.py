@@ -79,5 +79,60 @@ class BatteryTelemetryModel(BaseModel):
 def validate_telemetry(data: dict) -> BatteryTelemetryModel:
     """
     Функция валидации телеметрии с использованием Pydantic.
+
+    Args:
+        data: Словарь с данными телеметрии
+
+    Returns:
+        Валидированный объект BatteryTelemetryModel
+
+    Raises:
+        ValidationError: Если данные не соответствуют схеме
+
+    Пример:
+        >>> data = {
+        ...     "vin": "1HGBH41JXMN109186",
+        ...     "voltage": 396.5,
+        ...     "current": 125.3,
+        ...     "temperature": 35.2,
+        ...     "soc": 78.5,
+        ...     "soh": 96.2
+        ... }
+        >>> telemetry = validate_telemetry(data)
+        >>> print(telemetry.voltage)
+        396.5
     """
     return BatteryTelemetryModel(**data)
+
+
+if __name__ == "__main__":
+    # Пример использования
+    test_data = {
+        "vin": "1HGBH41JXMN109186",
+        "voltage": 396.5,
+        "current": 125.3,
+        "temperature": 35.2,
+        "soc": 78.5,
+        "soh": 96.2
+    }
+
+    try:
+        telemetry = validate_telemetry(test_data)
+        print(f"✅ Валидация пройдена: {telemetry.model_dump_json(indent=2)}")
+    except Exception as e:
+        print(f"❌ Ошибка валидации: {e}")
+
+    # Пример невалидных данных
+    invalid_data = {
+        "vin": "SHORT",  # Слишком короткий VIN
+        "voltage": 1500,  # Превышает лимит
+        "current": 100,
+        "temperature": 35,
+        "soc": 105,  # Больше 100%
+        "soh": 96
+    }
+
+    try:
+        validate_telemetry(invalid_data)
+    except Exception as e:
+        print(f"❌ Ожидаемая ошибка: {e}")

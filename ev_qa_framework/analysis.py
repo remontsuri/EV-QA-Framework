@@ -79,83 +79,74 @@ class EVBatteryAnalyzer:
         Анализ телеметрии батареи на предмет аномалий.
         
         Алгоритм:
-        1. Нормализация данных через StandardScaler (приведение к одной шкале)
-        2. Обучение IsolationForest на нормализованных данных
-        3. Предсказание аномалий (-1 = аномалия, 1 = норма)
-        4. Расчет anomaly scores (чем меньше, тем более аномальная точка)
-        5. Оценка серьезности на основе минимального score
+        1. Подготовка данных и выбор признаков.
+        2. Нормализация данных через StandardScaler.
+        3. Обучение или использование IsolationForest.
+        4. Расчет anomaly scores и предсказание аномалий.
+        5. Оценка серьезности.
         
         Args:
             df_telemetry: DataFrame с колонками ['voltage', 'current', 'temp', 'soc'].
-                         Каждая строка — это один момент времени.
         
         Returns:
-            Словарь с результатами анализа:
-                - total_samples: Общее количество точек данных
-                - anomalies_detected: Количество обнаруженных аномалий
-                - anomaly_percentage: Процент аномалий от общего числа
-                - severity: Уровень серьезности ('CRITICAL', 'WARNING', 'INFO')
-        
-        Пример:
-            >>> df = pd.DataFrame({
-            ...     'voltage': [48, 48, 200],  # 200 — аномалия
-            ...     'current': [100, 100, 100],
-            ...     'temp': [35, 35, 35],
-            ...     'soc': [85, 85, 85]
-            ... })
-            >>> analyzer = EVBatteryAnalyzer()
-            >>> results = analyzer.analyze_telemetry(df)
-            >>> print(results['anomalies_detected'])
-            1
+            Словарь с результатами анализа.
         """
+        if df_telemetry.empty:
+            return {
+                'total_samples': 0,
+                'anomalies_detected': 0,
+                'anomaly_percentage': 0.0,
+                'severity': 'INFO'
+            }
+
         # Шаг 1: Подготовка данных
-        # Принимаем либо 'temp', либо более читаемую 'temperature' и преобразуем в 'temp'
         df: pd.DataFrame = df_telemetry.copy()
         if 'temperature' in df.columns and 'temp' not in df.columns:
             df = df.rename(columns={'temperature': 'temp'})
         
-        # Шаг 2: Выбираем только числовые признаки для анализа
-        # SOC не используем для детекции, так как это зависимая переменная
+        # Шаг 2: Выбор признаков
         features: List[str] = ['voltage', 'current', 'temp']
+        # Ensure all features exist
+        missing = [f for f in features if f not in df.columns]
+        if missing:
+            logger.error(f"Missing features for ML analysis: {missing}")
+            # Fallback to whatever features are available
+            features = [f for f in features if f in df.columns]
+            if not features:
+                raise ValueError(f"None of the required features {features} found in DataFrame")
+
         X: pd.DataFrame = df[features]
         
-        # Шаг 2: Нормализация данных (mean=0, std=1)
-        # Use existing scaler if already fitted, otherwise fit_transform
+        # Шаг 3: Нормализация данных
         if hasattr(self.scaler, 'mean_'):
-            X_scaled = self.scaler.transform(X)  # type: ignore
+            X_scaled = self.scaler.transform(X)
         else:
-            X_scaled = self.scaler.fit_transform(X)  # type: ignore
+            X_scaled = self.scaler.fit_transform(X)
         
-        # Шаг 3: Обучение модели и предсказание аномалий
+        # Шаг 4: Обучение модели и предсказание аномалий
         if hasattr(self.model, 'estimators_'):
-            predictions = self.model.predict(X_scaled)  # type: ignore
+            predictions = self.model.predict(X_scaled)
         else:
-            predictions = self.model.fit_predict(X_scaled)  # type: ignore
+            predictions = self.model.fit_predict(X_scaled)
         
-        # Шаг 4: Расчет anomaly scores (чем ниже, тем более аномальная точка)
-        # score_samples работает и для предсказанной модели
-        anomaly_scores: np.ndarray = self.model.score_samples(X_scaled)  # type: ignore
+        anomaly_scores: np.ndarray = self.model.score_samples(X_scaled)
         
-        # Шаг 5: Фильтруем аномалии
-        # Помимо стандартной предсказания (-1), также учитываем случаи, когда
-        # score_samples упал ниже warning_threshold. Это помогает не пропустить
-        # редкие выбросы на маленьких выборках (например, когда модель обучена
-        # на одинаковых точках).
+        # Шаг 5: Фильтрация аномалий
         mask: np.ndarray = (predictions == -1) | (anomaly_scores < self.warning_threshold)
-        self.anomalies = df_telemetry[mask].copy()  # type: ignore
+        self.anomalies = df_telemetry[mask].copy()
         
-        # Добавляем anomaly scores в результаты для дальнейшего анализа
         if not self.anomalies.empty:
             self.anomalies['anomaly_score'] = anomaly_scores[mask]
         
-        # Шаг 6: Формируем результат анализа
+        # Шаг 6: Результат
         total = len(df_telemetry)
         count = len(self.anomalies)
         return {
             'total_samples': total,
             'anomalies_detected': count,
             'anomaly_percentage': (count / total) * 100 if total else 0.0,
-            'severity': self._assess_severity(anomaly_scores)
+            'severity': self._assess_severity(anomaly_scores),
+            'mean_score': np.mean(anomaly_scores)
         }
     
     def _assess_severity(self, scores: np.ndarray) -> str:

@@ -147,81 +147,93 @@ class EVQAFramework:
         return anomalies
     
     async def run_test_suite(self, telemetry_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Run full QA test suite with ML analysis"""
+        """
+        Запуск полного набора QA-тестов с ML-анализом.
+
+        Args:
+            telemetry_data: Список словарей с данными телеметрии.
+
+        Returns:
+            Словарь с результатами тестов и анализа.
+        """
         results: Dict[str, Any] = {
             'total_tests': len(telemetry_data),
             'passed': 0,
             'failed': 0,
             'anomalies': [],
             'ml_analysis': None,
-            'critical_issues': []  # собираем ошибки валидации и критические замечания
+            'critical_issues': []
         }
         
+        if not telemetry_data:
+            return results
+
         telemetries: List[BatteryTelemetryModel] = []
-        status: List[bool] = []  # True=passed, False=failed
+        status: List[bool] = []
+
         for data in telemetry_data:
             # Compatibility layer: Inject VIN if missing
-            if 'vin' not in data:
-                data['vin'] = self.config.default_vin  # Используем VIN из конфига
+            current_data = data.copy()
+            if 'vin' not in current_data:
+                current_data['vin'] = self.config.default_vin
                 
             try:
-                telemetry = BatteryTelemetryModel(**data)
+                telemetry = BatteryTelemetryModel(**current_data)
                 telemetries.append(telemetry)
                 
-                # initial validation
-                if self.validate_telemetry(telemetry):
-                    status.append(True)
-                else:
-                    status.append(False)
+                # Rule-based threshold validation
+                is_valid = self.validate_telemetry(telemetry)
+                status.append(is_valid)
+                if not is_valid:
                     results['critical_issues'].append(
-                        f"Failed validation for telemetry {telemetry.model_dump()}"
+                        f"Safety threshold violation: {telemetry.model_dump(exclude={'timestamp', 'vin'})}"
                     )
             except Exception as e:
                 msg = f"Validation failed - {e}"
                 logger.error(msg)
                 results['critical_issues'].append(msg)
                 status.append(False)
-                # also append telemetry so anomalies logic can inspect
-                try:
-                    telemetries.append(BatteryTelemetryModel(**data))
-                except Exception:
-                    pass
+                # Attempt to create model with partial data or defaults to keep indices synced
+                # if possible, otherwise we might have issues with jump detection
                 continue
         
-        # compute initial counts
-        results['passed'] = sum(1 for s in status if s)
-        results['failed'] = len(status) - results['passed']
-        
-        # Rule-based anomaly detection
+        # Rule-based anomaly detection (e.g. temperature jumps)
         anomalies = self.detect_anomalies(telemetries)
         results['anomalies'] = anomalies
-        # Optionally treat jumps as failures (configurable)
+
+        # Adjust pass/fail based on anomalies if configured
         if self.config.fail_on_anomaly:
             jump_threshold = self.config.safety_thresholds.max_temperature_jump
-            jump_indices: Set[int] = set()
             for i in range(1, len(telemetries)):
-                # only consider jump if previous telemetry was not already failed
-                if i-1 < len(status) and not status[i-1]:
+                # If the previous point was already failed, we ignore the jump from it
+                # to avoid cascading failures from a single bad reading.
+                if i > 0 and i-1 < len(status) and not status[i-1]:
                     continue
+
                 if abs(telemetries[i].temperature - telemetries[i-1].temperature) > jump_threshold:
-                    jump_indices.add(i)
-            # adjust status counts
-            for idx in jump_indices:
-                if idx < len(status) and status[idx]:
-                    status[idx] = False
-                    results['passed'] -= 1
-                    results['failed'] += 1
+                    if i < len(status):
+                        status[i] = False
+
+        # compute counts
+        results['passed'] = sum(1 for s in status if s)
+        results['failed'] = results['total_tests'] - results['passed']
         
         # ML-based analysis
         if telemetries:
-            # Convert Pydantic models to dicts for DataFrame
             df = pd.DataFrame([t.model_dump() for t in telemetries])
-            df.rename(columns={'temperature': 'temp'}, inplace=True)
-            ml_results = self.ml_analyzer.analyze_telemetry(df)
-            results['ml_analysis'] = ml_results
+            # Ensure column names match what analyzer expects
+            if 'temperature' in df.columns:
+                df.rename(columns={'temperature': 'temp'}, inplace=True)
+
+            try:
+                ml_results = self.ml_analyzer.analyze_telemetry(df)
+                results['ml_analysis'] = ml_results
+            except Exception as e:
+                logger.error(f"ML Analysis failed: {e}")
+                results['ml_analysis'] = {"error": str(e)}
         
         self.test_results = results
-        logger.info(f"Test Results: {results}")
+        logger.info(f"Test suite finished: {results['passed']} passed, {results['failed']} failed")
         return results
 
 
