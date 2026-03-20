@@ -40,7 +40,7 @@ class EVQAFramework:
             name: Название экземпляра фреймворка
             config: Кастомная конфигурация (если None, используется дефолтная)
         """
-        self.instance_name = name
+        self.name = name
         self.telemetry_data: List[BatteryTelemetryModel] = []
         # generic results dictionary with mixed values
         self.test_results: Dict[str, Any] = {}
@@ -58,7 +58,7 @@ class EVQAFramework:
                 soc=0.0,
                 soh=0.0,
             )
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             logger.warning(
                 "default_vin '%s' невалиден (%s), заменяем на DEFAULT_TEST_VIN (%s)",
                 self.config.default_vin, e, self.DEFAULT_TEST_VIN
@@ -73,7 +73,7 @@ class EVQAFramework:
         )
         logger.info(
             "Initialized %s with ML analyzer (contamination=%f)",
-            self.instance_name, self.config.ml_config.contamination
+            self.name, self.config.ml_config.contamination
         )
 
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
@@ -172,11 +172,40 @@ class EVQAFramework:
         if not telemetry_data:
             return results
 
+        telemetries, status = self._process_telemetry_batch(telemetry_data, results)
+
+        # Rule-based anomaly detection (e.g. temperature jumps)
+        results['anomalies'] = self.detect_anomalies(telemetries)
+
+        # Adjust pass/fail based on anomalies if configured
+        if self.config.fail_on_anomaly:
+            self._apply_anomaly_failures(telemetries, status)
+
+        # compute counts
+        results['passed'] = sum(1 for s in status if s)
+        results['failed'] = results['total_tests'] - results['passed']
+
+        # ML-based analysis
+        if telemetries:
+            results['ml_analysis'] = self._run_ml_analysis(telemetries)
+
+        self.test_results = results
+        logger.info(
+            "Test suite finished: %d passed, %d failed",
+            results['passed'], results['failed']
+        )
+        return results
+
+    def _process_telemetry_batch(
+        self,
+        telemetry_data: List[Dict[str, Any]],
+        results: Dict[str, Any]
+    ) -> tuple[List[BatteryTelemetryModel], List[bool]]:
+        """Вспомогательный метод для обработки пачки телеметрии"""
         telemetries: List[BatteryTelemetryModel] = []
         status: List[bool] = []
 
         for data in telemetry_data:
-            # Compatibility layer: Inject VIN if missing
             current_data = data.copy()
             if 'vin' not in current_data:
                 current_data['vin'] = self.config.default_vin
@@ -198,43 +227,34 @@ class EVQAFramework:
                 logger.error("Validation failed: %s", e)
                 results['critical_issues'].append(msg)
                 status.append(False)
+
+        return telemetries, status
+
+    def _apply_anomaly_failures(
+        self,
+        telemetries: List[BatteryTelemetryModel],
+        status: List[bool]
+    ) -> None:
+        """Применяет отказы на основе аномалий"""
+        jump_threshold = self.config.safety_thresholds.max_temperature_jump
+        for i in range(1, len(telemetries)):
+            if i > 0 and i-1 < len(status) and not status[i-1]:
                 continue
+            if abs(telemetries[i].temperature - telemetries[i-1].temperature) > jump_threshold:
+                if i < len(status):
+                    status[i] = False
 
-        # Rule-based anomaly detection (e.g. temperature jumps)
-        results['anomalies'] = self.detect_anomalies(telemetries)
+    def _run_ml_analysis(self, telemetries: List[BatteryTelemetryModel]) -> Dict[str, Any]:
+        """Выполняет ML анализ"""
+        df = pd.DataFrame([t.model_dump() for t in telemetries])
+        if 'temperature' in df.columns:
+            df.rename(columns={'temperature': 'temp'}, inplace=True)
 
-        # Adjust pass/fail based on anomalies if configured
-        if self.config.fail_on_anomaly:
-            jump_threshold = self.config.safety_thresholds.max_temperature_jump
-            for i in range(1, len(telemetries)):
-                if i > 0 and i-1 < len(status) and not status[i-1]:
-                    continue
-                if abs(telemetries[i].temperature - telemetries[i-1].temperature) > jump_threshold:
-                    if i < len(status):
-                        status[i] = False
-
-        # compute counts
-        results['passed'] = sum(1 for s in status if s)
-        results['failed'] = results['total_tests'] - results['passed']
-
-        # ML-based analysis
-        if telemetries:
-            df = pd.DataFrame([t.model_dump() for t in telemetries])
-            if 'temperature' in df.columns:
-                df.rename(columns={'temperature': 'temp'}, inplace=True)
-
-            try:
-                results['ml_analysis'] = self.ml_analyzer.analyze_telemetry(df)
-            except Exception as e:
-                logger.error("ML Analysis failed: %s", e)
-                results['ml_analysis'] = {"error": str(e)}
-
-        self.test_results = results
-        logger.info(
-            "Test suite finished: %d passed, %d failed",
-            results['passed'], results['failed']
-        )
-        return results
+        try:
+            return self.ml_analyzer.analyze_telemetry(df)
+        except (ValueError, TypeError, RuntimeError) as e:
+            logger.error("ML Analysis failed: %s", e)
+            return {"error": str(e)}
 
 
 # Example usage

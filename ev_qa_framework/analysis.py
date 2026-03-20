@@ -38,6 +38,7 @@ class EVBatteryAnalyzer:
         contamination: Доля аномалий в датасете (по умолчанию 0.1 = 10%)
     """
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self, contamination: float = 0.1, n_estimators: int = 200, random_state: int = 42,
                  critical_threshold: float = -0.8, warning_threshold: float = -0.5):
         """
@@ -185,7 +186,7 @@ class EVBatteryAnalyzer:
             return 'WARNING'   # Умеренная аномалия — предупреждение
         return 'INFO'          # Слабая аномалия или норма
 
-    def save_model(self, filepath: str, meta: Dict[str, Any] | None = None) -> None:
+    def save_model(self, filepath: str, metadata: Dict[str, Any] | None = None) -> None:
         """
         Сохранение обученной модели и scaler в файл.
 
@@ -222,7 +223,7 @@ class EVBatteryAnalyzer:
             'critical_threshold': self.critical_threshold,
             'warning_threshold': self.warning_threshold,
             'save_timestamp': datetime.datetime.now().isoformat(),
-            'metadata': meta or {}
+            'metadata': metadata or {}
         }
 
         # Добавляем расширение .joblib если его нет
@@ -236,10 +237,10 @@ class EVBatteryAnalyzer:
 
         # Сохранение
         joblib.dump(model_data, filepath, compress=3)
-        print(f"✅ Модель сохранена: {filepath}")
+        logger.info("Модель сохранена: %s", filepath)
 
-        if meta:
-            print(f"   Метаданные: {meta}")
+        if metadata:
+            logger.info("Метаданные: %s", metadata)
 
     @classmethod
     def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
@@ -289,10 +290,10 @@ class EVBatteryAnalyzer:
             save_time = model_data.get('save_timestamp', 'Unknown')
             meta = model_data.get('metadata', {})
 
-            print(f"✅ Модель загружена: {filepath}")
-            print(f"   Сохранена: {save_time}")
+            logger.info("Модель загружена: %s", filepath)
+            logger.info("Сохранена: %s", save_time)
             if meta:
-                print(f"   Метаданные: {meta}")
+                logger.info("Метаданные: %s", meta)
 
             return new_analyzer
 
@@ -327,7 +328,8 @@ class AnomalyDetector(EVBatteryAnalyzer):
     данных, а затем используется для real-time детекции.
     """
 
-    def __init__(self, contamination: float = 0.01, n_estimators: int = 200, random_state: int = 42):
+    def __init__(self, contamination: float = 0.01, n_estimators: int = 200,
+                 random_state: int = 42):
         """
         Инициализация детектора аномалий.
 
@@ -370,7 +372,7 @@ class AnomalyDetector(EVBatteryAnalyzer):
         # Обучаем IsolationForest
         self.model.fit(scaled_features)
         self._is_trained = True
-        print(f"✅ Модель обучена на {len(training_data)} точках данных")
+        logger.info("Модель обучена на %d точках данных", len(training_data))
 
     def detect(self, inference_data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -411,7 +413,7 @@ class AnomalyDetector(EVBatteryAnalyzer):
         anomaly_scores = self.model.score_samples(scaled_features)
 
         anomaly_count = np.sum(preds == -1)
-        print(f"🔍 Обнаружено аномалий: {anomaly_count}/{len(inference_data)}")
+        logger.info("Обнаружено аномалий: %d/%d", anomaly_count, len(inference_data))
 
         return preds, anomaly_scores
 
@@ -460,4 +462,3 @@ if __name__ == '__main__':
     predictions, scores = detector.detect(test_data)
     print(f"Предсказания: {predictions}")
     print(f"Scores: {scores}")
-
