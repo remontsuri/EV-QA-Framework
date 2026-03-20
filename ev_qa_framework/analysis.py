@@ -117,7 +117,9 @@ class EVBatteryAnalyzer:
             # Fallback to whatever features are available
             features = [f for f in features if f in df.columns]
             if not features:
-                raise ValueError(f"None of the required features {features} found in DataFrame")
+                raise ValueError(
+                    f"None of the required features {features} found in DataFrame"
+                )
 
         features_df: pd.DataFrame = df[features]
 
@@ -183,7 +185,7 @@ class EVBatteryAnalyzer:
             return 'WARNING'   # Умеренная аномалия — предупреждение
         return 'INFO'          # Слабая аномалия или норма
 
-    def save_model(self, filepath: str, metadata: Dict[str, Any] | None = None) -> None:
+    def save_model(self, filepath: str, meta: Dict[str, Any] | None = None) -> None:
         """
         Сохранение обученной модели и scaler в файл.
 
@@ -220,7 +222,7 @@ class EVBatteryAnalyzer:
             'critical_threshold': self.critical_threshold,
             'warning_threshold': self.warning_threshold,
             'save_timestamp': datetime.datetime.now().isoformat(),
-            'metadata': metadata or {}
+            'metadata': meta or {}
         }
 
         # Добавляем расширение .joblib если его нет
@@ -228,14 +230,16 @@ class EVBatteryAnalyzer:
             filepath = filepath + '.joblib'
 
         # Создаем директорию если не существует
-        os.makedirs(os.path.dirname(filepath), exist_ok=True) if os.path.dirname(filepath) else None
+        dir_name = os.path.dirname(filepath)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
 
         # Сохранение
         joblib.dump(model_data, filepath, compress=3)
         print(f"✅ Модель сохранена: {filepath}")
 
-        if metadata:
-            print(f"   Метаданные: {metadata}")
+        if meta:
+            print(f"   Метаданные: {meta}")
 
     @classmethod
     def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
@@ -415,23 +419,23 @@ class AnomalyDetector(EVBatteryAnalyzer):
 if __name__ == '__main__':
     # Пример использования EVBatteryAnalyzer
     print("=== Тест EVBatteryAnalyzer ===")
-    analyzer = EVBatteryAnalyzer()
+    main_analyzer = EVBatteryAnalyzer()
 
     # Генерируем тестовую телеметрию
     np.random.seed(42)
-    data = {
+    main_data = {
         'voltage': np.random.normal(48, 2, 1000),
         'current': np.random.normal(100, 15, 1000),
         'temp': np.random.normal(35, 5, 1000),
         'soc': np.random.normal(85, 10, 1000)
     }
-    df = pd.DataFrame(data)
+    main_df = pd.DataFrame(main_data)
 
     # Анализ
-    results = analyzer.analyze_telemetry(df)
-    print(f"Анализ завершен: {results}")
-    print(f"Аномалий: {results['anomalies_detected']}/{results['total_samples']}")
-    print(f"Серьезность: {results['severity']}")
+    main_results = main_analyzer.analyze_telemetry(main_df)
+    print(f"Анализ завершен: {main_results}")
+    print(f"Аномалий: {main_results['anomalies_detected']}/{main_results['total_samples']}")
+    print(f"Серьезность: {main_results['severity']}")
 
     # Пример использования AnomalyDetector
     print("\n=== Тест AnomalyDetector (train/detect) ===")

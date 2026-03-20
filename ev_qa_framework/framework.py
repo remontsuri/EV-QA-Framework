@@ -25,6 +25,7 @@ from .models import BatteryTelemetryModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# pylint: disable=too-many-instance-attributes
 class EVQAFramework:
     """Main QA Framework for EV & IoT testing"""
 
@@ -39,7 +40,7 @@ class EVQAFramework:
             name: Название экземпляра фреймворка
             config: Кастомная конфигурация (если None, используется дефолтная)
         """
-        self.name = name
+        self.instance_name = name
         self.telemetry_data: List[BatteryTelemetryModel] = []
         # generic results dictionary with mixed values
         self.test_results: Dict[str, Any] = {}
@@ -72,7 +73,7 @@ class EVQAFramework:
         )
         logger.info(
             "Initialized %s with ML analyzer (contamination=%f)",
-            self.name, self.config.ml_config.contamination
+            self.instance_name, self.config.ml_config.contamination
         )
 
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
@@ -192,7 +193,7 @@ class EVQAFramework:
                         f"Safety threshold violation: "
                         f"{telemetry.model_dump(exclude={'timestamp', 'vin'})}"
                     )
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 msg = f"Validation failed - {e}"
                 logger.error("Validation failed: %s", e)
                 results['critical_issues'].append(msg)
