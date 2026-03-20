@@ -1,13 +1,13 @@
 ---
-title: Building an ML-Powered Battery Testing Framework for Electric Vehicles
+title: "How to Test EV Batteries Like a Big OEM Using Open-Source Tools"
 published: false
-description: How I built an open-source Python framework with 64+ tests and Isolation Forest anomaly detection to prevent $5B in EV battery failures
+description: How I built an open-source Python framework with 85+ tests and Isolation Forest anomaly detection to prevent $5B in EV battery failures
 tags: python, machinelearning, testing, ev
 cover_image: https://dev-to-uploads.s3.amazonaws.com/uploads/articles/placeholder.jpg
 canonical_url: https://github.com/remontsuri/EV-QA-Framework
 ---
 
-# 🔋 Building an ML-Powered Battery Testing Framework for Electric Vehicles
+# 🔋 How to Test EV Batteries Like a Big OEM Using Open-Source Tools
 
 Battery failures cost the EV industry **$5 billion annually** in warranty claims, recalls, and safety incidents. A single thermal runaway event can destroy an entire vehicle and endanger lives.
 
@@ -66,11 +66,11 @@ class BatteryTelemetryModel(BaseModel):
 - Auto-generates validation errors with context
 
 ### 2. **Automated Testing (pytest)**
-64+ comprehensive tests covering:
-- **Boundary tests** (23+): Temperature limits, voltage ranges, SOC edges
+85+ comprehensive tests covering:
+- **Boundary tests** (40+): Temperature limits, voltage ranges, SOC edges
 - **Anomaly detection** (15+): Temperature jumps, multiple anomalies
 - **ML validation** (12+): Model accuracy, severity classification
-- **Integration tests** (14+): End-to-end workflows
+- **Integration tests** (18+): End-to-end workflows
 
 Example parametrized test:
 
@@ -224,7 +224,7 @@ The notebook includes:
 | **CI/CD Integration** | ✅ Docker/GitLab | ❌ | ❌ | ❌ |
 | **License** | **MIT** (Commercial OK) | GPL-3.0 | MIT | Proprietary |
 | **Language** | Python | C++ | Python | C# |
-| **Test Coverage** | **64+ automated** | Hardware integration | Dataset analysis | Manual |
+| **Test Coverage** | **85+ automated** | Hardware integration | Dataset analysis | Manual |
 
 ---
 
@@ -367,8 +367,8 @@ See [CONTRIBUTING.md](https://github.com/remontsuri/EV-QA-Framework/blob/main/CO
 
 ## 📊 Project Stats
 
-- **64+ tests** (and growing)
-- **85% code coverage**
+- **85+ tests** (and growing)
+- **90%+ code coverage**
 - **MIT License** (free for commercial use)
 - **18 GitHub Topics**
 - **v1.0.0 Release** (production-ready)
