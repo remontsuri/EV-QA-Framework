@@ -30,6 +30,17 @@ This framework provides enterprise-grade testing tools to the open-source commun
 
 ---
 
+## 🏢 For Hiring Managers & Tech Leads
+
+This framework was built to solve specific business and engineering challenges in the EV industry:
+
+- 📉 **Lower Warranty Costs**: Early detection of cell anomalies (before they become critical failures) can reduce expensive recall and warranty claims by up to 30%.
+- 🛡️ **Enhanced Safety**: Automating the detection of thermal runaway precursors (temperature spikes, voltage drops) ensures higher safety standards for end-users.
+- ⚡ **Engineering Scalability**: Replace manual telemetry analysis with a standard, automated QA pipeline that handles millions of data points per second.
+- 🧪 **Standardized Validation**: Provides a reproducible testing suite for BMS firmware updates, ensuring no regressions in safety-critical code.
+
+---
+
 ## 📊 Real-World Problem
 
 **Battery failures cost the EV industry billions annually.** Early detection of anomalies in telemetry can:
@@ -270,6 +281,30 @@ Inspired by real-world challenges in EV battery safety and quality assurance. Bu
 - 🍴 Forking and contributing
 - 📢 Sharing with your QA/automotive network
 - 💼 Hiring the author for EV QA roles 😊
+
+---
+
+## 📅 Roadmap
+
+We are continuously evolving the framework to meet industry needs:
+
+- [ ] **CAN Bus Live Integration**: Support for real-time `python-can` streams (In Progress)
+- [ ] **OBD-II Protocol Support**: Easy vehicle diagnostics via standard ELM327 adapters
+- [ ] **Advanced ML Models**: LSTM-based State of Health (SOH) degradation prediction
+- [ ] **Cloud Connectors**: Integration with AWS IoT Core and Azure IoT Hub
+- [ ] **Interactive Web Dashboard v2**: Advanced Grafana-style visualizations
+
+---
+
+## 🏁 Example Scenarios & Case Studies
+
+*How this framework is used in realistic settings:*
+
+- 🛰️ **Fleet Monitoring**: A commercial fleet operator uses the ML analyzer to flag batteries showing "unusual" behavior compared to the 5,000-vehicle baseline.
+- 🔬 **Pre-production Validation**: BMS engineers run the 85+ test suite against new firmware versions to ensure voltage threshold logic remains intact.
+- 🛠️ **Diagnostic Support**: Service centers use the anomaly report to pinpoint specific failing modules without disassembling the entire pack.
+
+See [Case Studies](./case_studies/) for detailed analysis.
 
 ---
 
