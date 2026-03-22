@@ -114,8 +114,8 @@ pip install -r requirements.txt
 ### 🌐 Real-time Dashboard & CAN Demo
 Experience the framework as a live monitoring system:
 
-```powershell
-./run_dashboard_demo.ps1
+```bash
+python quickstart.py dashboard
 ```
 *Requires `pip install fastapi uvicorn websockets jinja2 python-can`*
 
