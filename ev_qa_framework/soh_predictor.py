@@ -1,18 +1,29 @@
 """
 SOH Predictor Module: LSTM-based battery health degradation forecasting.
+
+Note: TensorFlow is an optional dependency. Without it, SOHPredictor
+will raise an ImportError only when instantiated, not at import time.
 """
 from __future__ import annotations
 import os
 from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import LSTM, Dense, Dropout
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 
-# Suppress tensorflow warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+def _import_tensorflow():
+    """Lazy-import tensorflow to avoid hard dependency at module level."""
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    try:
+        import tensorflow as tf
+        return tf
+    except ImportError:
+        raise ImportError(
+            "TensorFlow is required for SOHPredictor. "
+            "Install it via: pip install tensorflow>=2.15"
+        )
 
 
 class SOHPredictor:
@@ -29,7 +40,10 @@ class SOHPredictor:
         self.scaler = MinMaxScaler()
         self.is_trained = False
 
-    def _build_model(self, input_shape: Tuple[int, int]) -> Sequential:
+    def _build_model(self, input_shape: Tuple[int, int]):
+        tf = _import_tensorflow()
+        from tensorflow.keras.models import Sequential
+        from tensorflow.keras.layers import LSTM, Dense, Dropout
         model = Sequential([
             LSTM(64, activation='relu', input_shape=input_shape,
                  return_sequences=True),
@@ -114,6 +128,7 @@ class SOHPredictor:
 
     def load(self, path: str):
         """Load the model and scaler"""
+        from tensorflow.keras.models import load_model
         self.model = load_model(os.path.join(path, "soh_lstm.keras"))
         self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
         self.is_trained = True
