@@ -3,8 +3,8 @@
 Демонстрирует базовую валидацию телеметрии и ML-детекцию аномалий
 """
 
-from ev_qa_models import validate_telemetry, BatteryTelemetryModel
-from ev_qa_analysis import AnomalyDetector
+from ev_qa_framework.models import validate_telemetry, BatteryTelemetryModel
+from ev_qa_framework.analysis import AnomalyDetector
 import pandas as pd
 import numpy as np
 
