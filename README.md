@@ -247,8 +247,7 @@ This is an **open-source educational project**, but we're open to:
 - Integration with proprietary BMS systems
 - Training workshops for QA teams
 
-📧 Contact: [Your Email]  
-💼 LinkedIn: [Your Profile]  
+📧 Contact: [clockerindo@yandex.ru]  
 🐙 GitHub: [@remontsuri](https://github.com/remontsuri)
 
 ---
