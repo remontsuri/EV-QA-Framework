@@ -41,18 +41,7 @@ async def analyze_telemetry(request: AnalysisRequest):
 async def validate_single_telemetry(telemetry: BatteryTelemetryModel):
     """Validate single telemetry point"""
     qa = EVQAFramework()
-    
-    # Convert Pydantic model to BatteryTelemetry
-    from ev_qa_framework.framework import BatteryTelemetry
-    bt = BatteryTelemetry(
-        voltage=telemetry.voltage,
-        current=telemetry.current,
-        temperature=telemetry.temperature,
-        soc=telemetry.soc,
-        soh=telemetry.soh
-    )
-    
-    is_valid = qa.validate_telemetry(bt)
+    is_valid = qa.validate_telemetry(telemetry)
     
     return {
         "valid": is_valid,
