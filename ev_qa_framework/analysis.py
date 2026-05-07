@@ -315,6 +315,82 @@ class EVBatteryAnalyzer:
             'is_fitted': hasattr(self.scaler, 'mean_')
         }
 
+    def detect_cell_imbalance(self, cell_voltages: List[float]) -> Dict[str, Any]:
+        """
+        Анализ разбалансировки ячеек (Cell Imbalance).
+        Критически важно для батарей Tesla и других электромобилей.
+
+        Args:
+            cell_voltages: Список напряжений групп ячеек.
+
+        Returns:
+            Словарь с метриками разбалансировки.
+        """
+        if not cell_voltages:
+            return {"status": "error", "message": "No data"}
+
+        avg_v = np.mean(cell_voltages)
+        max_v = np.max(cell_voltages)
+        min_v = np.min(cell_voltages)
+        imbalance = max_v - min_v
+        std_v = np.std(cell_voltages)
+
+        # Пороги для Tesla обычно около 0.05V - 0.1V
+        severity = "NORMAL"
+        if imbalance > 0.1:
+            severity = "CRITICAL"
+        elif imbalance > 0.05:
+            severity = "WARNING"
+
+        return {
+            "average_voltage": float(avg_v),
+            "max_imbalance": float(imbalance),
+            "std_dev": float(std_v),
+            "severity": severity,
+            "outliers_count": int(np.sum(np.abs(np.array(cell_voltages) - avg_v) > 0.05))
+        }
+
+    def predict_thermal_runaway_risk(self, df_recent: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Прогнозирование риска теплового разгона (Thermal Runaway).
+        Использует комбинацию темпа роста температуры и ML-скоров.
+
+        Args:
+            df_recent: Последние точки телеметрии (минимум 5-10 точек).
+        """
+        if len(df_recent) < 2:
+            return {"risk_level": "LOW", "score": 0.0}
+
+        # 1. Анализ тренда температуры
+        temp_diffs = np.diff(df_recent['temp'].values if 'temp' in df_recent else df_recent['temperature'].values)
+        avg_temp_rise = np.mean(temp_diffs)
+        max_temp_rise = np.max(temp_diffs)
+        current_temp = df_recent['temp'].iloc[-1] if 'temp' in df_recent else df_recent['temperature'].iloc[-1]
+
+        # 2. Интеграция с ML (Isolation Forest)
+        ml_results = self.analyze_telemetry(df_recent)
+        anomaly_score = ml_results['anomaly_percentage'] / 100.0
+
+        # 3. Комбинированный риск-скор
+        risk_score = (avg_temp_rise * 2.0) + (max_temp_rise * 1.5) + (anomaly_score * 5.0)
+        if current_temp > 50:
+            risk_score += (current_temp - 50) * 0.5
+
+        risk_level = "LOW"
+        if risk_score > 10 or current_temp > 65:
+            risk_level = "CRITICAL"
+        elif risk_score > 5 or current_temp > 55:
+            risk_level = "HIGH"
+        elif risk_score > 2:
+            risk_level = "MEDIUM"
+
+        return {
+            "risk_level": risk_level,
+            "risk_score": float(risk_score),
+            "avg_temp_rise_rate": float(avg_temp_rise),
+            "current_temp": float(current_temp)
+        }
+
 
 class AnomalyDetector(EVBatteryAnalyzer):
     """
