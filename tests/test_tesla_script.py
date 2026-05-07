@@ -4,7 +4,7 @@ import os
 import json
 from ev_qa_framework import framework
 
-from test_tesla_battery import analyze_tesla_battery
+from .test_tesla_battery import analyze_tesla_battery
 import pathlib
 
 
