@@ -2,6 +2,9 @@ import can
 import time
 import random
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Virtual CAN bus setup
@@ -27,27 +30,27 @@ class CANEmulator:
         }
 
     def run(self):
-        print(f"⚡ Starting CAN Emulation on {self.channel}...")
+        logger.info("Starting CAN Emulation on %s...", self.channel)
         while True:
             data = self.generate_telemetry()
             
             # Simulate a 10% chance of a "spike" (anomaly)
             if random.random() > 0.90:
                 data["temperature"] += 15
-                print(f"🚨 ANOMALY GENERATED: Temp spike to {data['temperature']}°C")
+                logger.warning("ANOMALY GENERATED: Temp spike to %s°C", data['temperature'])
             
             # In a real CAN system, we'd do:
             # msg = can.Message(arbitration_id=0x123, data=[...])
             # bus.send(msg)
             
-            print(f"📡 Sending CAN Frame: ID=0x501 [V={data['voltage']}V, T={data['temperature']}°C]")
+            logger.info("Sending CAN Frame: ID=0x501 [V=%sV, T=%s°C]", data['voltage'], data['temperature'])
             
             # Send to our dashboard API (for demonstration/integration)
             try:
                 # This could be a webhook or we could just write to a shared pipe/socket
                 pass
             except Exception as e:
-                print(f"Error sending data: {e}")
+                logger.error("Error sending data: %s", e)
                 
             time.sleep(1)
 

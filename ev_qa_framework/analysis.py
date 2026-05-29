@@ -13,9 +13,12 @@ from typing import Any, Dict, Tuple, List
 import warnings
 import joblib  # type: ignore  # no stub available
 import os
+import logging
 from datetime import datetime
 
 warnings.filterwarnings('ignore')
+
+logger = logging.getLogger(__name__)
 
 
 class EVBatteryAnalyzer:
@@ -237,10 +240,10 @@ class EVBatteryAnalyzer:
         
         # Сохранение
         joblib.dump(model_data, filepath, compress=3)
-        print(f"✅ Модель сохранена: {filepath}")
-        
+        logger.info("Model saved: %s", filepath)
+
         if metadata:
-            print(f"   Метаданные: {metadata}")
+            logger.info("Model metadata: %s", metadata)
     
     @classmethod
     def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
@@ -290,10 +293,10 @@ class EVBatteryAnalyzer:
             save_time = model_data.get('save_timestamp', 'Unknown')
             metadata = model_data.get('metadata', {})
             
-            print(f"✅ Модель загружена: {filepath}")
-            print(f"   Сохранена: {save_time}")
+            logger.info("Model loaded: %s", filepath)
+            logger.info("Saved at: %s", save_time)
             if metadata:
-                print(f"   Метаданные: {metadata}")
+                logger.info("Metadata: %s", metadata)
             
             return analyzer
             
@@ -447,7 +450,7 @@ class AnomalyDetector(EVBatteryAnalyzer):
         # Обучаем IsolationForest
         self.model.fit(X_scaled)
         self._is_trained = True
-        print(f"✅ Модель обучена на {len(data)} точках данных")
+        logger.info("Model trained on %d data points", len(data))
     
     def detect(self, data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -488,7 +491,7 @@ class AnomalyDetector(EVBatteryAnalyzer):
         scores = self.model.score_samples(X_scaled)
         
         anomaly_count = np.sum(predictions == -1)
-        print(f"🔍 Обнаружено аномалий: {anomaly_count}/{len(data)}")
+        logger.info("Anomalies detected: %d/%d", anomaly_count, len(data))
         
         return predictions, scores
 

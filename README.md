@@ -178,6 +178,81 @@ scripts/               # Utility scripts
 
 ---
 
+## Deployment
+
+### Docker Compose (Recommended)
+
+Run the full EV-QA-Framework stack including the dashboard using Docker Compose:
+
+```bash
+# Clone the repository
+git clone https://github.com/remontsuri/EV-QA-Framework.git
+cd EV-QA-Framework
+
+# Start services
+docker compose up -d
+```
+
+This launches two containers:
+| Service | Description | Port |
+|---------|-------------|------|
+| `ev-qa-tests` | Runs the test suite with coverage | — |
+| `ev-qa-dashboard` | HTTP server serving test results | `8080` |
+
+### GitHub Container Registry
+
+Pre-built Docker images are available via GitHub Container Registry (GHCR):
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/remontsuri/ev-qa-framework:latest
+
+# Run tests inside the container
+docker run --rm ghcr.io/remontsuri/ev-qa-framework:latest
+
+# Run with mounted test results
+docker run --rm \
+  -v ./results:/app/results \
+  ghcr.io/remontsuri/ev-qa-framework:latest
+```
+
+#### Available tags
+
+- `latest` — most recent commit on `main`
+- `<sha>` — short Git SHA (e.g., `a1b2c3d`)
+- `<version>` — semantic version tags (e.g., `1.2.3`) on releases
+
+Multi-platform images are provided for `linux/amd64` and `linux/arm64`.
+
+### Environment Variables
+
+The following environment variables can be configured:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PYTHONUNBUFFERED` | `1` | Disable Python output buffering |
+| `LOG_LEVEL` | `INFO` | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `RESULTS_DIR` | `/app/results` | Directory for test results output |
+
+Example with custom configuration:
+
+```bash
+docker run --rm \
+  -e LOG_LEVEL=DEBUG \
+  -e RESULTS_DIR=/output \
+  -v ./output:/output \
+  ghcr.io/remontsuri/ev-qa-framework:latest
+```
+
+### Manual Docker Build
+
+```bash
+docker build -t ev-qa-framework .
+docker run --rm ev-qa-framework
+```
+
+---
+
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

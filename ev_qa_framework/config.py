@@ -9,6 +9,86 @@ from dataclasses import dataclass, field
 from typing import Optional
 import os
 import json
+import logging
+import sys
+from datetime import datetime, timezone
+
+
+class JSONFormatter(logging.Formatter):
+    """JSON formatter for structured logging with timestamp and severity."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format a log record as a JSON string."""
+        log_entry = {
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info and record.exc_info[0]:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_entry, ensure_ascii=False)
+
+
+def setup_logging(
+    level: str = "INFO",
+    log_file: str | None = None,
+    json_format: bool = True,
+) -> logging.Logger:
+    """Configure structured logging for the EV-QA-Framework.
+
+    Sets up root logger with JSON-formatted output to stdout and
+    an optional file handler.
+
+    Args:
+        level: Log level string (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+        log_file: Optional path to a log file.
+        json_format: If True (default), uses JSON formatting; otherwise
+                     uses a plain-text format.
+
+    Returns:
+        The root logger instance.
+    """
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+
+    # Remove any pre-existing handlers to avoid duplicates on re-init
+    root_logger.handlers.clear()
+
+    # Console handler (stdout)
+    console_handler = logging.StreamHandler(sys.stdout)
+    if json_format:
+        console_handler.setFormatter(JSONFormatter())
+    else:
+        console_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+        )
+    root_logger.addHandler(console_handler)
+
+    # Optional file handler
+    if log_file:
+        log_dir = os.path.dirname(log_file)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        if json_format:
+            file_handler.setFormatter(JSONFormatter())
+        else:
+            file_handler.setFormatter(
+                logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                )
+            )
+        root_logger.addHandler(file_handler)
+
+    logger = logging.getLogger(__name__)
+    logger.info(
+        "Logging configured",
+        extra={"level": level, "log_file": log_file, "json_format": json_format},
+    )
+    return root_logger
 
 
 @dataclass

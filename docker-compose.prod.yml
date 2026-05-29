@@ -1,0 +1,92 @@
+# =============================================================================
+# EV-QA-Framework — Production Docker Compose
+# =============================================================================
+# Usage:
+#   Start:    docker compose -f docker-compose.prod.yml up -d
+#   Stop:     docker compose -f docker-compose.prod.yml down
+#   Rebuild:  docker compose -f docker-compose.prod.yml build --no-cache
+#   Logs:     docker compose -f docker-compose.prod.yml logs -f
+#
+# To enable ML/TensorFlow support, build with:
+#   docker compose -f docker-compose.prod.yml build --build-arg INSTALL_ML=true
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # FastAPI application (gunicorn + uvicorn workers)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_ML: "${INSTALL_ML:-false}"
+    container_name: ev_qa_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DASHBOARD_HOST=0.0.0.0
+      - DASHBOARD_PORT=8000
+      - ENVIRONMENT=production
+    volumes:
+      # Mount data/results directory if needed
+      - ./results:/app/results:rw
+      # Mount dashboard static assets (optional, for live development)
+      # - ./dashboard/static:/app/dashboard/static:ro
+    networks:
+      - ev_qa_network
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - nginx  # optional: if using nginx as reverse proxy, app doesn't depend on it
+  # ---------------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------------
+  # Nginx reverse proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: ev_qa_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL certificates (mount when ready)
+      # - ./ssl/cert.pem:/etc/nginx/ssl/cert.pem:ro
+      # - ./ssl/key.pem:/etc/nginx/ssl/key.pem:ro
+      # Static files (optional — nginx can serve them directly)
+      # - ./dashboard/static:/var/www/static:ro
+    networks:
+      - ev_qa_network
+    depends_on:
+      - app
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  # ---------------------------------------------------------------------------
+
+networks:
+  ev_qa_network:
+    name: ev_qa_network
+    driver: bridge
+
+volumes:
+  results:
+    name: ev_qa_results

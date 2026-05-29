@@ -4,8 +4,11 @@ CAN Bus Module: Hardware-level battery telemetry simulation and reception.
 import time
 import random
 import threading
+import logging
 from typing import Dict, Any, Optional
 import can
+
+logger = logging.getLogger(__name__)
 
 
 class CANBatterySimulator:
@@ -31,7 +34,7 @@ class CANBatterySimulator:
                                          interface=self.interface)
         except (can.CanError, OSError, ValueError) as e:
             # Fallback for systems without virtual CAN support in kernel
-            print(f"Virtual CAN not supported, using simple emulation: {e}")
+            logger.warning("Virtual CAN not supported, using simple emulation: %s", e)
             self.bus = None
 
         self.running = True

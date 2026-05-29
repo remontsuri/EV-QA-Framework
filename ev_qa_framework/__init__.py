@@ -4,7 +4,7 @@ from .models import BatteryTelemetryModel
 from .analysis import EVBatteryAnalyzer, AnomalyDetector
 from .soh_predictor import SOHPredictor
 from .can_bus import CANBatterySimulator, CANTelemetryReceiver
-from .config import FrameworkConfig, SafetyThresholds, MLConfig
+from .config import FrameworkConfig, SafetyThresholds, MLConfig, setup_logging
 
 __version__ = "1.0.0"
 __all__ = [
@@ -17,5 +17,6 @@ __all__ = [
     "CANTelemetryReceiver",
     "FrameworkConfig",
     "SafetyThresholds",
-    "MLConfig"
+    "MLConfig",
+    "setup_logging",
 ]
