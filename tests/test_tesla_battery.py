@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Tesla Model S Battery QA Test
-Реальный тест батареи Tesla Model S с поиском дефектов
+Real Tesla Model S battery test with defect detection
 """
 
 import pandas as pd
@@ -21,15 +21,15 @@ def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'
     print("Tesla Model S Battery QA Analysis")
     print("=" * 50)
     
-    # Загружаем данные
+    # Load data
     df = pd.read_csv(csv_path)
     print("Loaded {} telemetry points".format(len(df)))
-    print("VIN: {}".format(df['vin'].iloc[0]))
+    print("VIN: {}\n".format(df['vin'].iloc[0]))
     
-    # Инициализируем фреймворк
+    # Initialize framework
     qa = EVQAFramework("Tesla-Model-S-QA")
     
-    # Конвертируем в нужный формат
+    # Convert to required format
     telemetry_data = []
     critical_issues = []
     
@@ -44,7 +44,7 @@ def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'
             'soh': row['soh']
         }
         
-        # Проверяем каждую точку через Pydantic
+        # Validate each point via Pydantic
         try:
             validated = validate_telemetry({
                 'vin': row['vin'],
@@ -59,7 +59,7 @@ def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'
         
         telemetry_data.append(data)
         
-        # Проверяем критические значения
+        # Check critical values
         if row['voltage'] > 450:
             critical_issues.append("CRITICAL: Overvoltage {}V at point {}".format(row['voltage'], idx))
         if row['voltage'] < 50:
@@ -67,12 +67,12 @@ def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'
         if row['temp'] > 70:
             critical_issues.append("CRITICAL: Overheating {}C at point {}".format(row['temp'], idx))
     
-    # Запускаем полный анализ
+    # Run full analysis
     print("\nRunning ML-powered analysis...")
     import asyncio
     results = asyncio.run(qa.run_test_suite(telemetry_data))
     
-    # Выводим результаты
+    # Output results
     print("\n" + "="*50)
     print("TESLA MODEL S BATTERY TEST RESULTS")
     print("="*50)
@@ -97,7 +97,7 @@ def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'
     for issue in critical_issues:
         print("   - {}".format(issue))
     
-    # Диагноз батареи
+    # Battery diagnosis
     print("\nBATTERY DIAGNOSIS:")
     
     failure_rate = results['failed'] / results['total_tests']
@@ -113,7 +113,7 @@ def analyze_tesla_battery(csv_path: str = 'examples/tesla_model_s_defective.csv'
         print("   STATUS: BATTERY APPROVED - Within acceptable parameters")
         print("   ACTION: Continue normal operation")
     
-    # Сохраняем отчет
+    # Save report
     report = {
         'timestamp': datetime.now().isoformat(),
         'vehicle': 'Tesla Model S',

@@ -1,53 +1,53 @@
 # 📊 Jupyter Notebook Demo
 
-Интерактивная демонстрация EV-QA-Framework с визуализацией ML-детекции аномалий.
+Interactive demo of EV-QA-Framework with ML anomaly detection visualization.
 
-## 🚀 Как запустить
+## 🚀 How to run
 
-### Локально:
+### Locally:
 ```bash
 cd notebooks/
 jupyter notebook anomaly_detection_demo.ipynb
 ```
 
 ### Google Colab:
-1. Загрузите `anomaly_detection_demo.ipynb` в Google Colab
-2. Раскомментируйте строку установки зависимостей:
+1. Upload `anomaly_detection_demo.ipynb` to Google Colab
+2. Uncomment the dependency installation line:
    ```python
    !pip install pydantic scikit-learn pandas numpy matplotlib seaborn
    ```
-3. Запустите все ячейки
+3. Run all cells
 
-## 📈 Что покажет демо:
+## 📈 What the demo shows:
 
-1. **Pydantic Валидация** - строгая проверка телеметрии
-2. **Генерация Данных** - 1000 точек + 50 аномалий
-3. **ML Детекция** - Isolation Forest (200 estimators)
-4. **Визуализации**:
+1. **Pydantic Validation** - strict telemetry validation
+2. **Data Generation** - 1000 points + 50 anomalies
+3. **ML Detection** - Isolation Forest (200 estimators)
+4. **Visualizations**:
    - Scatter plot: Voltage vs Temperature
    - Histogram: Anomaly Scores distribution
    - Time Series: Real-time anomaly detection
    - Pie Chart: Severity classification (CRITICAL/WARNING/INFO)
-5. **Summary Report** - детальная статистика
+5. **Summary Report** - detailed statistics
 
-## 🎯 Результаты:
+## 🎯 Results:
 
-- ✅ **~95% точность** детекции аномалий
-- ✅ **Severity classification** для приоритизации
-- ✅ **Красивые графики** для презентаций
-- ✅ **Готово к использованию** в Google Colab
+- ✅ **~95% accuracy** in anomaly detection
+- ✅ **Severity classification** for prioritization
+- ✅ **Beautiful charts** for presentations
+- ✅ **Ready to use** in Google Colab
 
-## 📸 Примеры графиков:
+## 📸 Example charts:
 
-Notebook генерирует:
-- 🟢 Зеленые точки = нормальная работа
-- 🔴 Красные крестики = обнаруженные аномалии
-- 🟠 Пунктирные линии = пороги безопасности
+Notebook generates:
+- 🟢 Green dots = normal operation
+- 🔴 Red crosses = detected anomalies
+- 🟠 Dashed lines = safety thresholds
 
 ---
 
-**Идеально для:**
-- Демонстрации проекта на собеседованиях
-- Презентаций для QA команд
-- Обучения ML-детекции аномалий
-- Публикации в LinkedIn/Medium
+**Perfect for:**
+- Project demos in interviews
+- Presentations for QA teams
+- Learning ML anomaly detection
+- Publishing on LinkedIn/Medium

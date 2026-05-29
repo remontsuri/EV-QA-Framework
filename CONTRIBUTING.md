@@ -1,95 +1,44 @@
 # Contributing to EV-QA-Framework
 
-Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
+Thanks for considering contributing.
 
-## Code of Conduct
+## How to Contribute
 
-- Be respectful and constructive
-- Follow PEP 8 style guide
-- Write clear, descriptive commit messages
-- Test your changes before submitting
+### Report Bugs
 
-## Getting Started
+Open an issue at github.com/remontsuri/EV-QA-Framework/issues. Include your Python version, OS, the full error traceback, and steps to reproduce.
 
-1. **Fork the repository**
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/EV-QA-Framework.git
-   cd EV-QA-Framework
-   ```
+### Suggest Features
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+Open a feature request issue. Describe the problem you're trying to solve and how you'd solve it.
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   pip install -e .
-   ```
+### Submit Code
 
-## Development Workflow
+```bash
+git clone https://github.com/YOUR_USERNAME/EV-QA-Framework.git
+cd EV-QA-Framework
+git checkout -b feature/your-feature-name
+pip install -r requirements-dev.txt
 
-### Making Changes
+# Run tests before committing
+pytest -v --cov=ev_qa_framework
 
-1. Create a feature branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+# Format code
+black ev_qa_framework tests
 
-2. Make your changes
+git commit -m "feat: add your feature description"
+git push origin feature/your-feature-name
+```
 
-3. Run tests:
-   ```bash
-   pytest -v
-   pytest --cov=ev_qa_framework
-   ```
+Open a pull request targeting the `main` branch. Keep PRs focused on one thing.
 
-4. Commit with descriptive message:
-   ```bash
-   git commit -m "feat: Add new anomaly detection algorithm"
-   ```
+## Development Guidelines
 
-5. Push and create Pull Request:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+- Code style: Black (default config), isort, flake8
+- Tests: pytest with pytest-asyncio for async code
+- Documentation in English, clear docstrings for public APIs
+- Runtime deps go in requirements.txt, dev-only in requirements-dev.txt
 
-## Code Style
+## Commit Convention
 
-- Follow PEP 8
-- Use type hints where possible
-- Write docstrings for all functions
-- Use meaningful variable names
-
-## Testing Requirements
-
-- All new features must include tests
-- Maintain or improve code coverage
-- Tests must pass before merging
-
-## Pull Request Process
-
-1. Update documentation
-2. Ensure tests pass
-3. Request review from maintainers
-4. Address feedback
-5. Merge after approval
-
-## Areas for Contribution
-
-- Battery management algorithms
-- Test coverage improvements
-- Documentation enhancements
-- Performance optimizations
-- Bug fixes
-- CI/CD improvements
-
-## Questions?
-
-Open an issue or discussion for questions!
-
----
-
-**Thank you for contributing!** 🉋
+Use conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `perf:`, `docker:`, `ci:`

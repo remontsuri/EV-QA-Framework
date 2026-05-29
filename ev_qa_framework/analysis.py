@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """EV QA Analysis: ML-based battery telemetry and quality assurance.
 
-Модуль машинного обучения для детекции аномалий в телеметрии батареи.
+Machine learning module for detecting anomalies in battery telemetry.
 """
 
 import numpy as np
@@ -23,85 +23,85 @@ logger = logging.getLogger(__name__)
 
 class EVBatteryAnalyzer:
     """
-    ML-анализатор телеметрии батареи EV на основе алгоритма Isolation Forest.
+    ML analyzer for EV battery telemetry based on the Isolation Forest algorithm.
     
-    Isolation Forest — это алгоритм обнаружения аномалий, который изолирует выбросы
-    путем случайного выбора признака и затем случайного выбора значения разделения
-    между максимумом и минимумом выбранного признака. Аномалии изолируются быстрее,
-    чем нормальные точки данных.
+    Isolation Forest is an anomaly detection algorithm that isolates outliers
+    by randomly selecting a feature and then randomly selecting a split value
+    between the maximum and minimum of the selected feature. Anomalies are isolated
+    faster than normal data points.
     
     Attributes:
-        model: Модель IsolationForest из scikit-learn
-        scaler: StandardScaler для нормализации данных
-        anomalies: DataFrame с обнаруженными аномалиями
-        contamination: Доля аномалий в датасете (по умолчанию 0.1 = 10%)
+        model: IsolationForest model from scikit-learn
+        scaler: StandardScaler for data normalization
+        anomalies: DataFrame with detected anomalies
+        contamination: Proportion of anomalies in the dataset (default 0.1 = 10%)
     """
     
     def __init__(self, contamination: float = 0.1, n_estimators: int = 200, random_state: int = 42,
                  critical_threshold: float = -0.8, warning_threshold: float = -0.5):
         """
-        Инициализация анализатора телеметрии.
+        Initialize the telemetry analyzer.
         
         Args:
-            contamination: Ожидаемая доля аномалий в данных (0.0 - 1.0).
-                          Например, 0.1 означает, что ~10% данных могут быть аномальными.
-            n_estimators: Количество деревьев в ансамбле (больше = точнее, но медленнее).
-                         Рекомендуется 100-200 для баланса точности и скорости.
-            random_state: Seed для воспроизводимости результатов.
-            critical_threshold: Порог для CRITICAL severity (по умолчанию -0.8)
-            warning_threshold: Порог для WARNING severity (по умолчанию -0.5)
+            contamination: Expected proportion of anomalies in the data (0.0 - 1.0).
+                          For example, 0.1 means ~10% of data may be anomalous.
+            n_estimators: Number of trees in the ensemble (more = more accurate, but slower).
+                         Recommended 100-200 for balance of accuracy and speed.
+            random_state: Seed for result reproducibility.
+            critical_threshold: Threshold for CRITICAL severity (default -0.8)
+            warning_threshold: Threshold for WARNING severity (default -0.5)
         
-        Примечание:
-            - contamination влияет на чувствительность: меньше значение = меньше ложных срабатываний
-            - n_estimators рекомендуется 100+ для стабильных результатов
+        Note:
+            - contamination affects sensitivity: lower value = fewer false positives
+            - n_estimators is recommended to be 100+ for stable results
         """
-        # Создаем модель Isolation Forest с настроенными параметрами
+        # Create Isolation Forest model with configured parameters
         self.model = IsolationForest(
-            contamination=contamination,    # Ожидаемая доля аномалий
-            n_estimators=n_estimators,      # Количество деревьев (больше = стабильнее)
-            max_samples='auto',             # Авто-выбор размера подвыборки
-            random_state=random_state,      # Для воспроизводимости
-            n_jobs=-1                       # Использовать все CPU ядра
+            contamination=contamination,    # Expected proportion of anomalies
+            n_estimators=n_estimators,      # Number of trees (more = more stable)
+            max_samples='auto',             # Auto-select subsample size
+            random_state=random_state,      # For reproducibility
+            n_jobs=-1                       # Use all CPU cores
         )
         
-        # StandardScaler нормализует данные: (x - mean) / std
-        # Это важно, так как IsolationForest чувствителен к масштабу признаков
+        # StandardScaler normalizes data: (x - mean) / std
+        # This is important because IsolationForest is sensitive to feature scale
         self.scaler = StandardScaler()
         
-        # Хранилище для обнаруженных аномалий (заполняется после analyze_telemetry)
+        # Storage for detected anomalies (populated after analyze_telemetry)
         # anomalies stored as DataFrame; start empty
         self.anomalies: pd.DataFrame = pd.DataFrame()
         
-        # Сохраняем параметры для доступа извне
+        # Save parameters for external access
         self.contamination = contamination
         self.critical_threshold = critical_threshold
         self.warning_threshold = warning_threshold
         
     def analyze_telemetry(self, df_telemetry: pd.DataFrame) -> Dict[str, Any]:
         """
-        Анализ телеметрии батареи на предмет аномалий.
+        Analyze battery telemetry for anomalies.
         
-        Алгоритм:
-        1. Нормализация данных через StandardScaler (приведение к одной шкале)
-        2. Обучение IsolationForest на нормализованных данных
-        3. Предсказание аномалий (-1 = аномалия, 1 = норма)
-        4. Расчет anomaly scores (чем меньше, тем более аномальная точка)
-        5. Оценка серьезности на основе минимального score
+        Algorithm:
+        1. Data normalization via StandardScaler (bringing to the same scale)
+        2. Train IsolationForest on normalized data
+        3. Predict anomalies (-1 = anomaly, 1 = normal)
+        4. Calculate anomaly scores (lower = more anomalous point)
+        5. Assess severity based on minimum score
         
         Args:
-            df_telemetry: DataFrame с колонками ['voltage', 'current', 'temp', 'soc'].
-                         Каждая строка — это один момент времени.
+            df_telemetry: DataFrame with columns ['voltage', 'current', 'temp', 'soc'].
+                         Each row represents a single point in time.
         
         Returns:
-            Словарь с результатами анализа:
-                - total_samples: Общее количество точек данных
-                - anomalies_detected: Количество обнаруженных аномалий
-                - anomaly_percentage: Процент аномалий от общего числа
-                - severity: Уровень серьезности ('CRITICAL', 'WARNING', 'INFO')
+            Dictionary with analysis results:
+                - total_samples: Total number of data points
+                - anomalies_detected: Number of detected anomalies
+                - anomaly_percentage: Percentage of anomalies relative to total
+                - severity: Severity level ('CRITICAL', 'WARNING', 'INFO')
         
-        Пример:
+        Example:
             >>> df = pd.DataFrame({
-            ...     'voltage': [48, 48, 200],  # 200 — аномалия
+            ...     'voltage': [48, 48, 200],  # 200 — anomaly
             ...     'current': [100, 100, 100],
             ...     'temp': [35, 35, 35],
             ...     'soc': [85, 85, 85]
@@ -111,47 +111,47 @@ class EVBatteryAnalyzer:
             >>> print(results['anomalies_detected'])
             1
         """
-        # Шаг 1: Подготовка данных
-        # Принимаем либо 'temp', либо более читаемую 'temperature' и преобразуем в 'temp'
+        # Step 1: Data preparation
+        # Accept either 'temp' or the more readable 'temperature' and convert to 'temp'
         df: pd.DataFrame = df_telemetry.copy()
         if 'temperature' in df.columns and 'temp' not in df.columns:
             df = df.rename(columns={'temperature': 'temp'})
         
-        # Шаг 2: Выбираем только числовые признаки для анализа
-        # SOC не используем для детекции, так как это зависимая переменная
+        # Step 2: Select only numeric features for analysis
+        # SOC is not used for detection since it is a dependent variable
         features: List[str] = ['voltage', 'current', 'temp']
         X: pd.DataFrame = df[features]
         
-        # Шаг 2: Нормализация данных (mean=0, std=1)
+        # Step 2: Data normalization (mean=0, std=1)
         # Use existing scaler if already fitted, otherwise fit_transform
         if hasattr(self.scaler, 'mean_'):
             X_scaled = self.scaler.transform(X)  # type: ignore
         else:
             X_scaled = self.scaler.fit_transform(X)  # type: ignore
         
-        # Шаг 3: Обучение модели и предсказание аномалий
+        # Step 3: Train model and predict anomalies
         if hasattr(self.model, 'estimators_'):
             predictions = self.model.predict(X_scaled)  # type: ignore
         else:
             predictions = self.model.fit_predict(X_scaled)  # type: ignore
         
-        # Шаг 4: Расчет anomaly scores (чем ниже, тем более аномальная точка)
-        # score_samples работает и для предсказанной модели
+        # Step 4: Calculate anomaly scores (lower = more anomalous point)
+        # score_samples works even for a previously fitted model
         anomaly_scores: np.ndarray = self.model.score_samples(X_scaled)  # type: ignore
         
-        # Шаг 5: Фильтруем аномалии
-        # Помимо стандартной предсказания (-1), также учитываем случаи, когда
-        # score_samples упал ниже warning_threshold. Это помогает не пропустить
-        # редкие выбросы на маленьких выборках (например, когда модель обучена
-        # на одинаковых точках).
+        # Step 5: Filter anomalies
+        # In addition to the standard prediction (-1), also consider cases where
+        # score_samples fell below warning_threshold. This helps avoid missing
+        # rare outliers on small samples (e.g., when the model is trained
+        # on identical points).
         mask: np.ndarray = (predictions == -1) | (anomaly_scores < self.warning_threshold)
         self.anomalies = df_telemetry[mask].copy()  # type: ignore
         
-        # Добавляем anomaly scores в результаты для дальнейшего анализа
+        # Add anomaly scores to results for further analysis
         if not self.anomalies.empty:
             self.anomalies['anomaly_score'] = anomaly_scores[mask]
         
-        # Шаг 6: Формируем результат анализа
+        # Step 6: Compile the analysis result
         total = len(df_telemetry)
         count = len(self.anomalies)
         return {
@@ -163,64 +163,64 @@ class EVBatteryAnalyzer:
     
     def _assess_severity(self, scores: np.ndarray) -> str:
         """
-        Оценка уровня серьезности обнаруженных аномалий.
+        Assess the severity level of detected anomalies.
         
-        Логика оценки:
-        - CRITICAL: Есть экстремальные выбросы (score < critical_threshold)
-                   Требуется немедленное внимание — возможна критическая неисправность
-        - WARNING: Умеренные аномалии (score < warning_threshold)
-                  Требуется проверка — возможна деградация системы
-        - INFO: Слабые аномалии или их отсутствие (score >= warning_threshold)
-               Система в норме, аномалии незначительны
+        Assessment logic:
+        - CRITICAL: Extreme outliers present (score < critical_threshold)
+                   Requires immediate attention — possible critical failure
+        - WARNING: Moderate anomalies (score < warning_threshold)
+                  Requires inspection — possible system degradation
+        - INFO: Minor anomalies or none (score >= warning_threshold)
+               System is normal, anomalies are insignificant
         
         Args:
-            scores: Массив anomaly scores из IsolationForest
+            scores: Array of anomaly scores from IsolationForest
         
         Returns:
-            Строка с уровнем серьезности: 'CRITICAL', 'WARNING' или 'INFO'
+            String with severity level: 'CRITICAL', 'WARNING', or 'INFO'
         
-        Примечание:
-            Пороги настраиваются через параметры конструктора и могут корректироваться
-            под конкретную систему на основе исторических данных.
+        Note:
+            Thresholds are configured via constructor parameters and can be adjusted
+            for a specific system based on historical data.
         """
         min_score = np.min(scores)
         
         if min_score < self.critical_threshold:
-            return 'CRITICAL'  # Экстремальная аномалия — критический уровень
+            return 'CRITICAL'  # Extreme anomaly — critical level
         elif min_score < self.warning_threshold:
-            return 'WARNING'   # Умеренная аномалия — предупреждение
-        return 'INFO'          # Слабая аномалия или норма
+            return 'WARNING'   # Moderate anomaly — warning
+        return 'INFO'          # Minor anomaly or normal
     
     def save_model(self, filepath: str, metadata: Dict[str, Any] | None = None) -> None:
         """
-        Сохранение обученной модели и scaler в файл.
+        Save the trained model and scaler to a file.
         
-        Сохраняет:
-        - Обученную модель IsolationForest
-        - Обученный StandardScaler
-        - Параметры модели (contamination, thresholds, etc.)
-        - Метаданные (дата обучения, версия, комментарии)
+        Saves:
+        - Trained IsolationForest model
+        - Trained StandardScaler
+        - Model parameters (contamination, thresholds, etc.)
+        - Metadata (training date, version, comments)
         
         Args:
-            filepath: Путь для сохранения модели (без расширения, добавится .joblib)
-            metadata: Опциональные метаданные (комментарии, версия, dataset info)
+            filepath: Path to save the model (without extension, .joblib will be added)
+            metadata: Optional metadata (comments, version, dataset info)
         
-        Пример:
+        Example:
             >>> analyzer = EVBatteryAnalyzer()
             >>> analyzer.analyze_telemetry(df)
             >>> analyzer.save_model('models/battery_analyzer_v1', 
             ...                     metadata={'version': '1.0', 'dataset': 'Tesla_2024'})
         
         Raises:
-            ValueError: Если модель не обучена (не был вызван analyze_telemetry)
+            ValueError: If model is not trained (analyze_telemetry was not called)
         """
-        # Проверка, что модель обучена (scaler должен быть fitted)
+        # Check that the model is trained (scaler must be fitted)
         if not hasattr(self.scaler, 'mean_'):
             raise ValueError(
-                "Модель не обучена! Сначала вызовите analyze_telemetry() или train()"
+                "Model not trained! Call analyze_telemetry() or train() first"
             )
         
-        # Подготовка данных для сохранения
+        # Prepare data for saving
         model_data = {
             'model': self.model,
             'scaler': self.scaler,
@@ -231,14 +231,14 @@ class EVBatteryAnalyzer:
             'metadata': metadata or {}
         }
         
-        # Добавляем расширение .joblib если его нет
+        # Add .joblib extension if not present
         if not filepath.endswith('.joblib'):
             filepath = filepath + '.joblib'
         
-        # Создаем директорию если не существует
+        # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(filepath), exist_ok=True) if os.path.dirname(filepath) else None
         
-        # Сохранение
+        # Save
         joblib.dump(model_data, filepath, compress=3)
         logger.info("Model saved: %s", filepath)
 
@@ -248,48 +248,48 @@ class EVBatteryAnalyzer:
     @classmethod
     def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
         """
-        Загрузка сохраненной модели из файла.
+        Load a saved model from a file.
         
-        Загружает все компоненты модели и создает новый экземпляр EVBatteryAnalyzer
-        с восстановленным состоянием.
+        Loads all model components and creates a new EVBatteryAnalyzer instance
+        with restored state.
         
         Args:
-            filepath: Путь к сохраненной модели (.joblib)
+            filepath: Path to the saved model (.joblib)
         
         Returns:
-            Новый экземпляр EVBatteryAnalyzer с загруженной моделью
+            New EVBatteryAnalyzer instance with loaded model
         
-        Пример:
+        Example:
             >>> analyzer = EVBatteryAnalyzer.load_model('models/battery_analyzer_v1.joblib')
             >>> results = analyzer.analyze_telemetry(new_data)
         
         Raises:
-            FileNotFoundError: Если файл не найден
-            ValueError: Если файл поврежден или имеет неверный формат
+            FileNotFoundError: If the file is not found
+            ValueError: If the file is corrupted or has an invalid format
         """
-        # Добавляем расширение если нет
+        # Add extension if not present
         if not filepath.endswith('.joblib'):
             filepath = filepath + '.joblib'
         
         if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Файл модели не найден: {filepath}")
+            raise FileNotFoundError(f"Model file not found: {filepath}")
         
         try:
-            # Загрузка данных
+            # Load data
             model_data = joblib.load(filepath)
             
-            # Создание нового экземпляра
+            # Create new instance
             analyzer = cls(
                 contamination=model_data['contamination'],
                 critical_threshold=model_data.get('critical_threshold', -0.8),
                 warning_threshold=model_data.get('warning_threshold', -0.5)
             )
             
-            # Восстановление модели и scaler
+            # Restore model and scaler
             analyzer.model = model_data['model']
             analyzer.scaler = model_data['scaler']
             
-            # Вывод информации о загруженной модели
+            # Output information about the loaded model
             save_time = model_data.get('save_timestamp', 'Unknown')
             metadata = model_data.get('metadata', {})
             
@@ -301,14 +301,14 @@ class EVBatteryAnalyzer:
             return analyzer
             
         except Exception as e:
-            raise ValueError(f"Ошибка загрузки модели: {e}")
+            raise ValueError(f"Error loading model: {e}")
     
     def get_model_info(self) -> Dict[str, Any]:
         """
-        Получение информации о текущей модели.
+        Get information about the current model.
         
         Returns:
-            Словарь с параметрами модели
+            Dictionary with model parameters
         """
         return {
             'contamination': self.contamination,
@@ -320,14 +320,14 @@ class EVBatteryAnalyzer:
 
     def detect_cell_imbalance(self, cell_voltages: List[float]) -> Dict[str, Any]:
         """
-        Анализ разбалансировки ячеек (Cell Imbalance).
-        Критически важно для батарей Tesla и других электромобилей.
+        Analyze cell imbalance.
+        Critically important for Tesla and other electric vehicle batteries.
 
         Args:
-            cell_voltages: Список напряжений групп ячеек.
+            cell_voltages: List of cell group voltages.
 
         Returns:
-            Словарь с метриками разбалансировки.
+            Dictionary with imbalance metrics.
         """
         if not cell_voltages:
             return {"status": "error", "message": "No data"}
@@ -338,7 +338,7 @@ class EVBatteryAnalyzer:
         imbalance = max_v - min_v
         std_v = np.std(cell_voltages)
 
-        # Пороги для Tesla обычно около 0.05V - 0.1V
+        # Thresholds for Tesla are typically around 0.05V - 0.1V
         severity = "NORMAL"
         if imbalance > 0.1:
             severity = "CRITICAL"
@@ -355,26 +355,26 @@ class EVBatteryAnalyzer:
 
     def predict_thermal_runaway_risk(self, df_recent: pd.DataFrame) -> Dict[str, Any]:
         """
-        Прогнозирование риска теплового разгона (Thermal Runaway).
-        Использует комбинацию темпа роста температуры и ML-скоров.
+        Predict thermal runaway risk.
+        Uses a combination of temperature rise rate and ML scores.
 
         Args:
-            df_recent: Последние точки телеметрии (минимум 5-10 точек).
+            df_recent: Latest telemetry points (minimum 5-10 points).
         """
         if len(df_recent) < 2:
             return {"risk_level": "LOW", "score": 0.0}
 
-        # 1. Анализ тренда температуры
+        # 1. Temperature trend analysis
         temp_diffs = np.diff(df_recent['temp'].values if 'temp' in df_recent else df_recent['temperature'].values)
         avg_temp_rise = np.mean(temp_diffs)
         max_temp_rise = np.max(temp_diffs)
         current_temp = df_recent['temp'].iloc[-1] if 'temp' in df_recent else df_recent['temperature'].iloc[-1]
 
-        # 2. Интеграция с ML (Isolation Forest)
+        # 2. Integration with ML (Isolation Forest)
         ml_results = self.analyze_telemetry(df_recent)
         anomaly_score = ml_results['anomaly_percentage'] / 100.0
 
-        # 3. Комбинированный риск-скор
+        # 3. Combined risk score
         risk_score = (avg_temp_rise * 2.0) + (max_temp_rise * 1.5) + (anomaly_score * 5.0)
         if current_temp > 50:
             risk_score += (current_temp - 50) * 0.5
@@ -397,41 +397,41 @@ class EVBatteryAnalyzer:
 
 class AnomalyDetector(EVBatteryAnalyzer):
     """
-    Расширенный класс-детектор аномалий с раздельными методами train/detect.
+    Extended anomaly detector class with separate train/detect methods.
     
-    Этот класс позволяет:
-    1. Обучить модель на "нормальных" данных (train)
-    2. Использовать обученную модель для детекции на новых данных (detect)
+    This class allows:
+    1. Train the model on "normal" data (train)
+    2. Use the trained model for detection on new data (detect)
     
-    Это полезно в продакшене, когда модель обучается один раз на исторических
-    данных, а затем используется для real-time детекции.
+    This is useful in production, where the model is trained once on historical
+    data and then used for real-time detection.
     """
     
     def __init__(self, contamination: float = 0.01, n_estimators: int = 200, random_state: int = 42):
         """
-        Инициализация детектора аномалий.
+        Initialize the anomaly detector.
         
         Args:
-            contamination: Ожидаемая доля аномалий (по умолчанию 0.01 = 1%).
-                          Для обучения на "чистых" данных используйте малое значение.
-            n_estimators: Количество деревьев (рекомендуется 200 для стабильности).
-            random_state: Seed для воспроизводимости.
+            contamination: Expected proportion of anomalies (default 0.01 = 1%).
+                          Use a small value for training on "clean" data.
+            n_estimators: Number of trees (recommended 200 for stability).
+            random_state: Seed for reproducibility.
         """
         super().__init__(contamination, n_estimators, random_state)
-        self._is_trained = False  # Флаг обученности модели
+        self._is_trained = False  # Model training flag
     
     def train(self, data: pd.DataFrame) -> None:
         """
-        Обучение модели на "нормальных" данных.
+        Train the model on "normal" data.
         
-        Рекомендуется использовать данные без аномалий для обучения,
-        чтобы модель научилась распознавать нормальное поведение батареи.
+        It is recommended to use data without anomalies for training,
+        so the model learns to recognize normal battery behavior.
         
         Args:
-            data: DataFrame с колонками ['voltage', 'current', 'temp', 'soc'].
-                  Данные должны содержать преимущественно нормальные значения.
+            data: DataFrame with columns ['voltage', 'current', 'temp', 'soc'].
+                  Data should contain predominantly normal values.
         
-        Пример:
+        Example:
             >>> normal_data = pd.DataFrame({
             ...     'voltage': np.random.normal(48, 1, 1000),
             ...     'current': np.random.normal(100, 5, 1000),
@@ -444,32 +444,32 @@ class AnomalyDetector(EVBatteryAnalyzer):
         features = ['voltage', 'current', 'temp']
         X = data[features]
         
-        # Обучаем scaler на нормальных данных
+        # Train scaler on normal data
         X_scaled = self.scaler.fit_transform(X)
         
-        # Обучаем IsolationForest
+        # Train IsolationForest
         self.model.fit(X_scaled)
         self._is_trained = True
         logger.info("Model trained on %d data points", len(data))
     
     def detect(self, data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Детекция аномалий на новых данных с использованием обученной модели.
+        Detect anomalies on new data using the trained model.
         
         Args:
-            data: DataFrame с новой телеметрией для анализа.
+            data: DataFrame with new telemetry data for analysis.
         
         Returns:
-            Кортеж (predictions, scores):
-                - predictions: Массив предсказаний (-1 = аномалия, 1 = норма)
-                - scores: Массив anomaly scores
+            Tuple (predictions, scores):
+                - predictions: Array of predictions (-1 = anomaly, 1 = normal)
+                - scores: Array of anomaly scores
         
         Raises:
-            ValueError: Если модель не обучена (нужно сначала вызвать train)
+            ValueError: If model is not trained (call train() first)
         
-        Пример:
+        Example:
             >>> new_data = pd.DataFrame({
-            ...     'voltage': [48, 200],  # 200 — аномалия
+            ...     'voltage': [48, 200],  # 200 — anomaly
             ...     'current': [100, 100],
             ...     'temp': [35, 35],
             ...     'soc': [85, 85]
@@ -478,15 +478,15 @@ class AnomalyDetector(EVBatteryAnalyzer):
             >>> print(predictions)  # [1, -1]
         """
         if not self._is_trained:
-            raise ValueError("Модель не обучена! Сначала вызовите метод train()")
+            raise ValueError("Model not trained! Call the train() method first")
         
         features = ['voltage', 'current', 'temp']
         X = data[features]
         
-        # Применяем уже обученный scaler
+        # Apply the already fitted scaler
         X_scaled = self.scaler.transform(X)
         
-        # Предсказание на новых данных
+        # Predict on new data
         predictions = self.model.predict(X_scaled)
         scores = self.model.score_samples(X_scaled)
         
@@ -497,11 +497,11 @@ class AnomalyDetector(EVBatteryAnalyzer):
 
 
 if __name__ == '__main__':
-    # Пример использования EVBatteryAnalyzer
-    print("=== Тест EVBatteryAnalyzer ===")
+    # Example usage of EVBatteryAnalyzer
+    print("=== EVBatteryAnalyzer Test ===")
     analyzer = EVBatteryAnalyzer()
     
-    # Генерируем тестовую телеметрию
+    # Generate test telemetry
     np.random.seed(42)
     data = {
         'voltage': np.random.normal(48, 2, 1000),
@@ -511,17 +511,17 @@ if __name__ == '__main__':
     }
     df = pd.DataFrame(data)
     
-    # Анализ
+    # Analysis
     results = analyzer.analyze_telemetry(df)
-    print(f"Анализ завершен: {results}")
-    print(f"Аномалий: {results['anomalies_detected']}/{results['total_samples']}")
-    print(f"Серьезность: {results['severity']}")
+    print(f"Analysis complete: {results}")
+    print(f"Anomalies: {results['anomalies_detected']}/{results['total_samples']}")
+    print(f"Severity: {results['severity']}")
     
-    # Пример использования AnomalyDetector
-    print("\n=== Тест AnomalyDetector (train/detect) ===")
+    # Example usage of AnomalyDetector
+    print("\n=== AnomalyDetector Test (train/detect) ===")
     detector = AnomalyDetector(contamination=0.01, n_estimators=200)
     
-    # Обучение на нормальных данных
+    # Train on normal data
     normal_data = pd.DataFrame({
         'voltage': np.random.normal(48, 1, 500),
         'current': np.random.normal(100, 5, 500),
@@ -530,14 +530,13 @@ if __name__ == '__main__':
     })
     detector.train(normal_data)
     
-    # Детекция на новых данных с аномалией
+    # Detect on new data with anomaly
     test_data = pd.DataFrame({
-        'voltage': [48, 48, 200, 48],  # 200V — явная аномалия
+        'voltage': [48, 48, 200, 48],  # 200V — obvious anomaly
         'current': [100, 100, 100, 100],
         'temp': [35, 35, 35, 35],
         'soc': [85, 85, 85, 85]
     })
     predictions, scores = detector.detect(test_data)
-    print(f"Предсказания: {predictions}")
+    print(f"Predictions: {predictions}")
     print(f"Scores: {scores}")
-

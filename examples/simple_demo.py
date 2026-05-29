@@ -1,6 +1,6 @@
 """
-Простой пример использования EV-QA-Framework
-Демонстрирует базовую валидацию телеметрии и ML-детекцию аномалий
+Simple example of using EV-QA-Framework
+Demonstrates basic telemetry validation and ML anomaly detection
 """
 
 from ev_qa_framework.models import validate_telemetry, BatteryTelemetryModel
@@ -11,7 +11,7 @@ import numpy as np
 def main():
     print("=== EV-QA-Framework Demo ===\n")
     
-    # 1. ВАЛИДАЦИЯ ОДНОЙ ТОЧКИ ТЕЛЕМЕТРИИ
+    # 1. SINGLE TELEMETRY POINT VALIDATION
     print("1️⃣ Pydantic Validation Example:")
     print("-" * 50)
     

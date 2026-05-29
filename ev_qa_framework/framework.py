@@ -33,21 +33,21 @@ class EVQAFramework:
     
     def __init__(self, name: str = "EV-QA-Tester", config: Optional[FrameworkConfig] = None):
         """
-        Инициализация QA Framework.
+        Initialize the QA Framework.
         
         Args:
-            name: Название экземпляра фреймворка
-            config: Кастомная конфигурация (если None, используется дефолтная)
+            name: Name of the framework instance
+            config: Custom configuration (if None, the default is used)
         """
         self.name = name
         self.telemetry_data: List[BatteryTelemetryModel] = []
         # generic results dictionary with mixed values
         self.test_results: Dict[str, Any] = {}
         
-        # Загрузка конфигурации
+        # Load configuration
         self.config = config if config is not None else FrameworkConfig()
-        # Проверяем, что default_vin пройдет валидацию Pydantic.
-        # Используем простой dummy-телеметрию, чтобы воспользоваться проверками модели.
+        # Verify that default_vin passes Pydantic validation.
+        # Use a simple dummy telemetry to leverage model validation checks.
         try:
             BatteryTelemetryModel(
                 vin=self.config.default_vin,
@@ -59,12 +59,12 @@ class EVQAFramework:
             )
         except Exception as e:
             logger.warning(
-                f"default_vin '{self.config.default_vin}' невалиден ({e}), "
-                f"заменяем на DEFAULT_TEST_VIN ({self.DEFAULT_TEST_VIN})"
+                f"default_vin '{self.config.default_vin}' is invalid ({e}), "
+                f"replacing with DEFAULT_TEST_VIN ({self.DEFAULT_TEST_VIN})"
             )
             self.config.default_vin = self.DEFAULT_TEST_VIN
         
-        # Инициализация ML-анализатора с параметрами из конфига
+        # Initialize ML analyzer with parameters from config
         self.ml_analyzer = EVBatteryAnalyzer(
             contamination=self.config.ml_config.contamination,
             n_estimators=self.config.ml_config.n_estimators,
@@ -74,75 +74,75 @@ class EVQAFramework:
     
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
         """
-        Валидация телеметрии батареи относительно порогов безопасности.
+        Validate battery telemetry against safety thresholds.
         
-        Использует пороги из self.config.safety_thresholds.
+        Uses thresholds from self.config.safety_thresholds.
         """
         thresholds = self.config.safety_thresholds
         
-        # Проверка температуры
+        # Temperature check
         if telemetry.temperature > thresholds.max_temperature:
             logger.warning(
-                f"ПРЕДУПРЕЖДЕНИЕ Температуры: {telemetry.temperature}°C "
-                f"(порог: {thresholds.max_temperature}°C)"
+                f"WARNING Temperature: {telemetry.temperature}°C "
+                f"(threshold: {thresholds.max_temperature}°C)"
             )
             return False
         
         if telemetry.temperature < thresholds.min_temperature:
             logger.warning(
-                f"ПРЕДУПРЕЖДЕНИЕ Температуры: {telemetry.temperature}°C "
-                f"(минимум: {thresholds.min_temperature}°C)"
+                f"WARNING Temperature: {telemetry.temperature}°C "
+                f"(minimum: {thresholds.min_temperature}°C)"
             )
             return False
         
-        # Проверка напряжения
+        # Voltage check
         if telemetry.voltage < thresholds.min_voltage or telemetry.voltage > thresholds.max_voltage:
             logger.warning(
-                f"ПРЕДУПРЕЖДЕНИЕ Напряжения: {telemetry.voltage}V "
-                f"(диапазон: {thresholds.min_voltage}-{thresholds.max_voltage}V)"
+                f"WARNING Voltage: {telemetry.voltage}V "
+                f"(range: {thresholds.min_voltage}-{thresholds.max_voltage}V)"
             )
             return False
         
-        # Дополнительные проверки
+        # Additional checks
         if telemetry.soc < thresholds.min_soc:
-            logger.warning(f"Низкий уровень заряда: {telemetry.soc}%")
+            logger.warning(f"Low state of charge: {telemetry.soc}%")
         
         if telemetry.soh < thresholds.critical_soh:
-            logger.warning(f"Критическое состояние батареи: {telemetry.soh}%")
+            logger.warning(f"Critical battery state of health: {telemetry.soh}%")
         
         return True
     
     def detect_anomalies(self, telemetry_list: List[BatteryTelemetryModel]) -> List[str]:
         """
-        Rule-based детектирование аномалий в телеметрии.
+        Rule-based anomaly detection in telemetry.
 
-        Выявляем два типа событий:
-        1. Перегрев свыше max_temperature (порог из safety_thresholds)
-        2. Резкий скачок температуры между соседними точками больше max_temperature_jump
+        Detects two types of events:
+        1. Overheating above max_temperature (threshold from safety_thresholds)
+        2. Sharp temperature jump between consecutive points exceeding max_temperature_jump
 
-        Возвращает список сообщений об аномалиях (строк).
+        Returns a list of anomaly messages (strings).
         """
         anomalies: List[str] = []
         if not telemetry_list:
             return anomalies
 
         thresholds = self.config.safety_thresholds
-        # 1. Проверка значений температуры на каждом шаге
+        # 1. Check temperature values at each step
         for t in telemetry_list:
             if t.temperature > thresholds.max_temperature:
                 anomalies.append(
-                    f"Температуры: {t.temperature}°C (порог: {thresholds.max_temperature}°C)"
+                    f"Temperature: {t.temperature}°C (threshold: {thresholds.max_temperature}°C)"
                 )
 
-        # 2. Скачки температуры
+        # 2. Temperature jumps
         if len(telemetry_list) >= 2:
             temp_jump_threshold = thresholds.max_temperature_jump
             for i in range(1, len(telemetry_list)):
                 temp_change = abs(telemetry_list[i].temperature - telemetry_list[i-1].temperature)
                 if temp_change > temp_jump_threshold:
                     anomalies.append(
-                        f"Резкий скачок температуры: {temp_change}°C "
-                        f"(порог: {temp_jump_threshold}°C)"
+                        f"Sharp temperature jump: {temp_change}°C "
+                        f"(threshold: {temp_jump_threshold}°C)"
                     )
         return anomalies
     
@@ -154,7 +154,7 @@ class EVQAFramework:
             'failed': 0,
             'anomalies': [],
             'ml_analysis': None,
-            'critical_issues': []  # собираем ошибки валидации и критические замечания
+            'critical_issues': []  # collect validation errors and critical remarks
         }
         
         telemetries: List[BatteryTelemetryModel] = []
@@ -162,7 +162,7 @@ class EVQAFramework:
         for data in telemetry_data:
             # Compatibility layer: Inject VIN if missing
             if 'vin' not in data:
-                data['vin'] = self.config.default_vin  # Используем VIN из конфига
+                data['vin'] = self.config.default_vin  # Use VIN from config
                 
             try:
                 telemetry = BatteryTelemetryModel(**data)

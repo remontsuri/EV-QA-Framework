@@ -1,21 +1,21 @@
 # 💾 ML Model Persistence Guide
 
-## Обзор
+## Overview
 
-Модуль персистентности позволяет сохранять обученные ML-модели и использовать их в production без переобучения. Это критично для **train-once, deploy-many** паттерна.
+The persistence module allows saving trained ML models and using them in production without retraining. This is critical for the **train-once, deploy-many** pattern.
 
-## 🎯 Зачем это нужно?
+## 🎯 Why is this needed?
 
-**Проблема:** Isolation Forest обучается каждый раз заново при вызове `analyze_telemetry()`, что:
-- ❌ Медленно для production (переобучение занимает время)
-- ❌ Нестабильно (разные результаты при каждом запуске без random_state)
-- ❌ Невозможно версионирование моделей
+**Problem:** Isolation Forest retrains every time `analyze_telemetry()` is called, which:
+- ❌ Is slow for production (retraining takes time)
+- ❌ Is unstable (different results each run without random_state)
+- ❌ Makes model versioning impossible
 
-**Решение:** Сохранение обученной модели:
-- ✅ Обучаем один раз offline
-- ✅ Сохраняем модель + scaler + metadata
-- ✅ Загружаем в production для быстрого inference
-- ✅ Версионируем модели (A/B тестирование)
+**Solution:** Save the trained model:
+- ✅ Train once offline
+- ✅ Save model + scaler + metadata
+- ✅ Load in production for fast inference
+- ✅ Version models (A/B testing)
 
 ---
 
@@ -23,20 +23,20 @@
 
 ### `save_model(filepath, metadata=None)`
 
-Сохраняет обученную модель в файл.
+Saves the trained model to a file.
 
-**Параметры:**
-- `filepath` (str): Путь для сохранения (автоматически добавляется `.joblib`)
-- `metadata` (dict, optional): Метаданные модели
+**Parameters:**
+- `filepath` (str): Path for saving (automatically adds `.joblib`)
+- `metadata` (dict, optional): Model metadata
 
-**Что сохраняется:**
-- Обученная модель `IsolationForest`
-- Обученный `StandardScaler`
-- Параметры: `contamination`, `critical_threshold`, `warning_threshold`
-- Timestamp сохранения
-- Пользовательские метаданные
+**What is saved:**
+- Trained `IsolationForest` model
+- Trained `StandardScaler`
+- Parameters: `contamination`, `critical_threshold`, `warning_threshold`
+- Save timestamp
+- Custom metadata
 
-**Пример:**
+**Example:**
 ```python
 analyzer = EVBatteryAnalyzer(contamination=0.1)
 analyzer.analyze_telemetry(train_data)
@@ -48,40 +48,40 @@ analyzer.save_model(
 ```
 
 **Raises:**
-- `ValueError` - если модель не обучена
+- `ValueError` - if model is not trained
 
 ---
 
 ### `load_model(filepath)` (classmethod)
 
-Загружает сохраненную модель из файла.
+Loads a saved model from a file.
 
-**Параметры:**
-- `filepath` (str): Путь к файлу модели
+**Parameters:**
+- `filepath` (str): Path to the model file
 
-**Возвращает:**
-- `EVBatteryAnalyzer` - новый экземпляр с загруженной моделью
+**Returns:**
+- `EVBatteryAnalyzer` - new instance with the loaded model
 
-**Пример:**
+**Example:**
 ```python
 analyzer = EVBatteryAnalyzer.load_model('models/battery_v1.joblib')
 results = analyzer.analyze_telemetry(new_data)
 ```
 
 **Raises:**
-- `FileNotFoundError` - если файл не найден
-- `ValueError` - если файл поврежден
+- `FileNotFoundError` - if file is not found
+- `ValueError` - if file is corrupted
 
 ---
 
 ### `get_model_info()`
 
-Получает информацию о текущей модели.
+Gets information about the current model.
 
-**Возвращает:**
-- `dict` с параметрами модели
+**Returns:**
+- `dict` with model parameters
 
-**Пример:**
+**Example:**
 ```python
 info = analyzer.get_model_info()
 print(info)
@@ -104,10 +104,10 @@ print(info)
 from ev_qa_framework import EVBatteryAnalyzer
 import pandas as pd
 
-# Загрузка исторических "нормальных" данных
+# Load historical "normal" data
 historical_data = pd.read_csv('historical_telemetry.csv')
 
-# Обучение модели
+# Train the model
 analyzer = EVBatteryAnalyzer(
     contamination=0.05,
     n_estimators=300,
@@ -116,7 +116,7 @@ analyzer = EVBatteryAnalyzer(
 
 analyzer.analyze_telemetry(historical_data)
 
-# Сохранение с метаданными
+# Save with metadata
 analyzer.save_model(
     'models/production/baseline_v2.0',
     metadata={
@@ -131,13 +131,13 @@ analyzer.save_model(
 ### 2. Production Deployment
 
 ```python
-# В production сервисе
+# In production service
 from ev_qa_framework import EVBatteryAnalyzer
 
-# Загрузка один раз при старте сервиса
+# Load once at service startup
 model = EVBatteryAnalyzer.load_model('models/production/baseline_v2.0')
 
-# Использование для real-time inference
+# Use for real-time inference
 def process_telemetry(incoming_batch):
     results = model.analyze_telemetry(incoming_batch)
     
@@ -150,32 +150,32 @@ def process_telemetry(incoming_batch):
 ### 3. Monitoring & Versioning
 
 ```python
-# A/B тестирование моделей
+# A/B testing of models
 model_a = EVBatteryAnalyzer.load_model('models/model_a_conservative')
 model_b = EVBatteryAnalyzer.load_model('models/model_b_tolerant')
 
 results_a = model_a.analyze_telemetry(test_data)
 results_b = model_b.analyze_telemetry(test_data)
 
-# Сравнение метрик
+# Compare metrics
 compare_models(results_a, results_b)
 ```
 
 ---
 
-## 📁 Структура сохраненной модели
+## 📁 Saved model structure
 
-Файл `.joblib` содержит словарь:
+The `.joblib` file contains a dictionary:
 
 ```python
 {
-    'model': IsolationForest object,      # Обученная модель
-    'scaler': StandardScaler object,      # Обученный scaler
-    'contamination': 0.1,                 # Параметры модели
+    'model': IsolationForest object,      # Trained model
+    'scaler': StandardScaler object,      # Trained scaler
+    'contamination': 0.1,                 # Model parameters
     'critical_threshold': -0.8,
     'warning_threshold': -0.5,
     'save_timestamp': '2024-01-28T12:00:00',
-    'metadata': {                         # Пользовательские метаданные
+    'metadata': {                         # Custom metadata
         'version': '1.0',
         'dataset': 'Tesla_2024',
         ...
@@ -185,66 +185,66 @@ compare_models(results_a, results_b)
 
 ---
 
-## 🔄 Версионирование моделей
+## 🔄 Model versioning
 
-### Рекомендуемая схема именования
+### Recommended naming scheme
 
 ```
 models/
 ├── production/
-│   ├── baseline_v1.0.joblib       # Продакшн версия
-│   ├── baseline_v1.1.joblib       # Обновленная версия
-│   └── champion_v2.0.joblib       # Новая best модель
+│   ├── baseline_v1.0.joblib       # Production version
+│   ├── baseline_v1.1.joblib       # Updated version
+│   └── champion_v2.0.joblib       # New best model
 ├── experiments/
-│   ├── exp_conservative.joblib    # Эксперименты
+│   ├── exp_conservative.joblib    # Experiments
 │   ├── exp_tolerant.joblib
 │   └── exp_highres.joblib
 └── archive/
-    └── deprecated_v0.9.joblib     # Старые версии
+    └── deprecated_v0.9.joblib     # Old versions
 ```
 
-### Semantic Versioning для моделей
+### Semantic Versioning for models
 
 ```
 [MAJOR].[MINOR].[PATCH]
 
-MAJOR: Изменение алгоритма или breaking changes
-MINOR: Изменение параметров (contamination, thresholds)
-PATCH: Переобучение на новых данных с теми же параметрами
+MAJOR: Algorithm change or breaking changes
+MINOR: Parameter changes (contamination, thresholds)
+PATCH: Retraining on new data with the same parameters
 ```
 
-**Примеры:**
-- `v1.0.0` → `v1.0.1` - переобучение на обновленном датасете
-- `v1.0.1` → `v1.1.0` - изменение contamination с 0.1 на 0.05
-- `v1.1.0` → `v2.0.0` - переход с IsolationForest на другой алгоритм
+**Examples:**
+- `v1.0.0` → `v1.0.1` - retraining on an updated dataset
+- `v1.0.1` → `v1.1.0` - changing contamination from 0.1 to 0.05
+- `v1.1.0` → `v2.0.0` - switching from IsolationForest to another algorithm
 
 ---
 
 ## ⚡ Performance Tips
 
-### 1. Используйте сжатие
+### 1. Use compression
 
 ```python
-# По умолчанию compress=3 (хороший баланс)
+# Default compress=3 (good balance)
 analyzer.save_model('model.joblib')  # ~500 KB
 
-# Без сжатия (быстрее, но больше размер)
+# No compression (faster but larger)
 import joblib
 joblib.dump(model_data, 'model.joblib', compress=0)  # ~2 MB
 
-# Максимальное сжатие (медленнее, но меньше размер)
+# Maximum compression (slower but smaller)
 joblib.dump(model_data, 'model.joblib', compress=9)  # ~300 KB
 ```
 
-### 2. Lazy Loading в production
+### 2. Lazy Loading in production
 
 ```python
-# Плохо: загружаем при каждом запросе
+# Bad: load on every request
 def handle_request(data):
-    model = EVBatteryAnalyzer.load_model('model.joblib')  # Медленно!
+    model = EVBatteryAnalyzer.load_model('model.joblib')  # Slow!
     return model.analyze_telemetry(data)
 
-# Хорошо: загружаем один раз
+# Good: load once
 class ModelService:
     def __init__(self):
         self.model = EVBatteryAnalyzer.load_model('model.joblib')
@@ -257,52 +257,52 @@ class ModelService:
 
 ## 🧪 Testing
 
-Тесты для персистентности находятся в `tests/test_model_persistence.py`:
+Persistence tests are in `tests/test_model_persistence.py`:
 
 ```bash
 pytest tests/test_model_persistence.py -v
 ```
 
-**Покрываемые сценарии:**
-- ✅ Базовое save/load
-- ✅ Save/load с метаданными
-- ✅ Ошибка при сохранении необученной модели
-- ✅ Inference после загрузки
-- ✅ Load несуществующего файла
-- ✅ Автоматическое создание директорий
-- ✅ Версионирование
+**Covered scenarios:**
+- ✅ Basic save/load
+- ✅ Save/load with metadata
+- ✅ Error when saving an untrained model
+- ✅ Inference after loading
+- ✅ Loading a non-existent file
+- ✅ Automatic directory creation
+- ✅ Versioning
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Ошибка: "Модель не обучена"
+### Error: "Model not trained"
 
 ```python
 analyzer = EVBatteryAnalyzer()
 analyzer.save_model('model.joblib')  # ValueError!
 
-# Решение: сначала обучите
+# Solution: train first
 analyzer.analyze_telemetry(data)
 analyzer.save_model('model.joblib')  # ✅
 ```
 
-### Ошибка: "Файл модели не найден"
+### Error: "Model file not found"
 
 ```python
 model = EVBatteryAnalyzer.load_model('nonexistent.joblib')  # FileNotFoundError!
 
-# Решение: проверьте путь
+# Solution: check the path
 import os
 print(os.path.exists('model.joblib'))
 ```
 
-### Несовместимость версий scikit-learn
+### scikit-learn version incompatibility
 
-Если модель сохранена на scikit-learn 1.2.0, а загружается на 1.3.0:
+If the model was saved on scikit-learn 1.2.0 and loaded on 1.3.0:
 
 ```python
-# Решение: используйте виртуальное окружение с фиксированными версиями
+# Solution: use a virtual environment with fixed versions
 # requirements.txt:
 scikit-learn==1.2.0
 joblib==1.3.0
@@ -312,7 +312,7 @@ joblib==1.3.0
 
 ## 📚 Best Practices
 
-1. **Всегда сохраняйте метаданные**
+1. **Always save metadata**
    ```python
    metadata = {
        'version': '1.0',
@@ -323,24 +323,24 @@ joblib==1.3.0
    analyzer.save_model('model', metadata=metadata)
    ```
 
-2. **Используйте версионирование**
-   - Сохраняйте несколько версий модели
-   - Ведите changelog изменений
+2. **Use versioning**
+   - Save multiple model versions
+   - Maintain a changelog of changes
 
-3. **Тестируйте перед деплоем**
-   - Сохраните модель
-   - Загрузите в тестовом окружении
-   - Проверьте на валидационных данных
+3. **Test before deployment**
+   - Save the model
+   - Load in a test environment
+   - Validate on validation data
 
-4. **Документируйте эксперименты**
-   - Какие данные использовались
-   - Какие параметры настроены
-   - Какие метрики получены
+4. **Document experiments**
+   - What data was used
+   - What parameters were tuned
+   - What metrics were obtained
 
 ---
 
-## 🔗 См. также
+## 🔗 See also
 
-- [Configuration Guide](../config/README.md) - настройка параметров ML
-- [examples/model_persistence_example.py](../examples/model_persistence_example.py) - примеры использования
-- [tests/test_model_persistence.py](../tests/test_model_persistence.py) - тесты
+- [Configuration Guide](../config/README.md) - ML parameter configuration
+- [examples/model_persistence_example.py](../examples/model_persistence_example.py) - usage examples
+- [tests/test_model_persistence.py](../tests/test_model_persistence.py) - tests

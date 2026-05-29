@@ -1,6 +1,6 @@
 """
-Пример использования персистентности ML-моделей
-Демонстрирует train-once, deploy-many паттерн для production
+Example of using ML model persistence
+Demonstrates the train-once, deploy-many pattern for production
 """
 
 import numpy as np
@@ -9,7 +9,7 @@ from ev_qa_framework.analysis import EVBatteryAnalyzer, AnomalyDetector
 
 
 def generate_normal_telemetry(n_samples=1000):
-    """Генерация нормальных данных телеметрии"""
+    """Generate normal telemetry data"""
     np.random.seed(42)
     return pd.DataFrame({
         'voltage': np.random.normal(48, 1, n_samples),
@@ -20,7 +20,7 @@ def generate_normal_telemetry(n_samples=1000):
 
 
 def generate_test_telemetry_with_anomalies():
-    """Генерация тестовых данных с аномалиями"""
+    """Generate test data with anomalies"""
     normal_data = pd.DataFrame({
         'voltage': [48, 48, 48, 48, 48],
         'current': [100, 100, 100, 100, 100],
@@ -28,9 +28,9 @@ def generate_test_telemetry_with_anomalies():
         'soc': [85, 85, 85, 85, 85]
     })
     
-    # Добавляем аномалии
+    # Add anomalies
     anomalies = pd.DataFrame({
-        'voltage': [200, 10],  # Экстремальные значения
+        'voltage': [200, 10],  # Extreme values
         'current': [500, 600],
         'temp': [90, -20],
         'soc': [5, 100]
@@ -41,35 +41,35 @@ def generate_test_telemetry_with_anomalies():
 
 def example_1_train_and_save():
     """
-    Пример 1: Обучение модели и сохранение
+    Example 1: Training the model and saving
     
-    Типичный сценарий: обучаем модель на исторических данных
-    и сохраняем для использования в production.
+    Typical scenario: train a model on historical data
+    and save for use in production.
     """
     print("=" * 70)
-    print("Пример 1: Обучение и сохранение модели")
+    print("Example 1: Training and saving the model")
     print("=" * 70)
     
-    # Генерируем тренировочные данные (исторические "нормальные" данные)
-    print("📊 Генерация тренировочных данных (1000 нормальных точек)...")
+    # Generate training data (historical "normal" data)
+    print("📊 Generating training data (1000 normal points)...")
     train_data = generate_normal_telemetry(1000)
     
-    # Создаем и обучаем анализатор
-    print("🧠 Обучение ML-модели (Isolation Forest)...")
+    # Create and train the analyzer
+    print("🧠 Training ML model (Isolation Forest)...")
     analyzer = EVBatteryAnalyzer(
-        contamination=0.05,  # Ожидаем 5% аномалий
+        contamination=0.05,  # Expect 5% anomalies
         n_estimators=200,
         critical_threshold=-0.9,
         warning_threshold=-0.6
     )
     
     results = analyzer.analyze_telemetry(train_data)
-    print(f"   Обучено на {results['total_samples']} точках")
-    print(f"   Обнаружено аномалий: {results['anomalies_detected']}")
-    print(f"   Серьезность: {results['severity']}")
+    print(f"   Trained on {results['total_samples']} points")
+    print(f"   Anomalies detected: {results['anomalies_detected']}")
+    print(f"   Severity: {results['severity']}")
     
-    # Сохраняем модель с метаданными
-    print("\n💾 Сохранение модели...")
+    # Save model with metadata
+    print("\n💾 Saving model...")
     metadata = {
         'version': '1.0',
         'dataset': 'historical_battery_data_2024',
@@ -84,150 +84,150 @@ def example_1_train_and_save():
 
 def example_2_load_and_infer():
     """
-    Пример 2: Загрузка сохраненной модели и inference
+    Example 2: Loading a saved model and inference
     
-    Production сценарий: загружаем предобученную модель
-    и используем для детекции аномалий в новых данных.
+    Production scenario: load a pre-trained model
+    and use it for anomaly detection on new data.
     """
     print("=" * 70)
-    print("Пример 2: Загрузка модели и inference")
+    print("Example 2: Loading model and inference")
     print("=" * 70)
     
-    # Загружаем сохраненную модель
-    print("📥 Загрузка сохраненной модели...")
+    # Load the saved model
+    print("📥 Loading saved model...")
     analyzer = EVBatteryAnalyzer.load_model('models/battery_analyzer_baseline')
     
-    # Получаем информацию о модели
-    print("\n📋 Информация о загруженной модели:")
+    # Get model information
+    print("\n📋 Loaded model info:")
     info = analyzer.get_model_info()
     for key, value in info.items():
         print(f"   {key}: {value}")
     
-    # Тестируем на новых данных
-    print("\n🔍 Тестирование на новых данных с аномалиями...")
+    # Test on new data
+    print("\n🔍 Testing on new data with anomalies...")
     test_data = generate_test_telemetry_with_anomalies()
     
     results = analyzer.analyze_telemetry(test_data)
-    print(f"   Всего точек: {results['total_samples']}")
-    print(f"   Аномалий: {results['anomalies_detected']}")
-    print(f"   Процент аномалий: {results['anomaly_percentage']:.2f}%")
-    print(f"   Серьезность: {results['severity']}")
+    print(f"   Total points: {results['total_samples']}")
+    print(f"   Anomalies: {results['anomalies_detected']}")
+    print(f"   Anomaly percentage: {results['anomaly_percentage']:.2f}%")
+    print(f"   Severity: {results['severity']}")
     print()
 
 
 def example_3_model_versioning():
     """
-    Пример 3: Версионирование моделей
+    Example 3: Model versioning
     
-    Сценарий: создаем несколько версий модели с разными параметрами
-    для A/B тестирования.
+    Scenario: create multiple model versions with different parameters
+    for A/B testing.
     """
     print("=" * 70)
-    print("Пример 3: Версионирование моделей (A/B тестирование)")
+    print("Example 3: Model versioning (A/B testing)")
     print("=" * 70)
     
     train_data = generate_normal_telemetry(500)
     test_data = generate_test_telemetry_with_anomalies()
     
-    # Модель A: консервативная (низкий contamination)
-    print("\n🅰️  Создание модели A (консервативная, contamination=0.01)...")
+    # Model A: conservative (low contamination)
+    print("\n🅰️  Creating model A (conservative, contamination=0.01)...")
     model_a = EVBatteryAnalyzer(contamination=0.01, n_estimators=200)
     model_a.analyze_telemetry(train_data)
     model_a.save_model('models/model_a_conservative', 
                        metadata={'version': 'A', 'type': 'conservative'})
     
-    # Модель B: терпимая (высокий contamination)
-    print("🅱️  Создание модели B (терпимая, contamination=0.15)...")
+    # Model B: tolerant (high contamination)
+    print("🅱️  Creating model B (tolerant, contamination=0.15)...")
     model_b = EVBatteryAnalyzer(contamination=0.15, n_estimators=200)
     model_b.analyze_telemetry(train_data)
     model_b.save_model('models/model_b_tolerant', 
                        metadata={'version': 'B', 'type': 'tolerant'})
     
-    # Сравнение моделей на тестовых данных
-    print("\n📊 Сравнение моделей на тестовых данных:")
+    # Compare models on test data
+    print("\n📊 Model comparison on test data:")
     
     loaded_a = EVBatteryAnalyzer.load_model('models/model_a_conservative')
     results_a = loaded_a.analyze_telemetry(test_data)
-    print(f"   Модель A: {results_a['anomalies_detected']} аномалий, {results_a['severity']}")
+    print(f"   Model A: {results_a['anomalies_detected']} anomalies, {results_a['severity']}")
     
     loaded_b = EVBatteryAnalyzer.load_model('models/model_b_tolerant')
     results_b = loaded_b.analyze_telemetry(test_data)
-    print(f"   Модель B: {results_b['anomalies_detected']} аномалий, {results_b['severity']}")
+    print(f"   Model B: {results_b['anomalies_detected']} anomalies, {results_b['severity']}")
     print()
 
 
 def example_4_anomaly_detector_pattern():
     """
-    Пример 4: Train/Detect паттерн с AnomalyDetector
+    Example 4: Train/Detect pattern with AnomalyDetector
     
-    Более продвинутый паттерн для production с разделением
-    обучения и детекции.
+    More advanced pattern for production with separate
+    training and detection phases.
     """
     print("=" * 70)
-    print("Пример 4: AnomalyDetector - Train/Detect паттерн")
+    print("Example 4: AnomalyDetector - Train/Detect pattern")
     print("=" * 70)
     
-    # Обучение на "чистых" данных
-    print("🧠 Обучение AnomalyDetector на чистых данных...")
+    # Train on "clean" data
+    print("🧠 Training AnomalyDetector on clean data...")
     clean_data = generate_normal_telemetry(1000)
     
     detector = AnomalyDetector(contamination=0.01, n_estimators=250)
     detector.train(clean_data)
     
-    # Сохранение
-    print("\n💾 Сохранение обученного детектора...")
+    # Save
+    print("\n💾 Saving trained detector...")
     detector.save_model('models/anomaly_detector_prod', 
                        metadata={'purpose': 'production_detector', 'trained_samples': 1000})
     
-    # В другой сессии/сервисе: загрузка и детекция
-    print("\n📥 Загрузка детектора (симуляция production environment)...")
-    # Примечание: в текущей версии load_model возвращает EVBatteryAnalyzer
-    # В production стоит добавить AnomalyDetector.load_model
+    # In another session/service: load and detect
+    print("\n📥 Loading detector (simulating production environment)...")
+    # Note: in the current version, load_model returns EVBatteryAnalyzer
+    # In production, consider adding AnomalyDetector.load_model
     loaded_detector = EVBatteryAnalyzer.load_model('models/anomaly_detector_prod')
     
-    # Real-time детекция
-    print("\n🔍 Real-time детекция на streaming данных...")
+    # Real-time detection
+    print("\n🔍 Real-time detection on streaming data...")
     
-    # Симулируем поток данных (батчи по 10 точек)
+    # Simulate data stream (batches of 10 points)
     for batch_num in range(3):
         batch_data = generate_test_telemetry_with_anomalies() if batch_num == 1 else generate_normal_telemetry(10)
         results = loaded_detector.analyze_telemetry(batch_data)
         
-        print(f"   Батч {batch_num + 1}: "
-              f"{results['anomalies_detected']}/{results['total_samples']} аномалий "
+        print(f"   Batch {batch_num + 1}: "
+              f"{results['anomalies_detected']}/{results['total_samples']} anomalies "
               f"({results['severity']})")
     print()
 
 
 def example_5_production_workflow():
     """
-    Пример 5: Полный production workflow
+    Example 5: Full production workflow
     
-    1. Train offline на исторических данных
-    2. Save модель
-    3. Deploy в production
-    4. Load и inference в реальном времени
-    5. Monitoring и versioning
+    1. Train offline on historical data
+    2. Save model
+    3. Deploy to production
+    4. Load and inference in real-time
+    5. Monitoring and versioning
     """
     print("=" * 70)
-    print("Пример 5: Production Workflow")
+    print("Example 5: Production Workflow")
     print("=" * 70)
     
     # OFFLINE TRAINING
-    print("\n📚 ФАЗА 1: Offline Training")
+    print("\n📚 PHASE 1: Offline Training")
     print("-" * 70)
     
     historical_data = generate_normal_telemetry(2000)
     
-    # Обучаем baseline модель
+    # Train baseline model
     baseline = EVBatteryAnalyzer(
         contamination=0.05,
-        n_estimators=300,  # Больше деревьев для production
+        n_estimators=300,  # More trees for production
         critical_threshold=-0.85,
         warning_threshold=-0.55
     )
     
-    print("   Обучение baseline модели на 2000 исторических точках...")
+    print("   Training baseline model on 2000 historical points...")
     baseline.analyze_telemetry(historical_data)
     
     baseline.save_model(
@@ -240,44 +240,44 @@ def example_5_production_workflow():
             'last_updated': '2024-01-28'
         }
     )
-    print("   ✅ Модель сохранена в production")
+    print("   ✅ Model saved to production")
     
     # PRODUCTION DEPLOYMENT
-    print("\n🚀 ФАЗА 2: Production Deployment")
+    print("\n🚀 PHASE 2: Production Deployment")
     print("-" * 70)
     
     production_model = EVBatteryAnalyzer.load_model('models/production/baseline_v1.0')
-    print("   ✅ Модель загружена в production environment")
+    print("   ✅ Model loaded into production environment")
     
     # REAL-TIME INFERENCE
-    print("\n⚡ ФАЗА 3: Real-time Inference")
+    print("\n⚡ PHASE 3: Real-time Inference")
     print("-" * 70)
     
-    # Симуляция real-time мониторинга
-    print("   Мониторинг телеметрии батареи...")
+    # Simulate real-time monitoring
+    print("   Monitoring battery telemetry...")
     for minute in range(1, 4):
-        incoming_data = generate_normal_telemetry(60)  # 60 точек в минуту
+        incoming_data = generate_normal_telemetry(60)  # 60 points per minute
         results = production_model.analyze_telemetry(incoming_data)
         
         status = "🟢 NORMAL" if results['severity'] == 'INFO' else "🔴 ALERT"
-        print(f"   Минута {minute}: {status} - "
-              f"{results['anomalies_detected']} аномалий ({results['severity']})")
+        print(f"   Minute {minute}: {status} - "
+              f"{results['anomalies_detected']} anomalies ({results['severity']})")
     
-    print("\n✅ Production workflow завершен!")
+    print("\n✅ Production workflow completed!")
     print()
 
 
 def main():
-    """Главная функция - запуск всех примеров"""
+    """Main function - run all examples"""
     print("\n" + "=" * 70)
     print(" 🔋 EV-QA-Framework: ML Model Persistence Examples")
     print("=" * 70 + "\n")
     
-    # Создаем директорию для моделей
+    # Create model directory
     import os
     os.makedirs('models/production', exist_ok=True)
     
-    # Запуск примеров
+    # Run examples
     example_1_train_and_save()
     example_2_load_and_infer()
     example_3_model_versioning()
@@ -285,15 +285,15 @@ def main():
     example_5_production_workflow()
     
     print("=" * 70)
-    print("✅ Все примеры выполнены успешно!")
+    print("✅ All examples completed successfully!")
     print("=" * 70)
-    print("\n💡 Сохраненные модели:")
+    print("\n💡 Saved models:")
     print("   - models/battery_analyzer_baseline.joblib")
     print("   - models/model_a_conservative.joblib")
     print("   - models/model_b_tolerant.joblib")
     print("   - models/anomaly_detector_prod.joblib")
     print("   - models/production/baseline_v1.0.joblib")
-    print("\n📖 Используйте EVBatteryAnalyzer.load_model() для загрузки")
+    print("\n📖 Use EVBatteryAnalyzer.load_model() to load")
 
 
 if __name__ == "__main__":

@@ -1,76 +1,76 @@
 # 🔧 Configuration Guide - EV-QA-Framework
 
-## Обзор
+## Overview
 
-Модуль конфигурации позволяет настраивать пороги безопасности и параметры ML-анализа без изменения кода. Все настройки вынесены в структурированные классы и могут сохраняться/загружаться из JSON файлов.
+The configuration module allows you to customize safety thresholds and ML analysis parameters without changing code. All settings are organized into structured classes and can be saved/loaded from JSON files.
 
-## 📝 Основные классы
+## 📝 Main classes
 
-### 1. `SafetyThresholds` - Пороги безопасности
+### 1. `SafetyThresholds` - Safety thresholds
 
-Определяет пороговые значения для валидации телеметрии батареи.
+Defines threshold values for battery telemetry validation.
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | По умолчанию | Описание |
-|----------|-----|--------------|----------|
-| `max_temperature` | float | 60.0 | Максимальная безопасная температура (°C) |
-| `min_temperature` | float | -40.0 | Минимальная безопасная температура (°C) |
-| `max_temperature_jump` | float | 5.0 | Максимальный допустимый скачок температуры (°C) |
-| `min_voltage` | float | 200.0 | Минимальное безопасное напряжение (V) |
-| `max_voltage` | float | 900.0 | Максимальное безопасное напряжение (V) |
-| `min_soc` | float | 10.0 | Минимальный уровень заряда для предупреждения (%) |
-| `critical_soh` | float | 70.0 | Критический уровень здоровья батареи (%) |
-| `max_current` | float | 500.0 | Максимальный безопасный ток (A) |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `max_temperature` | float | 60.0 | Maximum safe temperature (°C) |
+| `min_temperature` | float | -40.0 | Minimum safe temperature (°C) |
+| `max_temperature_jump` | float | 5.0 | Maximum allowed temperature jump (°C) |
+| `min_voltage` | float | 200.0 | Minimum safe voltage (V) |
+| `max_voltage` | float | 900.0 | Maximum safe voltage (V) |
+| `min_soc` | float | 10.0 | Minimum charge level for warning (%) |
+| `critical_soh` | float | 70.0 | Critical battery health level (%) |
+| `max_current` | float | 500.0 | Maximum safe current (A) |
 
-### 2. `MLConfig` - Конфигурация ML
+### 2. `MLConfig` - ML configuration
 
-Параметры для ML-анализатора аномалий (Isolation Forest).
+Parameters for the ML anomaly detector (Isolation Forest).
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | По умолчанию | Описание |
-|----------|-----|--------------|----------|
-| `contamination` | float | 0.1 | Ожидаемая доля аномалий (0.0 - 1.0) |
-| `n_estimators` | int | 200 | Количество деревьев в ансамбле |
-| `random_state` | int | 42 | Seed для воспроизводимости |
-| `critical_score_threshold` | float | -0.8 | Порог для CRITICAL severity |
-| `warning_score_threshold` | float | -0.5 | Порог для WARNING severity |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `contamination` | float | 0.1 | Expected proportion of anomalies (0.0 - 1.0) |
+| `n_estimators` | int | 200 | Number of trees in the ensemble |
+| `random_state` | int | 42 | Seed for reproducibility |
+| `critical_score_threshold` | float | -0.8 | Threshold for CRITICAL severity |
+| `warning_score_threshold` | float | -0.5 | Threshold for WARNING severity |
 
-### 3. `FrameworkConfig` - Главная конфигурация
+### 3. `FrameworkConfig` - Main configuration
 
-Объединяет все настройки фреймворка.
+Combines all framework settings.
 
-**Параметры:**
+**Parameters:**
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `safety_thresholds` | SafetyThresholds | Пороги безопасности |
-| `ml_config` | MLConfig | Конфигурация ML |
-| `default_vin` | str | VIN по умолчанию для тестов |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `safety_thresholds` | SafetyThresholds | Safety thresholds |
+| `ml_config` | MLConfig | ML configuration |
+| `default_vin` | str | Default VIN for tests |
 
-## 🚀 Использование
+## 🚀 Usage
 
-### Базовый пример
+### Basic example
 
 ```python
 from ev_qa_framework import EVQAFramework, FrameworkConfig
 
-# Использование дефолтной конфигурации
+# Use default configuration
 qa = EVQAFramework("My-QA")
 
-# Или создание кастомной конфигурации
+# Or create a custom configuration
 config = FrameworkConfig()
-config.safety_thresholds.max_temperature = 55.0  # Более строгий порог
+config.safety_thresholds.max_temperature = 55.0  # Stricter threshold
 qa = EVQAFramework("My-QA", config=config)
 ```
 
-### Создание кастомной конфигурации
+### Creating a custom configuration
 
 ```python
 from ev_qa_framework import FrameworkConfig, SafetyThresholds, MLConfig
 
-# Строгие пороги для Tesla
+# Strict thresholds for Tesla
 tesla_thresholds = SafetyThresholds(
     max_temperature=55.0,
     min_voltage=250.0,
@@ -78,44 +78,44 @@ tesla_thresholds = SafetyThresholds(
     max_temperature_jump=3.0
 )
 
-# ML с низким contamination для высокой точности
+# ML with low contamination for high accuracy
 ml_config = MLConfig(
     contamination=0.05,
     n_estimators=250,
     critical_score_threshold=-0.9
 )
 
-# Создание конфигурации
+# Create configuration
 config = FrameworkConfig(
     safety_thresholds=tesla_thresholds,
     ml_config=ml_config,
     default_vin="5YJ3E1EA8KF000001"
 )
 
-# Использование
+# Use it
 qa = EVQAFramework("Tesla-QA", config=config)
 ```
 
-### Сохранение и загрузка конфигурации
+### Saving and loading configuration
 
 ```python
 from ev_qa_framework import FrameworkConfig
 
-# Создание конфигурации
+# Create configuration
 config = FrameworkConfig()
 config.safety_thresholds.max_temperature = 55.0
 
-# Сохранение в JSON
+# Save to JSON
 config.save_to_file("my_config.json")
 
-# Загрузка из JSON
+# Load from JSON
 loaded_config = FrameworkConfig.load_from_file("my_config.json")
 
-# Использование загруженной конфигурации
+# Use loaded configuration
 qa = EVQAFramework("My-QA", config=loaded_config)
 ```
 
-## 📁 Пример JSON конфигурации
+## 📁 Example JSON configuration
 
 ```json
 {
@@ -140,62 +140,62 @@ qa = EVQAFramework("My-QA", config=loaded_config)
 }
 ```
 
-## 🎯 Готовые конфигурации
+## 🎯 Pre-built configurations
 
-В директории `config/` доступны готовые конфигурации:
+The `config/` directory contains ready-to-use configurations:
 
-- **`default_config.json`** - Дефолтная конфигурация для общего использования
-- **`tesla_config.json`** - Строгая конфигурация для Tesla EV
+- **`default_config.json`** - Default configuration for general use
+- **`tesla_config.json`** - Strict configuration for Tesla EV
 
-### Использование готовых конфигураций
+### Using pre-built configurations
 
 ```python
 from ev_qa_framework import FrameworkConfig, EVQAFramework
 
-# Загрузка Tesla конфигурации
+# Load Tesla configuration
 tesla_config = FrameworkConfig.load_from_file("config/tesla_config.json")
 qa = EVQAFramework("Tesla-QA", config=tesla_config)
 ```
 
-## 🧪 Тестирование
+## 🧪 Testing
 
-Все конфигурационные классы покрыты тестами в `tests/test_config.py`:
+All configuration classes are covered by tests in `tests/test_config.py`:
 
 ```bash
 pytest tests/test_config.py -v
 ```
 
-Тесты включают:
-- ✅ Инициализацию классов
-- ✅ Сериализацию/десериализацию
-- ✅ Сохранение/загрузку из файлов
-- ✅ Интеграцию с EVQAFramework
-- ✅ Валидацию с кастомными порогами
+Tests include:
+- ✅ Class initialization
+- ✅ Serialization/deserialization
+- ✅ Save/load from files
+- ✅ Integration with EVQAFramework
+- ✅ Validation with custom thresholds
 
-## 💡 Лучшие практики
+## 💡 Best practices
 
-1. **Используйте конфигурационные файлы** для разных типов батарей (Tesla, Nissan, etc.)
-2. **Настраивайте contamination** в зависимости от ожидаемого процента аномалий
-3. **Адаптируйте пороги температуры** под климатические условия
-4. **Логируйте конфигурацию** при старте тестов для воспроизводимости
+1. **Use configuration files** for different battery types (Tesla, Nissan, etc.)
+2. **Tune contamination** based on expected anomaly percentage
+3. **Adapt temperature thresholds** to climate conditions
+4. **Log the configuration** at test start for reproducibility
 
-## 🔄 Миграция с hardcoded значений
+## 🔄 Migration from hardcoded values
 
-**Старый код (v0.x):**
+**Old code (v0.x):**
 ```python
 qa = EVQAFramework("Test")
-# Пороги были hardcoded в коде
+# Thresholds were hardcoded in code
 ```
 
-**Новый код (v1.0+):**
+**New code (v1.0+):**
 ```python
 config = FrameworkConfig()
-config.safety_thresholds.max_temperature = 55.0  # Настраиваемо!
+config.safety_thresholds.max_temperature = 55.0  # Configurable!
 qa = EVQAFramework("Test", config=config)
 ```
 
-## 📚 Дополнительные ресурсы
+## 📚 Additional resources
 
-- См. также: `ev_qa_framework/config.py` - полная документация в docstrings
-- Примеры использования: `examples/` директория
-- Тесты: `tests/test_config.py`
+- See also: `ev_qa_framework/config.py` - full documentation in docstrings
+- Usage examples: `examples/` directory
+- Tests: `tests/test_config.py`

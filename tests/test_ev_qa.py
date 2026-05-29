@@ -17,7 +17,7 @@ class TestBatteryTelemetry:
         """Test creation of battery telemetry object"""
         telemetry = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456",
-            voltage=390.0, # Используем реальные значения (300V-400V) так как модель валидирует 0-1000
+            voltage=390.0, # Using real values (300V-400V) since the model validates 0-1000
             current=50,
             temperature=35,
             soc=80,
@@ -63,8 +63,8 @@ class TestEVQAFramework:
         """Test validation of valid telemetry"""
         telemetry = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", 
-            voltage=400.0, # Внимание: Pydantic позволяет 0-1000, но Framework warning < 3.0
-                         # Здесь ставим 4.0 чтобы пройти warning check
+            voltage=400.0, # Note: Pydantic allows 0-1000, but Framework warning < 3.0
+                         # Setting to 4.0 to pass warning check
             current=50, 
             temperature=35, 
             soc=80, 
@@ -123,7 +123,7 @@ class TestEVQAFramework:
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
         assert len(anomalies) > 0
-        assert "Резкий скачок температуры" in anomalies[0]
+        assert "Sudden temperature jump" in anomalies[0]
     
     @pytest.mark.asyncio
     async def test_run_test_suite_async(self):

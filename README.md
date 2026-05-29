@@ -1,264 +1,168 @@
+<div align="center">
+
 # EV-QA-Framework
 
-**ML-powered Quality Assurance Framework for Electric Vehicle Battery Systems**
+ML-Powered Quality Assurance Framework for Electric Vehicle Battery Systems
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/test.yml/badge.svg)](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/test.yml)
+[![Docker](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/docker.yml/badge.svg)](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/docker.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![GitHub issues](https://img.shields.io/github/issues/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-A comprehensive **Python framework** for automated quality assurance of EV battery telemetry. Provides ML-powered anomaly detection, State-of-Health (SOH) prediction, CAN bus emulation, and real-time monitoring — purpose-built for battery engineers, QA teams, and automotive developers.
+</div>
 
 ---
 
-## Key Capabilities
+## Why
 
-| Feature | Description |
-|---------|-------------|
-| **Battery Telemetry Validation** | Schema-based validation for voltage, current, temperature, SOC, SOH using Pydantic |
-| **ML Anomaly Detection** | Isolation Forest-based detection of irregular battery patterns (cell imbalance, thermal runaway precursors) |
-| **SOH Prediction** | LSTM-based model for battery degradation forecasting and remaining useful life estimation |
-| **CAN Bus Emulation** | Tools to simulate and test physical vehicle network communication (CAN 2.0, OBD-II protocols) |
-| **Real-time Dashboard** | FastAPI web dashboard for live telemetry monitoring and visualization |
-| **Test Suite** | 85+ automated tests covering telemetry validation, anomaly detection, and integration |
+Electric vehicle battery systems produce a lot of telemetry data - thousands of readings per minute. EV-QA-Framework helps QA engineers and battery researchers catch anomalies, predict degradation, and validate battery performance without needing expensive test rigs.
+
+The framework combines rule-based validation with machine learning (Isolation Forest for anomaly detection, LSTM for State of Health prediction), plus a CAN bus emulator so you can test without physical hardware.
+
+---
+
+## Features
+
+- ML anomaly detection via Isolation Forest with adjustable sensitivity
+- State of Health prediction using an LSTM neural network
+- CAN bus emulation (CAN 2.0B and J1939 protocols)
+- Interactive real-time dashboard (FastAPI + WebSocket + Chart.js)
+- Configurable safety thresholds per vehicle profile
+- Save/load trained models as JSON or joblib
+- 100+ pytest tests with ML validation edge cases
 
 ---
 
 ## Quick Start
 
-### Installation
-
 ```bash
-git clone https://github.com/remontsuri/EV-QA-Framework.git
-cd EV-QA-Framework
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Run analysis on sample data
+python -m ev_qa_framework.cli analyze examples/tesla_model_s_defective.csv
+
+# Launch dashboard
+python -m ev_qa_framework.cli dashboard
+
+# Generate synthetic CAN data
+python -m ev_qa_framework.cli emulate --duration 60
 ```
 
-### Running the Dashboard
+With Docker:
 
 ```bash
-python quickstart.py
-```
-
-Opens a real-time battery telemetry dashboard at `http://localhost:8000`.
-
-### Running Tests
-
-```bash
-python -m pytest -v
-```
-
----
-
-## Usage Examples
-
-### 1. Battery Telemetry Validation
-
-Validate incoming telemetry from BMS (Battery Management System) or CAN bus:
-
-```python
-from ev_qa_framework.models import validate_telemetry
-
-data = {
-    "vin": "1HGBH41JXMN109186",
-    "voltage": 396.5,       # Pack voltage (V)
-    "current": 125.3,       # Current (A)
-    "temperature": 35.2,    # Cell temperature (°C)
-    "soc": 78.5,            # State of Charge (%)
-    "soh": 96.2             # State of Health (%)
-}
-telemetry = validate_telemetry(data)
-```
-
-### 2. Anomaly Detection on Battery Data
-
-Detect outliers in battery telemetry streams — useful for identifying cell degradation, sensor faults, or thermal events:
-
-```python
-from ev_qa_framework.analysis import AnomalyDetector
-import pandas as pd
-
-# Load battery telemetry CSV (voltage, current, temp per cell group)
-df = pd.read_csv("battery_telemetry.csv")
-
-detector = AnomalyDetector(contamination=0.01, n_estimators=200)
-detector.train(df[["voltage", "current", "temperature", "soc"]])
-
-predictions, scores = detector.detect(new_data)
-# predictions: 1 = normal, -1 = anomaly
-```
-
-### 3. State of Health (SOH) Prediction
-
-Forecast battery degradation using LSTM deep learning:
-
-```python
-from ev_qa_framework.soh_predictor import SOHPredictor
-
-model = SOHPredictor(seq_length=50, n_features=4)
-model.train(soh_training_data, epochs=50)
-
-# Predict future SOH
-future_soh = model.predict_soh(sequence_data)
-print(f"Predicted SOH: {future_soh:.1f}%")
-```
-
-### 4. CAN Bus Emulation
-
-Simulate battery telemetry over CAN bus for HIL (Hardware-in-the-Loop) testing:
-
-```python
-from ev_qa_framework.can_bus import CANEmulator
-
-emulator = CANEmulator(interface="virtual", channel="vcan0")
-emulator.start()
-
-# Simulate battery cell voltage broadcast
-emulator.send_battery_status(voltage=400.0, current=120.0, soc=75.0)
+docker compose -f docker-compose.prod.yml up -d
+# then open http://localhost:8080
 ```
 
 ---
 
 ## Architecture
 
-```
-ev_qa_framework/
-├── models.py          # Pydantic schemas for battery telemetry
-├── analysis.py        # ML anomaly detection (Isolation Forest)
-├── soh_predictor.py   # LSTM-based SOH degradation forecasting
-├── can_bus.py         # CAN bus emulation and simulation
-├── config.py          # Configuration management
-├── framework.py       # Core orchestration
-└── cli.py             # CLI entry point
+The framework has four main components:
 
-dashboard/             # FastAPI web dashboard
-tests/                 # 85+ automated tests
-examples/              # Usage demos and notebooks
-scripts/               # Utility scripts
+- **Core QA Engine** - Pydantic-based validation with configurable safety thresholds
+- **ML Analyzer** - Isolation Forest for anomaly detection, LSTM for SOH prediction
+- **CAN Emulator** - Generates CAN 2.0B and J1939 data streams for offline testing
+- **Dashboard** - FastAPI server with WebSocket-powered real-time charts
+
+Data flows: CSV/API input -> Pydantic validation -> ML analysis -> dashboard visualization.
+
+---
+
+## CLI Reference
+
+```bash
+python -m ev_qa_framework.cli analyze examples/tesla_model_s_defective.csv
+
+python -m ev_qa_framework.cli dashboard
+
+python -m ev_qa_framework.cli emulate --duration 120 --protocol j1939
+
+python -m ev_qa_framework.cli analyze examples/tesla_model_s_defective.csv \
+  --config config/tesla_config.json \
+  --output report.json \
+  --save-model
+```
+
+---
+
+## Docker
+
+```bash
+docker compose -f docker-compose.prod.yml up -d
+
+# With custom configuration
+cp .env.example .env
+docker compose -f docker-compose.prod.yml --env-file .env up -d
+```
+
+Images are published to GitHub Container Registry:
+`ghcr.io/remontsuri/ev-qa-framework:latest`
+
+---
+
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+pytest -v --cov=ev_qa_framework
+
+# Specific test suites
+pytest tests/test_ml_analysis.py -v
+pytest tests/test_integration.py -v
 ```
 
 ---
 
 ## Project Structure
 
-- `ev_qa_framework/` — Core Python package with battery QA models and ML
-- `dashboard/` — FastAPI web dashboard for real-time telemetry visualization
-- `scripts/` — Utility scripts for CAN emulation and debugging
-- `tests/` — Comprehensive test suite (pytest)
-- `examples/` — Usage demos and Jupyter notebooks
-- `notebooks/` — Interactive analysis notebooks
-
-## Documentation
-
-- [CHANGELOG.md](CHANGELOG.md) — Version history and release notes
-- [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guidelines
-- [LICENSE](LICENSE) — MIT License
+```
+EV-QA-Framework/
+  ev_qa_framework/         # Core package
+    analysis.py            # ML anomaly detection
+    cli.py                 # CLI entry point
+    config.py              # Thresholds and logging setup
+    framework.py           # Main QA engine
+    models.py              # Pydantic validation models
+    soh_predictor.py       # LSTM SOH predictor
+    can_bus.py             # CAN bus simulator
+  dashboard/               # Web dashboard
+    app.py                 # FastAPI + WebSocket server
+    templates/             # Jinja2 frontend
+  api/                     # REST API
+    routes.py              # API endpoints
+  config/                  # Configuration profiles
+  examples/                # Usage examples
+  tests/                   # Test suite
+```
 
 ---
 
-## Who Is This For?
+## Roadmap
 
-- **Battery QA Engineers** — Validate telemetry data and detect anomalies in battery packs
-- **EV System Developers** — Integrate battery monitoring into vehicle software pipelines
-- **BMS Algorithm Engineers** — Test SOH prediction and anomaly detection models against real data
-- **Test & Validation Teams** — Automate battery telemetry validation in CI/CD with CAN emulation
-- **Automotive Researchers** — Analyze battery degradation patterns with ML models
-
-## Technologies
-
-- **Python 3.8+** with type hints and Pydantic validation
-- **scikit-learn** Isolation Forest for anomaly detection
-- **TensorFlow/Keras** LSTM for SOH forecasting
-- **python-can** for CAN bus protocol simulation
-- **FastAPI** for the real-time dashboard
-- **pytest** (85+ tests) for QA automation
-
----
-
-## Deployment
-
-### Docker Compose (Recommended)
-
-Run the full EV-QA-Framework stack including the dashboard using Docker Compose:
-
-```bash
-# Clone the repository
-git clone https://github.com/remontsuri/EV-QA-Framework.git
-cd EV-QA-Framework
-
-# Start services
-docker compose up -d
-```
-
-This launches two containers:
-| Service | Description | Port |
-|---------|-------------|------|
-| `ev-qa-tests` | Runs the test suite with coverage | — |
-| `ev-qa-dashboard` | HTTP server serving test results | `8080` |
-
-### GitHub Container Registry
-
-Pre-built Docker images are available via GitHub Container Registry (GHCR):
-
-```bash
-# Pull the latest image
-docker pull ghcr.io/remontsuri/ev-qa-framework:latest
-
-# Run tests inside the container
-docker run --rm ghcr.io/remontsuri/ev-qa-framework:latest
-
-# Run with mounted test results
-docker run --rm \
-  -v ./results:/app/results \
-  ghcr.io/remontsuri/ev-qa-framework:latest
-```
-
-#### Available tags
-
-- `latest` — most recent commit on `main`
-- `<sha>` — short Git SHA (e.g., `a1b2c3d`)
-- `<version>` — semantic version tags (e.g., `1.2.3`) on releases
-
-Multi-platform images are provided for `linux/amd64` and `linux/arm64`.
-
-### Environment Variables
-
-The following environment variables can be configured:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PYTHONUNBUFFERED` | `1` | Disable Python output buffering |
-| `LOG_LEVEL` | `INFO` | Logging verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `RESULTS_DIR` | `/app/results` | Directory for test results output |
-
-Example with custom configuration:
-
-```bash
-docker run --rm \
-  -e LOG_LEVEL=DEBUG \
-  -e RESULTS_DIR=/output \
-  -v ./output:/output \
-  ghcr.io/remontsuri/ev-qa-framework:latest
-```
-
-### Manual Docker Build
-
-```bash
-docker build -t ev-qa-framework .
-docker run --rm ev-qa-framework
-```
+- [x] Core QA engine
+- [x] ML anomaly detection
+- [x] SOH prediction
+- [x] CAN bus emulation
+- [x] Interactive dashboard
+- [x] Docker deployment
+- [ ] PyPI package
+- [ ] Automated release pipeline
+- [ ] Cell imbalance detection
+- [ ] Thermal runaway prediction
+- [ ] Grafana datasource plugin
 
 ---
 
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-Battery engineers and EV developers — your domain expertise is especially valued.
+Bug reports, feature requests, and pull requests are welcome. See CONTRIBUTING.md for the workflow.
+
+---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
+MIT. See LICENSE for details.

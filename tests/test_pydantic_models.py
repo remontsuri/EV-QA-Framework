@@ -1,5 +1,5 @@
 """
-Параметризованные тесты для валидации SOC (State of Charge) и Pydantic моделей
+Parameterized tests for SOC (State of Charge) validation and Pydantic models
 """
 
 import pytest
@@ -8,23 +8,23 @@ from ev_qa_framework.models import BatteryTelemetryModel, validate_telemetry
 
 
 class TestSOCValidation:
-    """Тесты для проверки валидации SOC (State of Charge)"""
+    """Tests for SOC (State of Charge) validation"""
     
     @pytest.mark.parametrize("soc,expected_valid", [
-        # Граничные значения
-        (-1, False),      # Меньше минимума
-        (0, True),        # Минимальное валидное значение
-        (0.1, True),      # Чуть больше минимума
-        (1, True),        # Малое значение
-        (50, True),       # Середина диапазона
-        (99, True),       # Почти максимум
-        (99.9, True),     # Чуть меньше максимума
-        (100, True),      # Максимальное валидное значение
-        (100.1, False),   # Чуть больше максимума
-        (101, False),     # Больше максимума
+        # Boundary values
+        (-1, False),      # Below minimum
+        (0, True),        # Minimum valid value
+        (0.1, True),      # Slightly above minimum
+        (1, True),        # Small value
+        (50, True),       # Mid-range
+        (99, True),       # Almost maximum
+        (99.9, True),     # Slightly below maximum
+        (100, True),      # Maximum valid value
+        (100.1, False),   # Slightly above maximum
+        (101, False),     # Above maximum
     ])
     def test_soc_boundary_values(self, soc, expected_valid):
-        """Граничные значения SOC: -1, 0, 1, 99, 100, 101"""
+        """SOC boundary values: -1, 0, 1, 99, 100, 101"""
         data = {
             "vin": "1HGBH41JXMN109186",
             "voltage": 400,
@@ -43,15 +43,15 @@ class TestSOCValidation:
             assert "soc" in str(exc_info.value).lower()
     
     @pytest.mark.parametrize("soc_value", [
-        "строка",          # Строка вместо числа
-        "50",              # Число в виде строки (Pydantic может конвертировать)
-        None,              # Пустое значение
-        [],                # Список
-        {},                # Словарь
-        True,              # Булево значение (может быть приведено к 1)
+        "string",          # String instead of number
+        "50",              # Number as a string (Pydantic can convert)
+        None,              # Empty value
+        [],                # List
+        {},                # Dict
+        True,              # Boolean value (may be converted to 1)
     ])
     def test_soc_invalid_types(self, soc_value):
-        """Проверка типов: строка вместо числа, None, другие типы"""
+        """Type validation: string instead of number, None, other types"""
         data = {
             "vin": "1HGBH41JXMN109186",
             "voltage": 400,
@@ -61,30 +61,30 @@ class TestSOCValidation:
             "soh": 95
         }
         
-        # Pydantic может конвертировать некоторые типы (например, "50" -> 50.0)
-        # Но строки типа "строка", None, [], {} выбросят ошибку
+        # Pydantic can convert some types (e.g., "50" -> 50.0)
+        # But strings like "string", None, [], {} will throw an error
         if soc_value in [None, [], {}]:
             with pytest.raises(ValidationError):
                 validate_telemetry(data)
         elif soc_value == "50":
-            # Pydantic автоматически конвертирует строку "50" в float
+            # Pydantic automatically converts string "50" to float
             telemetry = validate_telemetry(data)
             assert telemetry.soc == 50.0
         elif soc_value is True:
-            # True конвертируется в 1.0
+            # True converts to 1.0
             telemetry = validate_telemetry(data)
             assert telemetry.soc == 1.0
         else:
-            # "строка" и другие не конвертируемые типы
+            # "string" and other non-convertible types
             with pytest.raises(ValidationError):
                 validate_telemetry(data)
 
 
 class TestPydanticTelemetryModel:
-    """Тесты для Pydantic модели BatteryTelemetryModel"""
+    """Tests for Pydantic BatteryTelemetryModel"""
     
     def test_valid_telemetry_creation(self):
-        """Создание валидной телеметрии"""
+        """Creating valid telemetry"""
         data = {
             "vin": "1HGBH41JXMN109186",
             "voltage": 396.5,
@@ -99,8 +99,8 @@ class TestPydanticTelemetryModel:
         assert telemetry.soc == 78.5
     
     def test_vin_validation_length(self):
-        """VIN должен быть ровно 17 символов"""
-        # Короткий VIN
+        """VIN must be exactly 17 characters"""
+        # Short VIN
         with pytest.raises(ValidationError) as exc_info:
             validate_telemetry({
                 "vin": "SHORT",
@@ -112,7 +112,7 @@ class TestPydanticTelemetryModel:
             })
         assert "vin" in str(exc_info.value).lower()
         
-        # Длинный VIN
+        # Long VIN
         with pytest.raises(ValidationError):
             validate_telemetry({
                 "vin": "TOOLONGVINCODE123456",
@@ -124,7 +124,7 @@ class TestPydanticTelemetryModel:
             })
     
     def test_vin_forbidden_characters(self):
-        """VIN не должен содержать I, O, Q"""
+        """VIN must not contain I, O, Q"""
         for forbidden_char in ['I', 'O', 'Q']:
             vin = f"1HGBH41JXMN10918{forbidden_char}"
             with pytest.raises(ValidationError) as exc_info:
@@ -139,8 +139,8 @@ class TestPydanticTelemetryModel:
             assert "VIN" in str(exc_info.value) or "vin" in str(exc_info.value)
     
     def test_voltage_range_validation(self):
-        """Напряжение должно быть 0-1000V"""
-        # Отрицательное напряжение
+        """Voltage must be 0-1000V"""
+        # Negative voltage
         with pytest.raises(ValidationError):
             validate_telemetry({
                 "vin": "1HGBH41JXMN109186",
@@ -151,7 +151,7 @@ class TestPydanticTelemetryModel:
                 "soh": 95
             })
         
-        # Слишком высокое напряжение
+        # Too high voltage
         with pytest.raises(ValidationError):
             validate_telemetry({
                 "vin": "1HGBH41JXMN109186",
@@ -163,8 +163,8 @@ class TestPydanticTelemetryModel:
             })
     
     def test_temperature_range_validation(self):
-        """Температура должна быть в диапазоне -50 до +150°C"""
-        # Слишком низкая температура
+        """Temperature must be in range -50 to +150°C"""
+        # Too low temperature
         with pytest.raises(ValidationError):
             validate_telemetry({
                 "vin": "1HGBH41JXMN109186",
@@ -175,7 +175,7 @@ class TestPydanticTelemetryModel:
                 "soh": 95
             })
         
-        # Слишком высокая температура
+        # Too high temperature
         with pytest.raises(ValidationError):
             validate_telemetry({
                 "vin": "1HGBH41JXMN109186",
@@ -187,11 +187,11 @@ class TestPydanticTelemetryModel:
             })
     
     def test_negative_current_allowed(self):
-        """Отрицательный ток разрешен (разряд батареи)"""
+        """Negative current is allowed (battery discharge)"""
         telemetry = validate_telemetry({
             "vin": "1HGBH41JXMN109186",
             "voltage": 400,
-            "current": -50,  # Разряд
+            "current": -50,  # Discharge
             "temperature": 35,
             "soc": 80,
             "soh": 95
@@ -199,7 +199,7 @@ class TestPydanticTelemetryModel:
         assert telemetry.current == -50
     
     def test_timestamp_auto_generation(self):
-        """Timestamp автоматически генерируется, если не указан"""
+        """Timestamp is automatically generated if not provided"""
         telemetry = validate_telemetry({
             "vin": "1HGBH41JXMN109186",
             "voltage": 400,
@@ -211,12 +211,12 @@ class TestPydanticTelemetryModel:
         assert telemetry.timestamp is not None
     
     def test_missing_required_fields(self):
-        """Отсутствие обязательных полей выбрасывает ошибку"""
+        """Missing required fields throws an error"""
         with pytest.raises(ValidationError):
             validate_telemetry({
                 "vin": "1HGBH41JXMN109186",
                 "voltage": 400,
-                # current отсутствует
+                # current missing
                 "temperature": 35,
                 "soc": 80,
                 "soh": 95

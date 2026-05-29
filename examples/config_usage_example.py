@@ -1,10 +1,10 @@
 """
-Пример использования конфигурационной системы EV-QA-Framework
+Example of using the EV-QA-Framework configuration system
 
-Демонстрирует:
-1. Создание кастомных конфигураций
-2. Сохранение/загрузку конфигураций
-3. Использование разных конфигураций для разных типов батарей
+Demonstrates:
+1. Creating custom configurations
+2. Saving/loading configurations
+3. Using different configurations for different battery types
 """
 
 import asyncio
@@ -17,42 +17,42 @@ from ev_qa_framework import (
 
 
 def example_1_default_config():
-    """Пример 1: Использование дефолтной конфигурации"""
+    """Example 1: Using the default configuration"""
     print("=" * 60)
-    print("Пример 1: Дефолтная конфигурация")
+    print("Example 1: Default Configuration")
     print("=" * 60)
     
     qa = EVQAFramework("Default-QA")
     
-    print(f"Макс. температура: {qa.config.safety_thresholds.max_temperature}°C")
-    print(f"Диапазон напряжения: {qa.config.safety_thresholds.min_voltage}-{qa.config.safety_thresholds.max_voltage}V")
+    print(f"Max temperature: {qa.config.safety_thresholds.max_temperature}°C")
+    print(f"Voltage range: {qa.config.safety_thresholds.min_voltage}-{qa.config.safety_thresholds.max_voltage}V")
     print(f"ML contamination: {qa.config.ml_config.contamination}")
     print()
 
 
 def example_2_tesla_config():
-    """Пример 2: Строгая конфигурация для Tesla"""
+    """Example 2: Strict configuration for Tesla"""
     print("=" * 60)
-    print("Пример 2: Конфигурация Tesla (строгие пороги)")
+    print("Example 2: Tesla Configuration (strict thresholds)")
     print("=" * 60)
     
-    # Создаем строгие пороги для Tesla
+    # Creating strict thresholds for Tesla
     tesla_thresholds = SafetyThresholds(
-        max_temperature=55.0,      # Tesla более консервативна
-        min_temperature=-20.0,      # Работа в умеренном климате
-        max_temperature_jump=3.0,   # Очень чувствительно к скачкам
-        min_voltage=250.0,          # Более узкий диапазон
+        max_temperature=55.0,      # Tesla is more conservative
+        min_temperature=-20.0,      # Operation in moderate climate
+        max_temperature_jump=3.0,   # Very sensitive to jumps
+        min_voltage=250.0,          # Narrower range
         max_voltage=450.0,
-        min_soc=20.0,              # Предупреждение при SOC < 20%
-        critical_soh=80.0,         # Более высокий порог здоровья
+        min_soc=20.0,              # Warning at SOC < 20%
+        critical_soh=80.0,         # Higher health threshold
         max_current=600.0
     )
     
-    # ML конфигурация с высокой точностью
+    # ML configuration with high accuracy
     tesla_ml = MLConfig(
-        contamination=0.05,        # Ожидаем меньше аномалий
-        n_estimators=250,          # Больше деревьев = точнее
-        critical_score_threshold=-0.9,  # Более строгий порог
+        contamination=0.05,        # Expect fewer anomalies
+        n_estimators=250,          # More trees = more accurate
+        critical_score_threshold=-0.9,  # Stricter threshold
         warning_score_threshold=-0.6
     )
     
@@ -62,29 +62,29 @@ def example_2_tesla_config():
         default_vin="5YJ3E1EA8KF000001"  # Tesla VIN
     )
     
-    # Сохранение конфигурации
+    # Save configuration
     config.save_to_file("tesla_custom.json")
-    print("✅ Конфигурация Tesla сохранена в tesla_custom.json")
+    print("✅ Tesla configuration saved to tesla_custom.json")
     
     qa = EVQAFramework("Tesla-QA", config=config)
-    print(f"Макс. температура: {qa.config.safety_thresholds.max_temperature}°C")
-    print(f"Диапазон напряжения: {qa.config.safety_thresholds.min_voltage}-{qa.config.safety_thresholds.max_voltage}V")
+    print(f"Max temperature: {qa.config.safety_thresholds.max_temperature}°C")
+    print(f"Voltage range: {qa.config.safety_thresholds.min_voltage}-{qa.config.safety_thresholds.max_voltage}V")
     print(f"ML contamination: {qa.config.ml_config.contamination}")
     print()
 
 
 def example_3_nissan_leaf_config():
-    """Пример 3: Конфигурация для Nissan Leaf (более мягкие пороги)"""
+    """Example 3: Configuration for Nissan Leaf (softer thresholds)"""
     print("=" * 60)
-    print("Пример 3: Конфигурация Nissan Leaf")
+    print("Example 3: Nissan Leaf Configuration")
     print("=" * 60)
     
-    # Nissan Leaf имеет другие характеристики
+    # Nissan Leaf has different characteristics
     leaf_thresholds = SafetyThresholds(
-        max_temperature=65.0,      # Менее строгий порог
+        max_temperature=65.0,      # Less strict threshold
         min_temperature=-30.0,
-        max_temperature_jump=7.0,  # Более терпимо к скачкам
-        min_voltage=300.0,         # Другой диапазон напряжения
+        max_temperature_jump=7.0,  # More tolerant of jumps
+        min_voltage=300.0,         # Different voltage range
         max_voltage=400.0,
         min_soc=10.0,
         critical_soh=65.0,
@@ -92,7 +92,7 @@ def example_3_nissan_leaf_config():
     )
     
     leaf_ml = MLConfig(
-        contamination=0.15,        # Больше аномалий ожидается
+        contamination=0.15,        # More anomalies expected
         n_estimators=150
     )
     
@@ -103,84 +103,84 @@ def example_3_nissan_leaf_config():
     )
     
     config.save_to_file("nissan_leaf.json")
-    print("✅ Конфигурация Nissan Leaf сохранена в nissan_leaf.json")
+    print("✅ Nissan Leaf configuration saved to nissan_leaf.json")
     
     qa = EVQAFramework("Leaf-QA", config=config)
-    print(f"Макс. температура: {qa.config.safety_thresholds.max_temperature}°C")
-    print(f"Диапазон напряжения: {qa.config.safety_thresholds.min_voltage}-{qa.config.safety_thresholds.max_voltage}V")
+    print(f"Max temperature: {qa.config.safety_thresholds.max_temperature}°C")
+    print(f"Voltage range: {qa.config.safety_thresholds.min_voltage}-{qa.config.safety_thresholds.max_voltage}V")
     print()
 
 
 async def example_4_testing_with_config():
-    """Пример 4: Тестирование с кастомной конфигурацией"""
+    """Example 4: Testing with a custom configuration"""
     print("=" * 60)
-    print("Пример 4: Тестирование с кастомной конфигурацией")
+    print("Example 4: Testing with a custom configuration")
     print("=" * 60)
     
-    # Загружаем сохраненную конфигурацию
+    # Load saved configuration
     config = FrameworkConfig.load_from_file("tesla_custom.json")
     qa = EVQAFramework("Test-QA", config=config)
     
-    # Тестовые данные
+    # Test data
     test_data = [
         {'voltage': 350.0, 'current': 100, 'temperature': 30, 'soc': 80, 'soh': 95},
         {'voltage': 355.0, 'current': 95, 'temperature': 31, 'soc': 78, 'soh': 95},
         {'voltage': 360.0, 'current': 90, 'temperature': 32, 'soc': 76, 'soh': 95},
         {'voltage': 365.0, 'current': 85, 'temperature': 33, 'soc': 74, 'soh': 95},
-        {'voltage': 370.0, 'current': 80, 'temperature': 56, 'soc': 72, 'soh': 95},  # Температура > 55°C!
+        {'voltage': 370.0, 'current': 80, 'temperature': 56, 'soc': 72, 'soh': 95},  # Temperature > 55°C!
     ]
     
     results = await qa.run_test_suite(test_data)
     
-    print(f"📊 Результаты тестирования:")
-    print(f"   Всего тестов: {results['total_tests']}")
-    print(f"   Пройдено: {results['passed']}")
-    print(f"   Провалено: {results['failed']}")
-    print(f"   Аномалий: {len(results['anomalies'])}")
+    print(f"📊 Test Results:")
+    print(f"   Total tests: {results['total_tests']}")
+    print(f"   Passed: {results['passed']}")
+    print(f"   Failed: {results['failed']}")
+    print(f"   Anomalies: {len(results['anomalies'])}")
     
     if results['ml_analysis']:
-        print(f"   ML серьезность: {results['ml_analysis']['severity']}")
+        print(f"   ML severity: {results['ml_analysis']['severity']}")
     
     print()
 
 
 def example_5_comparison():
-    """Пример 5: Сравнение конфигураций"""
+    """Example 5: Comparing configurations"""
     print("=" * 60)
-    print("Пример 5: Сравнение конфигураций")
+    print("Example 5: Comparing Configurations")
     print("=" * 60)
     
-    # Загружаем разные конфигурации
+    # Load different configurations
     tesla_cfg = FrameworkConfig.load_from_file("tesla_custom.json")
     leaf_cfg = FrameworkConfig.load_from_file("nissan_leaf.json")
     
-    print("Сравнение Tesla vs Nissan Leaf:")
+    print("Tesla vs Nissan Leaf Comparison:")
     print("-" * 60)
-    print(f"{'Параметр':<30} {'Tesla':<15} {'Leaf':<15}")
+    print(f"{'Parameter':<30} {'Tesla':<15} {'Leaf':<15}")
     print("-" * 60)
-    print(f"{'Макс. температура':<30} {tesla_cfg.safety_thresholds.max_temperature:<15} {leaf_cfg.safety_thresholds.max_temperature:<15}")
-    print(f"{'Макс. напряжение':<30} {tesla_cfg.safety_thresholds.max_voltage:<15} {leaf_cfg.safety_thresholds.max_voltage:<15}")
-    print(f"{'Скачок температуры':<30} {tesla_cfg.safety_thresholds.max_temperature_jump:<15} {leaf_cfg.safety_thresholds.max_temperature_jump:<15}")
+    print(f"{'Max temperature':<30} {tesla_cfg.safety_thresholds.max_temperature:<15} {leaf_cfg.safety_thresholds.max_temperature:<15}")
+    print(f"{'Max voltage':<30} {tesla_cfg.safety_thresholds.max_voltage:<15} {leaf_cfg.safety_thresholds.max_voltage:<15}")
+    print(f"{'Temperature jump':<30} {tesla_cfg.safety_thresholds.max_temperature_jump:<15} {leaf_cfg.safety_thresholds.max_temperature_jump:<15}")
     print(f"{'ML contamination':<30} {tesla_cfg.ml_config.contamination:<15} {leaf_cfg.ml_config.contamination:<15}")
     print()
 
 
 def main():
-    """Главная функция - запуск всех примеров"""
+    """Main function - run all examples"""
     print("\n🚗 EV-QA-Framework: Configuration Examples\n")
     
-    # Запуск примеров
+    # Run examples
     example_1_default_config()
     example_2_tesla_config()
     example_3_nissan_leaf_config()
     
-    # Асинхронный пример
+    # Async example
     asyncio.run(example_4_testing_with_config())
     
     example_5_comparison()
     
     print("=" * 60)
-    print("✅ Все примеры выполнены успешно!")
+    print("✅ All examples completed successfully!")
     print("=" * 60)
 
 
