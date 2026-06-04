@@ -30,7 +30,9 @@ ML-powered QA framework for electric vehicle battery systems. Validates BMS tele
 ## Quick start
 
 ```bash
-pip install -r requirements.txt
+# Install directly from GitHub (no PyPI account needed)
+pip install git+https://github.com/remontsuri/EV-QA-Framework.git
+# or from a release: pip install https://github.com/remontsuri/EV-QA-Framework/releases/download/v1.0.0/ev_qa_framework-1.0.0.tar.gz
 
 # launch dashboard
 python -m ev_qa_framework.cli dashboard
