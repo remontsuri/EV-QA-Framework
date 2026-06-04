@@ -4,8 +4,9 @@ CAN Bus Module: Hardware-level battery telemetry simulation and reception.
 import time
 import random
 import threading
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import can
+from .dbc_parser import DBCParser, battery_dbc_content
 
 
 class CANBatterySimulator:
@@ -151,3 +152,103 @@ class CANTelemetryReceiver:
     def get_telemetry(self) -> Dict[str, Any]:
         """Return latest telemetry"""
         return self.latest_data.copy()
+
+
+class DBCFileSimulator:
+    """
+    CAN telemetry simulator driven by a DBC file definition.
+
+    Reads signal definitions from a .dbc file and generates random
+    data for all defined messages and signals. Supports both CAN 2.0B
+    and J1939 (29-bit) IDs automatically.
+
+    Args:
+        dbc_path: Path to .dbc file, or None to use built-in battery DBC.
+    """
+
+    def __init__(self, dbc_path: Optional[str] = None):
+        if dbc_path:
+            self.dbc = DBCParser(dbc_path)
+        else:
+            import tempfile, os
+            tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
+            tmp.write(battery_dbc_content())
+            tmp.close()
+            self.dbc = DBCParser(tmp.name)
+            os.unlink(tmp.name)
+
+        self.running = False
+        self._thread: Optional[threading.Thread] = None
+        self._bus: Optional[can.interface.Bus] = None
+
+    def start(self, interface: str = "virtual", channel: str = "vcan0"):
+        """Start simulation on the given CAN interface."""
+        try:
+            self._bus = can.interface.Bus(channel=channel, interface=interface)
+        except (can.CanError, OSError, ValueError) as e:
+            print(f"CAN bus not available, running in log-only mode: {e}")
+            self._bus = None
+
+        self.running = True
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        """Stop simulation."""
+        self.running = False
+        if self._thread:
+            self._thread.join(timeout=2)
+        if self._bus:
+            self._bus.shutdown()
+
+    def _run(self):
+        """Main simulation loop."""
+        while self.running:
+            for can_id, msg_def in self.dbc.messages.items():
+                data = self._generate_frame(msg_def)
+                msg = can.Message(
+                    arbitration_id=can_id,
+                    data=data,
+                    is_extended_id=msg_def.is_extended,
+                )
+                if self._bus:
+                    try:
+                        self._bus.send(msg)
+                    except can.CanError:
+                        pass
+            time.sleep(1.0)
+
+    def _generate_frame(self, msg_def) -> List[int]:
+        """Generate random CAN data bytes for a message definition."""
+        data = [0] * 8
+        for sig_name, sig in msg_def.signals.items():
+            raw = self._random_raw(sig)
+            self._place_raw(data, sig, raw)
+        return data
+
+    @staticmethod
+    def _random_raw(sig) -> int:
+        """Generate a random raw value within the signal's range."""
+        import numpy as np  # noqa: F811
+        # Generate a value in physical range, convert to raw
+        if sig.min_val < sig.max_val:
+            phys = random.uniform(sig.min_val, sig.max_val)
+        else:
+            phys = random.uniform(0, 100)
+        raw = sig.physical_to_raw(phys)
+        max_raw = (1 << sig.length) - 1
+        return max(0, min(raw, max_raw))
+
+    @staticmethod
+    def _place_raw(data: List[int], sig, raw: int):
+        """Place a raw integer into the CAN data bytes."""
+        for i in range(sig.length):
+            bit_pos = sig.start_bit + i if sig.byte_order == "Intel" else sig.start_bit - i
+            byte_idx = bit_pos // 8
+            bit_in_byte = bit_pos % 8
+            if byte_idx >= len(data):
+                continue
+            if (raw >> i) & 1:
+                data[byte_idx] |= 1 << bit_in_byte
+            else:
+                data[byte_idx] &= ~(1 << bit_in_byte)

@@ -1,0 +1,124 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "id": null,
+  "title": "EV Battery Metrics",
+  "tags": ["ev", "battery"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "title": "Temperature",
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "expr": "battery_temperature_celsius",
+          "legendFormat": "Temperature"
+        }
+      ]
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "title": "Voltage & Current",
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {}
+      },
+      "targets": [
+        {
+          "expr": "battery_voltage_volts",
+          "legendFormat": "Voltage"
+        },
+        {
+          "expr": "battery_current_amps",
+          "legendFormat": "Current"
+        }
+      ]
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "title": "SOC / SOH",
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "expr": "battery_soc_percent",
+          "legendFormat": "SOC"
+        },
+        {
+          "expr": "battery_soh_percent",
+          "legendFormat": "SOH"
+        }
+      ]
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "title": "Anomalies (total count)",
+      "type": "stat",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "thresholds": [
+          { "color": "green", "value": null },
+          { "color": "red", "value": 1 }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "battery_anomaly_total",
+          "legendFormat": "Anomalies"
+        }
+      ]
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "title": "Cell Imbalance (max)",
+      "type": "gauge",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "min": 0,
+          "max": 0.5
+        }
+      },
+      "targets": [
+        {
+          "expr": "battery_cell_imbalance_max",
+          "legendFormat": "Imbalance"
+        }
+      ]
+    }
+  ]
+}

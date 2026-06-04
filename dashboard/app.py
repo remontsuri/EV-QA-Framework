@@ -20,8 +20,20 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # pylint: disable=wrong-import-position
 from ev_qa_framework import SOHPredictor  # noqa: E402
 from api.routes import router  # noqa: E402
+from fastapi.responses import Response
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from ev_qa_framework.metrics import *  # noqa: F401,F403 — register metrics
 
 app = FastAPI(title="EV Battery Monitor", version="1.0.0")
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint (no auth)"""
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 # Include API routes
 app.include_router(router, prefix="/api")
@@ -97,9 +109,30 @@ async def telemetry_streamer():
 
     current_soh = 99.8
 
+    # Cell voltages simulation (96 cells, like Tesla Model S pack)
+    n_cells = 96
+    cell_voltages = [3.3 + random.uniform(-0.05, 0.05) for _ in range(n_cells)]
+
     while True:
         base_voltage = 396.0
         base_temp = 35.0
+
+        # Update cell voltages
+        for i in range(n_cells):
+            cell_voltages[i] += random.uniform(-0.01, 0.01)
+            cell_voltages[i] = max(2.5, min(4.2, cell_voltages[i]))
+
+        # Inject cell imbalance anomalies (5% chance)
+        if random.random() > 0.95:
+            bad_cell = random.randint(0, n_cells - 1)
+            cell_voltages[bad_cell] = random.uniform(2.0, 2.5)
+
+        # Compute imbalance stats
+        v_min = min(cell_voltages)
+        v_max = max(cell_voltages)
+        imbalance = v_max - v_min
+        outlier_cells = [i for i, v in enumerate(cell_voltages)
+                        if abs(v - np.mean(cell_voltages)) > 0.05]
 
         data = {
             "timestamp": datetime.now().strftime("%H:%M:%S"),
@@ -108,7 +141,10 @@ async def telemetry_streamer():
             "temperature": round(base_temp + random.uniform(-2, 5), 1),
             "soc": round(random.uniform(70, 90), 1),
             "soh": round(current_soh, 2),
-            "is_anomaly": False
+            "is_anomaly": False,
+            "cell_imbalance": round(imbalance, 4),
+            "cell_outliers": len(outlier_cells),
+            "cell_voltages_sample": [round(v, 3) for v in cell_voltages[:12]],
         }
 
         # 5% chance of anomaly

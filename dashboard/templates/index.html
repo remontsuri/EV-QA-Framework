@@ -19,11 +19,17 @@
         .status-critical { background: #e74c3c; color: white; }
         .log-container { flex-grow: 1; font-family: monospace; font-size: 0.8rem; height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5rem; }
         .anomaly-item { border-left: 4px solid #e74c3c; padding-left: 0.5rem; margin-bottom: 0.5rem; background: #fdf2f2; }
+        .heatmap-container { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; }
+        .cell-dot { width: 14px; height: 14px; border-radius: 2px; transition: background 0.5s; }
+        .cell-label { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
+        .cell-label span { min-width: 60px; }
+        .cell-bar { width: 100%; height: 20px; background: #ecf0f1; border-radius: 3px; overflow: hidden; }
+        .cell-bar-fill { height: 100%; transition: width 0.5s; }
     </style>
 </head>
 <body>
     <header>
-        <h1>🔋 EV-QA Dashboard</h1>
+        <h1>EV-QA Dashboard</h1>
         <div id="connection-status">
             Connection: <span id="ws-status" class="status-badge status-warning">Connecting...</span>
         </div>
@@ -56,7 +62,18 @@
                 <p>Latest Current: <b id="val-current">-</b> A</p>
                 <p>Latest Temp: <b id="val-temp">-</b> °C</p>
                 <p>State of Health: <b id="val-soh">-</b> %</p>
+                <p>Cell Imbalance: <b id="val-imbalance">-</b> V</p>
+                <p>Outlier Cells: <b id="val-outliers">-</b></p>
                 <p>Severity: <span id="val-severity" class="status-badge status-ok">NORMAL</span></p>
+            </div>
+            <div class="card">
+                <h3>Cell Balance (96 cells)</h3>
+                <div id="heatmap" class="heatmap-container"></div>
+                <div class="cell-label" style="margin-top: 8px;">
+                    <span>Min: <b id="cv-min">-</b>V</span>
+                    <span>Avg: <b id="cv-avg">-</b>V</span>
+                    <span>Max: <b id="cv-max">-</b>V</span>
+                </div>
             </div>
             <div class="card">
                 <h3>Anomaly Log</h3>
@@ -113,6 +130,32 @@
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, animation: false }
         });
 
+        // Build heatmap grid (96 cells, 12x8)
+        const heatmap = document.getElementById('heatmap');
+        const cellDots = [];
+        for (let i = 0; i < 96; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'cell-dot';
+            dot.title = `Cell ${i + 1}`;
+            heatmap.appendChild(dot);
+            cellDots.push(dot);
+        }
+
+        function voltageColor(v, target) {
+            // target = nominal voltage (e.g. 3.3V)
+            const diff = v - target;
+            const maxDiff = 0.5;
+            const ratio = Math.max(-1, Math.min(1, diff / maxDiff));
+            // ratio: -1 = blue (low), 0 = green (normal), +1 = red (high)
+            let r, g, b;
+            if (ratio < 0) {
+                r = 50; g = Math.round(150 + ratio * 150); b = Math.round(200 + ratio * 100);
+            } else {
+                r = Math.round(50 + ratio * 205); g = Math.round(200 - ratio * 200); b = 50;
+            }
+            return `rgb(${r},${g},${b})`;
+        }
+
         const ws = new WebSocket(`ws://${window.location.host}/ws`);
         const wsStatus = document.getElementById('ws-status');
 
@@ -150,16 +193,46 @@
             document.getElementById('val-current').textContent = data.current;
             document.getElementById('val-temp').textContent = data.temperature;
             document.getElementById('val-soh').textContent = data.soh || 100;
+            document.getElementById('val-imbalance').textContent = data.cell_imbalance || '-';
+            document.getElementById('val-outliers').textContent = data.cell_outliers || '0';
+
+            // Update heatmap
+            if (data.cell_voltages_sample) {
+                const nominal = 3.3;
+                const cellVals = data.cell_voltages_sample;
+                let vMin = 99, vMax = 0, vSum = 0;
+
+                for (let i = 0; i < 96; i++) {
+                    // Extrapolate 12 samples to 96 (repeat each 8x)
+                    const vi = cellVals[Math.floor(i / 8) % cellVals.length] || nominal;
+                    cellDots[i].style.background = voltageColor(vi, nominal);
+                    cellDots[i].title = `Cell ${i + 1}: ${vi.toFixed(3)}V`;
+                    if (vi < vMin) vMin = vi;
+                    if (vi > vMax) vMax = vi;
+                    vSum += vi;
+                }
+                document.getElementById('cv-min').textContent = vMin.toFixed(3);
+                document.getElementById('cv-avg').textContent = (vSum / 96).toFixed(3);
+                document.getElementById('cv-max').textContent = vMax.toFixed(3);
+            }
 
             const severityEl = document.getElementById('val-severity');
-            severityEl.textContent = data.is_anomaly ? 'CRITICAL' : 'NORMAL';
-            severityEl.className = 'status-badge ' + (data.is_anomaly ? 'status-critical' : 'status-ok');
+            if (data.cell_outliers > 5 || data.is_anomaly) {
+                severityEl.textContent = 'CRITICAL';
+                severityEl.className = 'status-badge status-critical';
+            } else if (data.cell_imbalance > 0.05 || data.cell_outliers > 0) {
+                severityEl.textContent = 'WARNING';
+                severityEl.className = 'status-badge status-warning';
+            } else {
+                severityEl.textContent = 'NORMAL';
+                severityEl.className = 'status-badge status-ok';
+            }
 
             if (data.is_anomaly) {
                 const log = document.getElementById('anomaly-log');
                 const item = document.createElement('div');
                 item.className = 'anomaly-item';
-                item.innerHTML = `[${time}] Anomaly Detected! V:${data.voltage} T:${data.temperature}`;
+                item.innerHTML = `[${time}] Anomaly! V:${data.voltage} T:${data.temperature} Imbalance:${data.cell_imbalance}`;
                 log.prepend(item);
             }
 

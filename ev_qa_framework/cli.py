@@ -6,7 +6,7 @@ import json
 import time
 import pandas as pd
 from .analysis import EVBatteryAnalyzer
-from .can_bus import CANBatterySimulator, CANTelemetryReceiver
+from .can_bus import CANBatterySimulator, CANTelemetryReceiver, DBCFileSimulator
 from .soh_predictor import SOHPredictor
 
 
@@ -33,7 +33,7 @@ def analyze_csv(file_path: str, output: str = None):
 
 def run_can_demo(duration: int = 10):
     """Run a live CAN bus emulation demo"""
-    print(f"🚗 Starting CAN Bus Emulation Demo ({duration}s)...")
+    print(f"Starting CAN Bus Emulation Demo ({duration}s)...")
     sim = CANBatterySimulator()
     receiver = CANTelemetryReceiver()
 
@@ -47,15 +47,33 @@ def run_can_demo(duration: int = 10):
             i_val = data['current']
             t_val = data['temperature']
             s_val = data['soc']
-            print(f"📡 CAN Telemetry: V={v_val:.1f}V | "
+            print(f"CAN Telemetry: V={v_val:.1f}V | "
                   f"I={i_val:.1f}A | "
-                  f"T={t_val:.0f}°C | "
+                  f"T={t_val:.0f}C | "
                   f"SOC={s_val:.0f}%")
             time.sleep(1)
     finally:
         sim.stop()
         receiver.stop()
-    print("✅ CAN Demo finished.")
+    print("CAN Demo finished.")
+
+
+def run_dbc_emulate(dbc_path: str = None, duration: int = 10):
+    """Run DBC-driven CAN emulation."""
+    if dbc_path:
+        print(f"Loading DBC: {dbc_path}")
+    else:
+        print("Using built-in battery DBC")
+    sim = DBCFileSimulator(dbc_path=dbc_path)
+    sim.start()
+
+    try:
+        for _ in range(duration):
+            print(f"Sent {len(sim.dbc.messages)} messages")
+            time.sleep(1)
+    finally:
+        sim.stop()
+    print("DBC Emulation finished.")
 
 
 def train_soh_model(csv_path: str, model_path: str):
@@ -83,6 +101,12 @@ def main():
     can_p.add_argument('--duration', '-d', type=int, default=10,
                        help='Demo duration in seconds')
 
+    # DBC emulate command
+    dbc_p = subparsers.add_parser('emulate', help='Run DBC-driven CAN emulation')
+    dbc_p.add_argument('--dbc', help='Path to .dbc file (default: built-in)')
+    dbc_p.add_argument('--duration', '-d', type=int, default=10,
+                       help='Duration in seconds')
+
     # Train command
     train_p = subparsers.add_parser('train-soh', help='Train SOH model')
     train_p.add_argument('--input', '-i', required=True, help='Historical CSV')
@@ -103,6 +127,8 @@ def main():
         analyze_csv(args.input, args.output)
     elif args.command == 'can-demo':
         run_can_demo(args.duration)
+    elif args.command == 'emulate':
+        run_dbc_emulate(dbc_path=args.dbc, duration=args.duration)
     elif args.command == 'train-soh':
         train_soh_model(args.input, args.model_dir)
     else:

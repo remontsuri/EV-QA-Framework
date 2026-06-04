@@ -148,8 +148,7 @@ class TestIntegrationFlow:
         
         # run_test_suite возвращает результаты даже если были ошибки валидации,
         # логируя их как проваленные тесты.
-        loop = asyncio.get_event_loop()
-        results = loop.run_until_complete(qa.run_test_suite(invalid_data))
+        results = asyncio.run(qa.run_test_suite(invalid_data))
         
         assert results['total_tests'] == 1
         assert results['failed'] == 1
