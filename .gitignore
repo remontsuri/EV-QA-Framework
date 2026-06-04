@@ -18,6 +18,12 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
+.claude/
+*.md~
+post_hackernews.md
+post_reddit.md
+CONTEXT.md
+quickstart.py
 *.egg
 
 # Virtual environments
