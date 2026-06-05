@@ -1,11 +1,13 @@
 """
 CAN Bus Module: Hardware-level battery telemetry simulation and reception.
 """
-import time
 import random
 import threading
-from typing import Dict, Any, Optional, List
+import time
+from typing import Any
+
 import can
+
 from .dbc_parser import DBCParser, battery_dbc_content
 
 
@@ -18,12 +20,12 @@ class CANBatterySimulator:
     - 0x102: Temperature (int8, 1°C res) and SOC (uint8, 1% res)
     """
 
-    def __init__(self, interface: str = 'virtual', channel: str = 'vcan0'):
+    def __init__(self, interface: str = "virtual", channel: str = "vcan0"):
         self.interface = interface
         self.channel = channel
-        self.bus: Optional[can.interface.Bus] = None
+        self.bus: can.interface.Bus | None = None
         self.running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
 
     def start(self):
         """Start simulation"""
@@ -92,18 +94,18 @@ class CANTelemetryReceiver:
     Receives and decodes battery telemetry from CAN bus.
     """
 
-    def __init__(self, interface: str = 'virtual', channel: str = 'vcan0'):
+    def __init__(self, interface: str = "virtual", channel: str = "vcan0"):
         self.interface = interface
         self.channel = channel
-        self.latest_data: Dict[str, Any] = {
-            'voltage': 0.0,
-            'current': 0.0,
-            'temperature': 0.0,
-            'soc': 0.0
+        self.latest_data: dict[str, Any] = {
+            "voltage": 0.0,
+            "current": 0.0,
+            "temperature": 0.0,
+            "soc": 0.0
         }
-        self.bus: Optional[can.interface.Bus] = None
+        self.bus: can.interface.Bus | None = None
         self.running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
 
     def start(self):
         """Start receiver"""
@@ -140,16 +142,16 @@ class CANTelemetryReceiver:
                     # Handle signed current (2's complement)
                     if c_scaled > 0x7FFF:
                         c_scaled -= 0x10000
-                    self.latest_data['voltage'] = v_scaled / 10.0
-                    self.latest_data['current'] = c_scaled / 10.0
+                    self.latest_data["voltage"] = v_scaled / 10.0
+                    self.latest_data["current"] = c_scaled / 10.0
                 elif msg.arbitration_id == 0x102:
                     temp = msg.data[0]
                     if temp > 0x7F:
                         temp -= 0x100
-                    self.latest_data['temperature'] = float(temp)
-                    self.latest_data['soc'] = float(msg.data[1])
+                    self.latest_data["temperature"] = float(temp)
+                    self.latest_data["soc"] = float(msg.data[1])
 
-    def get_telemetry(self) -> Dict[str, Any]:
+    def get_telemetry(self) -> dict[str, Any]:
         """Return latest telemetry"""
         return self.latest_data.copy()
 
@@ -166,11 +168,12 @@ class DBCFileSimulator:
         dbc_path: Path to .dbc file, or None to use built-in battery DBC.
     """
 
-    def __init__(self, dbc_path: Optional[str] = None):
+    def __init__(self, dbc_path: str | None = None):
         if dbc_path:
             self.dbc = DBCParser(dbc_path)
         else:
-            import tempfile, os
+            import os
+            import tempfile
             tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
             tmp.write(battery_dbc_content())
             tmp.close()
@@ -178,8 +181,8 @@ class DBCFileSimulator:
             os.unlink(tmp.name)
 
         self.running = False
-        self._thread: Optional[threading.Thread] = None
-        self._bus: Optional[can.interface.Bus] = None
+        self._thread: threading.Thread | None = None
+        self._bus: can.interface.Bus | None = None
 
     def start(self, interface: str = "virtual", channel: str = "vcan0"):
         """Start simulation on the given CAN interface."""
@@ -218,7 +221,7 @@ class DBCFileSimulator:
                         pass
             time.sleep(1.0)
 
-    def _generate_frame(self, msg_def) -> List[int]:
+    def _generate_frame(self, msg_def) -> list[int]:
         """Generate random CAN data bytes for a message definition."""
         data = [0] * 8
         for sig_name, sig in msg_def.signals.items():
@@ -229,7 +232,6 @@ class DBCFileSimulator:
     @staticmethod
     def _random_raw(sig) -> int:
         """Generate a random raw value within the signal's range."""
-        import numpy as np  # noqa: F811
         # Generate a value in physical range, convert to raw
         if sig.min_val < sig.max_val:
             phys = random.uniform(sig.min_val, sig.max_val)
@@ -240,7 +242,7 @@ class DBCFileSimulator:
         return max(0, min(raw, max_raw))
 
     @staticmethod
-    def _place_raw(data: List[int], sig, raw: int):
+    def _place_raw(data: list[int], sig, raw: int):
         """Place a raw integer into the CAN data bytes."""
         for i in range(sig.length):
             bit_pos = sig.start_bit + i if sig.byte_order == "Intel" else sig.start_bit - i

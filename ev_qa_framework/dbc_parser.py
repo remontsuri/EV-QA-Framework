@@ -14,10 +14,7 @@ DBC format: https://vector.com/candb-format
 """
 
 import re
-import math
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
-
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -37,7 +34,7 @@ class Signal:
     min_val: float
     max_val: float
     unit: str
-    receiver: List[str] = field(default_factory=list)
+    receiver: list[str] = field(default_factory=list)
     comment: str = ""
 
     def raw_to_physical(self, raw: int) -> float:
@@ -57,7 +54,7 @@ class Message:
     name: str
     dlc: int                # data length code (bytes)
     transmitter: str
-    signals: Dict[str, Signal] = field(default_factory=dict)
+    signals: dict[str, Signal] = field(default_factory=dict)
     comment: str = ""
     is_extended: bool = False   # True = 29-bit (J1939 style)
 
@@ -75,13 +72,13 @@ class DBCParser:
 
     def __init__(self, filepath: str):
         self.filepath = filepath
-        self.messages: Dict[int, Message] = {}      # keyed by CAN ID
-        self._by_name: Dict[str, Message] = {}      # keyed by message name
+        self.messages: dict[int, Message] = {}      # keyed by CAN ID
+        self._by_name: dict[str, Message] = {}      # keyed by message name
         self.version: str = ""
-        self.comments: Dict[str, str] = {}           # node->comment, etc.
+        self.comments: dict[str, str] = {}           # node->comment, etc.
         self._raw = ""
 
-        with open(filepath, "r", encoding="latin-1") as f:
+        with open(filepath, encoding="latin-1") as f:
             self._raw = f.read()
 
         self._parse()
@@ -90,21 +87,21 @@ class DBCParser:
     # Public API
     # ------------------------------------------------------------------
 
-    def get_message(self, can_id: int) -> Optional[Message]:
+    def get_message(self, can_id: int) -> Message | None:
         """Look up a message definition by its CAN ID."""
         return self.messages.get(can_id)
 
-    def get_message_by_name(self, name: str) -> Optional[Message]:
+    def get_message_by_name(self, name: str) -> Message | None:
         """Look up a message by its symbolic name."""
         return self._by_name.get(name)
 
-    def list_messages(self) -> List[Message]:
+    def list_messages(self) -> list[Message]:
         """Return all parsed messages."""
         return list(self.messages.values())
 
     def get_signal(
         self, can_id: int, signal_name: str
-    ) -> Optional[Signal]:
+    ) -> Signal | None:
         """Look up a specific signal within a message."""
         msg = self.messages.get(can_id)
         if msg is None:
@@ -113,7 +110,7 @@ class DBCParser:
 
     def decode(
         self, can_id: int, data: bytes
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Decode raw CAN data bytes into physical signal values.
 
@@ -132,7 +129,7 @@ class DBCParser:
         if msg is None:
             return {}
 
-        result: Dict[str, float] = {}
+        result: dict[str, float] = {}
         for sig_name, sig in msg.signals.items():
             raw = self._extract_raw(data, sig)
             result[sig_name] = sig.raw_to_physical(raw)
@@ -140,7 +137,7 @@ class DBCParser:
 
     def get_signal_value(
         self, can_id: int, data: bytes, signal_name: str
-    ) -> Optional[float]:
+    ) -> float | None:
         """Decode a single named signal from raw CAN data."""
         msg = self.messages.get(can_id)
         if msg is None:
@@ -175,7 +172,7 @@ class DBCParser:
         self._parse_comments(lines)
 
     # ------------------------------------------------------------------
-    def _parse_message(self, line: str, all_lines: List[str], lineno: int):
+    def _parse_message(self, line: str, all_lines: list[str], lineno: int):
         """
         Parse a BO_ line and its following SG_ (signal) lines.
 
@@ -220,7 +217,7 @@ class DBCParser:
         self._by_name[msg_name] = msg
 
     # ------------------------------------------------------------------
-    def _parse_signal(self, line: str) -> Optional[Signal]:
+    def _parse_signal(self, line: str) -> Signal | None:
         """
         Parse a single SG_ line.
 
@@ -307,7 +304,7 @@ class DBCParser:
         )
 
     # ------------------------------------------------------------------
-    def _parse_comments(self, lines: List[str]):
+    def _parse_comments(self, lines: list[str]):
         """Parse CM_ entries for message and signal comments."""
         for line in lines:
             stripped = line.strip()
@@ -400,7 +397,7 @@ def battery_dbc_content() -> str:
     Return a DBC string describing the standard battery telemetry messages
     used by this framework (CAN 2.0B + J1939).
     """
-    return '''VERSION "EV-QA-Framework v1.0"
+    return """VERSION "EV-QA-Framework v1.0"
 
 BS_:
 
@@ -445,11 +442,12 @@ CM_ BO_ 65273 "J1939 PGN 0xFEF9: SOC and SOH";
 CM_ SG_ 257 Voltage "Battery pack voltage (0.1V resolution)";
 CM_ SG_ 258 Temperature "Battery temperature in Celsius";
 CM_ SG_ 65270 CellTemp_1 "Cell 1 temperature";
-'''
+"""
 
 def builtin_dbc() -> DBCParser:
     """Return a DBCParser loaded with the built-in battery definition."""
-    import tempfile, os
+    import os
+    import tempfile
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
     tmp.write(battery_dbc_content())
     tmp.close()

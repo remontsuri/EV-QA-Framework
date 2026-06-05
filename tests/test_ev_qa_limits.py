@@ -1,11 +1,12 @@
-from typing import Literal
 import pytest
 from pydantic import ValidationError
+
 from ev_qa_framework.framework import EVQAFramework
 from ev_qa_framework.models import BatteryTelemetryModel
 
+
 class TestEVQAFrameworkLimts:
-    
+
     def setup_method(self):
         self.qa = EVQAFramework("Limit-Tester")
         self.vin = "TESTVEHCLE0123456"

@@ -1,7 +1,7 @@
 """Tests for CellBalanceAnalyzer."""
 
 import pytest
-import numpy as np
+
 from ev_qa_framework.cell_balance import CellBalanceAnalyzer
 
 

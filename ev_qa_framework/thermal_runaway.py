@@ -6,7 +6,7 @@ Thermal Runaway Prediction Module.
 - ml: Isolation Forest на темповых признаках
 """
 
-from typing import Dict, Optional
+
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
@@ -31,8 +31,8 @@ class ThermalRunawayPredictor:
     def __init__(
         self,
         mode: str = "rule",
-        rule_weights: Optional[Dict[str, float]] = None,
-        thresholds: Optional[Dict[str, float]] = None,
+        rule_weights: dict[str, float] | None = None,
+        thresholds: dict[str, float] | None = None,
         contamination: float = 0.1,
         random_state: int = 42,
     ):
@@ -65,7 +65,7 @@ class ThermalRunawayPredictor:
                 n_estimators=100,
             )
 
-    def analyze_temperature_trend(self, df_recent: pd.DataFrame) -> Dict[str, float]:
+    def analyze_temperature_trend(self, df_recent: pd.DataFrame) -> dict[str, float]:
         """
         Извлечение темповых признаков из DataFrame.
 
@@ -94,7 +94,7 @@ class ThermalRunawayPredictor:
             "dt_dt": max_dt,
         }
 
-    def predict_risk(self, df_recent: pd.DataFrame) -> Dict:
+    def predict_risk(self, df_recent: pd.DataFrame) -> dict:
         """
         Прогноз риска thermal runaway.
 
@@ -124,7 +124,7 @@ class ThermalRunawayPredictor:
 
         risk_score = (
             features["temp_rise_rate"] * self.rule_weights["rise_rate"]
-            + features["max_temp"] * self.rule_weights["max_temp"]
+            + max(0, features["max_temp"] - 50) * self.rule_weights["max_temp"]
             + anomaly_score * self.rule_weights["anomaly"]
             + features["dt_dt"] * self.rule_weights["dt_dt"]
         )

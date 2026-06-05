@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from ev_qa_framework.analysis import EVBatteryAnalyzer
 from ev_qa_framework.models import BatteryCellDataModel
+from ev_qa_framework.thermal_runaway import ThermalRunawayPredictor
 
 def simulate_tesla_pack_data(vin="5YJSA1E26HF000337", num_cells=96):
     """Simulates 96 cell group voltages for a Tesla Model S/X pack."""
@@ -42,9 +43,10 @@ def main():
         'temp': [35.0, 36.5, 38.2, 40.5, 43.1, 46.8, 51.2, 56.5, 62.1, 68.5]
     })
 
-    risk_results = analyzer.predict_thermal_runaway_risk(time_series)
-    print(f"   Current Temp: {risk_results['current_temp']}°C")
-    print(f"   Temp Rise Rate: {risk_results['avg_temp_rise_rate']:.2f}°C/sample")
+    predictor = ThermalRunawayPredictor(mode="rule")
+    risk_results = predictor.predict_risk(time_series)
+    print(f"   Current Temp: {risk_results['max_temp']}°C")
+    print(f"   Temp Rise Rate: {risk_results['temp_rise_rate']:.2f}°C/sample")
     print(f"   Risk Level: {risk_results['risk_level']}")
     print(f"   Risk Score: {risk_results['risk_score']:.2f}")
 

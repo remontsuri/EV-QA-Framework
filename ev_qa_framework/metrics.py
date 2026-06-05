@@ -6,7 +6,7 @@ text format so they can be scraped by a Prometheus server or consumed
 directly by Grafana via the built-in Prometheus datasource.
 """
 
-from prometheus_client import Gauge, Counter
+from prometheus_client import Counter, Gauge
 
 # -- Battery state gauges (instantaneous readings) --
 

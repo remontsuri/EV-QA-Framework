@@ -5,12 +5,13 @@ Uses statistical methods, configurable thresholds, and linear regression trend
 prediction to identify cell imbalance conditions before they become critical.
 """
 
-import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # no-display backend for headless/server use
+import numpy as np
+
+matplotlib.use("Agg")  # no-display backend for headless/server use
+
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
-from typing import List, Optional, Tuple, Dict
 
 
 class CellBalanceAnalyzer:
@@ -48,7 +49,7 @@ class CellBalanceAnalyzer:
         self.outlier_abs_deviation = outlier_abs_deviation
         self.trend_window = trend_window
 
-    def compute_statistics(self, voltages: List[float]) -> Dict[str, float]:
+    def compute_statistics(self, voltages: list[float]) -> dict[str, float]:
         """
         Compute basic statistics of cell voltages.
 
@@ -73,7 +74,7 @@ class CellBalanceAnalyzer:
             "max_min_imbalance": float(np.max(arr) - np.min(arr)),
         }
 
-    def detect_outliers(self, voltages: List[float]) -> List[int]:
+    def detect_outliers(self, voltages: list[float]) -> list[int]:
         """
         Identify indices of outlier cells based on voltage thresholds.
 
@@ -94,7 +95,7 @@ class CellBalanceAnalyzer:
 
         lower = mean - self.outlier_std_factor * std
         upper = mean + self.outlier_std_factor * std
-        outliers: List[int] = []
+        outliers: list[int] = []
         for idx, v in enumerate(arr):
             if v < lower or v > upper:
                 outliers.append(idx)
@@ -103,7 +104,7 @@ class CellBalanceAnalyzer:
                     outliers.append(idx)
         return sorted(outliers)
 
-    def classify_severity(self, voltages: List[float]) -> str:
+    def classify_severity(self, voltages: list[float]) -> str:
         """
         Classify overall imbalance severity based on max-min difference.
 
@@ -119,8 +120,8 @@ class CellBalanceAnalyzer:
         return "CRITICAL"
 
     def predict_trend(
-        self, timeline_measurements: List[List[float]]
-    ) -> Tuple[float, float]:
+        self, timeline_measurements: list[list[float]]
+    ) -> tuple[float, float]:
         """
         Fit linear regression to max-min imbalance over recent snapshots.
 
@@ -155,8 +156,8 @@ class CellBalanceAnalyzer:
 
     def plot_imbalance(
         self,
-        timeline_voltages: List[List[float]],
-        save_path: Optional[str] = "imbalance_plot.png",
+        timeline_voltages: list[list[float]],
+        save_path: str | None = "imbalance_plot.png",
     ) -> None:
         """
         Plot max-min imbalance over time and save to file.

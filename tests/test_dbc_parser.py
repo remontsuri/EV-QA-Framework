@@ -1,10 +1,11 @@
 """Tests for DBCParser."""
 
-import pytest
 import os
 import tempfile
-from ev_qa_framework.dbc_parser import DBCParser, builtin_dbc, battery_dbc_content
 
+import pytest
+
+from ev_qa_framework.dbc_parser import DBCParser, battery_dbc_content, builtin_dbc
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -13,7 +14,7 @@ from ev_qa_framework.dbc_parser import DBCParser, builtin_dbc, battery_dbc_conte
 @pytest.fixture
 def minimal_dbc():
     """Create a minimal temporary DBC file."""
-    content = '''VERSION "1.0"
+    content = """VERSION "1.0"
 
 BS_:
 
@@ -25,7 +26,7 @@ BO_ 257 TestMessage: 8 TEST_ECU
 
 CM_ BO_ 257 "Test message";
 CM_ SG_ 257 Voltage "Battery voltage";
-'''
+"""
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
     tmp.write(content)
     tmp.close()

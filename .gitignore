@@ -28,6 +28,7 @@ quickstart.py
 
 # Virtual environments
 venv/
+.venv/
 env/
 ENV/
 
@@ -47,10 +48,18 @@ htmlcov/
 *.log
 logs/
 
+# Cache
+.cache/
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Project specific
+.hermes/
+.ruff_cache/
+.venv-fresh/
+*.egg-info.old/
+build_tmp_old/
 tesla_battery_report.json
 results.json
