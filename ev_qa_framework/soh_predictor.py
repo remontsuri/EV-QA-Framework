@@ -43,7 +43,7 @@ class SOHPredictor:
         self.is_trained = False
 
     def _build_model(self, input_shape: tuple[int, int]):
-        tf = _import_tensorflow()
+        _import_tensorflow()
         from tensorflow.keras.layers import LSTM, Dense, Dropout
         from tensorflow.keras.models import Sequential
         model = Sequential([

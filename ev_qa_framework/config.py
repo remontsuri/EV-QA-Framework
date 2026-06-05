@@ -8,13 +8,20 @@ EV-QA-Framework Configuration Module
 import json
 import os
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .chemistries import ChemistryKey
+else:
+    # Runtime alias — str is accepted; ChemistryKey is only for static checkers
+    ChemistryKey = str
 
 
 @dataclass
 class SafetyThresholds:
     """
     Пороги безопасности для валидации телеметрии батареи.
-    
+
     Attributes:
         max_temperature: Максимальная безопасная температура (°C)
         min_voltage: Минимальное безопасное напряжение (V)
@@ -75,7 +82,7 @@ class SafetyThresholds:
 class MLConfig:
     """
     Конфигурация для ML-анализатора аномалий.
-    
+
     Attributes:
         contamination: Ожидаемая доля аномалий (0.0 - 1.0)
         n_estimators: Количество деревьев в Isolation Forest
@@ -111,8 +118,10 @@ class MLConfig:
 class FrameworkConfig:
     """
     Главная конфигурация EV-QA-Framework.
-    
+
     Объединяет все настройки: пороги безопасности, ML-конфиг.
+    Поддерживает выбор химии батареи через *chemistry* — при указании
+    пороги безопасности могут быть автоматически заполнены из профиля.
     """
 
     safety_thresholds: SafetyThresholds = field(default_factory=SafetyThresholds)
@@ -122,24 +131,71 @@ class FrameworkConfig:
     # за отказ теста и увеличивают счетчик failed; по умолчанию False.
     fail_on_anomaly: bool = False
 
+    # --- Chemistry profile integration ---
+    # Идентификатор химии: "lfp", "nmc", "nca" (или None для ручной настройки).
+    chemistry: ChemistryKey | None = None
+    # Количество ячеек в последовательной сборке (для расчёта pack-напряжения).
+    cells_in_series: int = 96
+
+    def __post_init__(self) -> None:
+        """Авто-заполнение safety_thresholds из профиля химии, если указана."""
+        FrameworkConfig._apply_chemistry(self)
+
+    @staticmethod
+    def _apply_chemistry(cfg: FrameworkConfig) -> None:
+        """Internal helper to populate safety thresholds from a chemistry profile."""
+        if cfg.chemistry is None:
+            return
+        # Lazy import to avoid circular dependency at module level
+        from .chemistries import get_profile  # fmt: skip
+
+        profile = get_profile(cfg.chemistry)
+        safe = profile.to_safety_thresholds_dict(cells_in_series=cfg.cells_in_series)
+        cfg.safety_thresholds = SafetyThresholds.from_dict(safe)
+
+    def get_chemistry_profile(self) -> Any | None:
+        """Return the ``BatteryChemistryProfile`` for the selected *chemistry*, or ``None``."""
+        if self.chemistry is None:
+            return None
+        from .chemistries import get_profile  # fmt: skip
+
+        return get_profile(self.chemistry)
+
+    def configure_from_chemistry(self) -> FrameworkConfig:
+        """Explicitly populate *safety_thresholds* from the selected chemistry profile.
+
+        Useful when you constructed ``FrameworkConfig(chemistry=\"lfp\")`` without
+        thresholds being auto-applied (e.g. after JSON deserialisation that
+        included explicit thresholds in the file).
+        """
+        FrameworkConfig._apply_chemistry(self)
+        return self
+
     def to_dict(self) -> dict:
         """Конвертация в словарь"""
-        return {
+        d: dict = {
             "safety_thresholds": self.safety_thresholds.to_dict(),
             "ml_config": self.ml_config.to_dict(),
             "default_vin": self.default_vin,
-            "fail_on_anomaly": self.fail_on_anomaly
+            "fail_on_anomaly": self.fail_on_anomaly,
         }
+        if self.chemistry is not None:
+            d["chemistry"] = self.chemistry
+            d["cells_in_series"] = self.cells_in_series
+        return d
 
     @classmethod
     def from_dict(cls, data: dict) -> 'FrameworkConfig':
         """Создание из словаря"""
-        return cls(
+        cfg = cls(
             safety_thresholds=SafetyThresholds.from_dict(data.get("safety_thresholds", {})),
             ml_config=MLConfig.from_dict(data.get("ml_config", {})),
             default_vin=data.get("default_vin", "TESTVEHCLE0123456"),
-            fail_on_anomaly=data.get("fail_on_anomaly", False)
+            fail_on_anomaly=data.get("fail_on_anomaly", False),
+            chemistry=data.get("chemistry"),
+            cells_in_series=data.get("cells_in_series", 96),
         )
+        return cfg
 
     def save_to_file(self, filepath: str) -> None:
         """Сохранение конфигурации в JSON файл"""
@@ -158,23 +214,16 @@ class FrameworkConfig:
         return cls.from_dict(data)
 
 
-# Глобальная дефолтная конфигурация
-DEFAULT_CONFIG = FrameworkConfig()
+# Глобальная дефолтная конфигурация (NMC, 96s)
+DEFAULT_CONFIG = FrameworkConfig(chemistry="nmc")
 
 # Специальный профиль для Tesla Potesti
 # Пороговые значения подобраны под реальные параметры батарей Tesla
 TESLA_CONFIG = FrameworkConfig(
-    safety_thresholds=SafetyThresholds(
-        max_temperature=55.0,
-        min_temperature=-20.0,
-        max_temperature_jump=8.0,
-        min_voltage=250.0,
-        max_voltage=450.0,
-        min_soc=20.0,
-        critical_soh=75.0
-    ),
+    chemistry="nca",
+    cells_in_series=108,  # Model S 108s (~400 V nominal)
     default_vin="5YJSA1E26HF000337",  # пример валидного 17-символьного VIN
-    fail_on_anomaly=True
+    fail_on_anomaly=True,
 )
 
 

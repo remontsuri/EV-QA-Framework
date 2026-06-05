@@ -37,7 +37,7 @@ class EVQAFramework:
     def __init__(self, name: str = "EV-QA-Tester", config: FrameworkConfig | None = None):
         """
         Инициализация QA Framework.
-        
+
         Args:
             name: Название экземпляра фреймворка
             config: Кастомная конфигурация (если None, используется дефолтная)
@@ -78,7 +78,7 @@ class EVQAFramework:
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
         """
         Валидация телеметрии батареи относительно порогов безопасности.
-        
+
         Использует пороги из self.config.safety_thresholds.
         """
         thresholds = self.config.safety_thresholds

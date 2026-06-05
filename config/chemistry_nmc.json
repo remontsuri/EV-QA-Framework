@@ -1,0 +1,37 @@
+{
+  "name": "NMC (Standard Li-ion)",
+  "short_name": "nmc",
+  "manufacturer": "LG / Samsung SDI / Panasonic",
+  "description": "Lithium Nickel Manganese Cobalt Oxide — high energy density, good power. Most common EV chemistry. Used in LG Chem, Samsung SDI packs.",
+  "cell_nominal_voltage": 3.7,
+  "cell_min_voltage": 3.0,
+  "cell_max_voltage": 4.2,
+  "cell_max_charge_current": 1.0,
+  "cell_max_discharge_current": 3.0,
+  "temp_min_charge": 0.0,
+  "temp_max_charge": 45.0,
+  "temp_min_discharge": -20.0,
+  "temp_max_discharge": 60.0,
+  "temp_max_jump": 5.0,
+  "temp_optimal_min": 15.0,
+  "temp_optimal_max": 35.0,
+  "overcharge_voltage": 4.25,
+  "overdischarge_voltage": 2.7,
+  "thermal_runaway_temp": 80.0,
+  "gas_venting_temp": 70.0,
+  "soh_params": {
+    "cycle_life_min": 1000,
+    "cycle_life_max": 2000,
+    "deg_knee_point_soh": 80.0,
+    "annual_fade_rate_pct": 2.0,
+    "calendric_fade_pct_per_year": 4.0
+  },
+  "balance": {
+    "max_delta_mv": 100.0,
+    "warning_delta_mv": 50.0,
+    "recovery_rate_mv_per_h": 15.0
+  },
+  "min_soc_pct": 10.0,
+  "max_soc_pct": 95.0,
+  "critical_soh_pct": 70.0
+}

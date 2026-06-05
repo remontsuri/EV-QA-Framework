@@ -22,12 +22,12 @@ warnings.filterwarnings("ignore")
 class EVBatteryAnalyzer:
     """
     ML-анализатор телеметрии батареи EV на основе алгоритма Isolation Forest.
-    
+
     Isolation Forest — это алгоритм обнаружения аномалий, который изолирует выбросы
     путем случайного выбора признака и затем случайного выбора значения разделения
     между максимумом и минимумом выбранного признака. Аномалии изолируются быстрее,
     чем нормальные точки данных.
-    
+
     Attributes:
         model: Модель IsolationForest из scikit-learn
         scaler: StandardScaler для нормализации данных
@@ -39,7 +39,7 @@ class EVBatteryAnalyzer:
                  critical_threshold: float = -0.8, warning_threshold: float = -0.5):
         """
         Инициализация анализатора телеметрии.
-        
+
         Args:
             contamination: Ожидаемая доля аномалий в данных (0.0 - 1.0).
                           Например, 0.1 означает, что ~10% данных могут быть аномальными.
@@ -48,7 +48,7 @@ class EVBatteryAnalyzer:
             random_state: Seed для воспроизводимости результатов.
             critical_threshold: Порог для CRITICAL severity (по умолчанию -0.8)
             warning_threshold: Порог для WARNING severity (по умолчанию -0.5)
-        
+
         Примечание:
             - contamination влияет на чувствительность: меньше значение = меньше ложных срабатываний
             - n_estimators рекомендуется 100+ для стабильных результатов
@@ -78,25 +78,25 @@ class EVBatteryAnalyzer:
     def analyze_telemetry(self, df_telemetry: pd.DataFrame) -> dict[str, Any]:
         """
         Анализ телеметрии батареи на предмет аномалий.
-        
+
         Алгоритм:
         1. Нормализация данных через StandardScaler (приведение к одной шкале)
         2. Обучение IsolationForest на нормализованных данных
         3. Предсказание аномалий (-1 = аномалия, 1 = норма)
         4. Расчет anomaly scores (чем меньше, тем более аномальная точка)
         5. Оценка серьезности на основе минимального score
-        
+
         Args:
             df_telemetry: DataFrame с колонками ['voltage', 'current', 'temp', 'soc'].
                          Каждая строка — это один момент времени.
-        
+
         Returns:
             Словарь с результатами анализа:
                 - total_samples: Общее количество точек данных
                 - anomalies_detected: Количество обнаруженных аномалий
                 - anomaly_percentage: Процент аномалий от общего числа
                 - severity: Уровень серьезности ('CRITICAL', 'WARNING', 'INFO')
-        
+
         Пример:
             >>> df = pd.DataFrame({
             ...     'voltage': [48, 48, 200],  # 200 — аномалия
@@ -162,7 +162,7 @@ class EVBatteryAnalyzer:
     def _assess_severity(self, scores: np.ndarray) -> str:
         """
         Оценка уровня серьезности обнаруженных аномалий.
-        
+
         Логика оценки:
         - CRITICAL: Есть экстремальные выбросы (score < critical_threshold)
                    Требуется немедленное внимание — возможна критическая неисправность
@@ -170,13 +170,13 @@ class EVBatteryAnalyzer:
                   Требуется проверка — возможна деградация системы
         - INFO: Слабые аномалии или их отсутствие (score >= warning_threshold)
                Система в норме, аномалии незначительны
-        
+
         Args:
             scores: Массив anomaly scores из IsolationForest
-        
+
         Returns:
             Строка с уровнем серьезности: 'CRITICAL', 'WARNING' или 'INFO'
-        
+
         Примечание:
             Пороги настраиваются через параметры конструктора и могут корректироваться
             под конкретную систему на основе исторических данных.
@@ -192,23 +192,23 @@ class EVBatteryAnalyzer:
     def save_model(self, filepath: str, metadata: dict[str, Any] | None = None) -> None:
         """
         Сохранение обученной модели и scaler в файл.
-        
+
         Сохраняет:
         - Обученную модель IsolationForest
         - Обученный StandardScaler
         - Параметры модели (contamination, thresholds, etc.)
         - Метаданные (дата обучения, версия, комментарии)
-        
+
         Args:
             filepath: Путь для сохранения модели (без расширения, добавится .joblib)
             metadata: Опциональные метаданные (комментарии, версия, dataset info)
-        
+
         Пример:
             >>> analyzer = EVBatteryAnalyzer()
             >>> analyzer.analyze_telemetry(df)
-            >>> analyzer.save_model('models/battery_analyzer_v1', 
+            >>> analyzer.save_model('models/battery_analyzer_v1',
             ...                     metadata={'version': '1.0', 'dataset': 'Tesla_2024'})
-        
+
         Raises:
             ValueError: Если модель не обучена (не был вызван analyze_telemetry)
         """
@@ -247,20 +247,20 @@ class EVBatteryAnalyzer:
     def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
         """
         Загрузка сохраненной модели из файла.
-        
+
         Загружает все компоненты модели и создает новый экземпляр EVBatteryAnalyzer
         с восстановленным состоянием.
-        
+
         Args:
             filepath: Путь к сохраненной модели (.joblib)
-        
+
         Returns:
             Новый экземпляр EVBatteryAnalyzer с загруженной моделью
-        
+
         Пример:
             >>> analyzer = EVBatteryAnalyzer.load_model('models/battery_analyzer_v1.joblib')
             >>> results = analyzer.analyze_telemetry(new_data)
-        
+
         Raises:
             FileNotFoundError: Если файл не найден
             ValueError: Если файл поврежден или имеет неверный формат
@@ -304,7 +304,7 @@ class EVBatteryAnalyzer:
     def get_model_info(self) -> dict[str, Any]:
         """
         Получение информации о текущей модели.
-        
+
         Returns:
             Словарь с параметрами модели
         """
@@ -355,11 +355,11 @@ class EVBatteryAnalyzer:
 class AnomalyDetector(EVBatteryAnalyzer):
     """
     Расширенный класс-детектор аномалий с раздельными методами train/detect.
-    
+
     Этот класс позволяет:
     1. Обучить модель на "нормальных" данных (train)
     2. Использовать обученную модель для детекции на новых данных (detect)
-    
+
     Это полезно в продакшене, когда модель обучается один раз на исторических
     данных, а затем используется для real-time детекции.
     """
@@ -367,7 +367,7 @@ class AnomalyDetector(EVBatteryAnalyzer):
     def __init__(self, contamination: float = 0.01, n_estimators: int = 200, random_state: int = 42):
         """
         Инициализация детектора аномалий.
-        
+
         Args:
             contamination: Ожидаемая доля аномалий (по умолчанию 0.01 = 1%).
                           Для обучения на "чистых" данных используйте малое значение.
@@ -380,14 +380,14 @@ class AnomalyDetector(EVBatteryAnalyzer):
     def train(self, data: pd.DataFrame) -> None:
         """
         Обучение модели на "нормальных" данных.
-        
+
         Рекомендуется использовать данные без аномалий для обучения,
         чтобы модель научилась распознавать нормальное поведение батареи.
-        
+
         Args:
             data: DataFrame с колонками ['voltage', 'current', 'temp', 'soc'].
                   Данные должны содержать преимущественно нормальные значения.
-        
+
         Пример:
             >>> normal_data = pd.DataFrame({
             ...     'voltage': np.random.normal(48, 1, 1000),
@@ -412,18 +412,18 @@ class AnomalyDetector(EVBatteryAnalyzer):
     def detect(self, data: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         """
         Детекция аномалий на новых данных с использованием обученной модели.
-        
+
         Args:
             data: DataFrame с новой телеметрией для анализа.
-        
+
         Returns:
             Кортеж (predictions, scores):
                 - predictions: Массив предсказаний (-1 = аномалия, 1 = норма)
                 - scores: Массив anomaly scores
-        
+
         Raises:
             ValueError: Если модель не обучена (нужно сначала вызвать train)
-        
+
         Пример:
             >>> new_data = pd.DataFrame({
             ...     'voltage': [48, 200],  # 200 — аномалия

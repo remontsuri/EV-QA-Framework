@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ev-qa-framework"
-version = "1.0.0"
+version = "1.1.0"
 description = "ML-powered QA Framework for Electric Vehicle & IoT Battery Testing"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -87,6 +87,7 @@ target-version = "py38"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+ignore = ["E402", "E501", "F401", "N806"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

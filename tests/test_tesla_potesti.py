@@ -9,7 +9,8 @@ from ev_qa_framework.framework import EVQAFramework
 
 def test_tesla_configuration_valid():
     """Проверяем что профиль Tesla корректно создаётся"""
-    assert TESLA_CONFIG.safety_thresholds.max_voltage == 450.0
+    # NCA 108s: 4.2 * 108 = 453.6 V (chemically correct vs old hardcoded 450.0)
+    assert TESLA_CONFIG.safety_thresholds.max_voltage == pytest.approx(453.6)
     assert TESLA_CONFIG.fail_on_anomaly is True
     assert len(TESLA_CONFIG.default_vin) == 17
 
@@ -31,6 +32,6 @@ async def test_tesla_normal_and_spike():
 async def test_tesla_vin_format():
     """VIN в профиле должен проходить валидацию"""
     qa = EVQAFramework(config=TESLA_CONFIG)
-    data = {"voltage": 300.0, "current": 50.0, "temperature": 25.0, "soc": 90.0, "soh": 98.0}
+    data = {"voltage": 350.0, "current": 50.0, "temperature": 25.0, "soc": 90.0, "soh": 98.0}
     result = await qa.run_test_suite([data])
     assert result["passed"] == 1

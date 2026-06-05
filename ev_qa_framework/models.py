@@ -30,7 +30,7 @@ class BatteryCellDataModel(BaseModel):
 class BatteryTelemetryModel(BaseModel):
     """
     Строгая модель телеметрии батареи EV с автоматической валидацией.
-    
+
     Поля:
         vin: VIN автомобиля (Vehicle Identification Number)
         voltage: Напряжение батареи в вольтах (0-1000V)
