@@ -42,7 +42,6 @@ dependencies = [
     "scikit-learn>=1.2",
     "pandas>=2.0",
     "numpy>=1.24",
-    "python-can>=4.3",
     "pydantic>=2.0",
     "fastapi>=0.100",
     "uvicorn>=0.23",
@@ -64,6 +63,7 @@ Changelog = "https://github.com/remontsuri/EV-QA-Framework/blob/main/CHANGELOG.m
 
 [project.optional-dependencies]
 ml = ["tensorflow>=2.15"]
+hardware = ["python-can>=4.3", "pyserial>=3.5"]
 dev = [
     "black>=22.0",
     "flake8>=4.0",
