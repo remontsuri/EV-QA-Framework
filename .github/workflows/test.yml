@@ -27,10 +27,10 @@ jobs:
 
       - name: Install deps
         run: |
-          uv sync --no-extra ml --no-extra dev
+          ~/.local/bin/uv sync --no-extra ml --no-extra dev
 
       - name: Lint
-        run: uv run ruff check ev_qa_framework/
+        run: ~/.local/bin/uv run ruff check ev_qa_framework/
 
       - name: Test
-        run: uv run pytest tests/ --cov=ev_qa_framework --tb=short -x -k "not soh" --ignore=tests/test_soh_predictor.py
+        run: ~/.local/bin/uv run pytest tests/ --cov=ev_qa_framework --tb=short -x -k "not soh" --ignore=tests/test_soh_predictor.py
