@@ -20,7 +20,6 @@ import time
 from typing import Any
 
 import can
-import serial
 
 from .dbc_parser import DBCParser, battery_dbc_content
 
@@ -639,7 +638,7 @@ class OBD2Adapter:
 
             return result
 
-        except (OSError, serial.SerialException) as e:
+        except (OSError, serial.SerialException) as e:  # noqa: F821
             logger.warning("OBD-II serial error on command %s: %s", command, e)
             self._handle_serial_error()
             return None
