@@ -18,7 +18,7 @@ from .models import BatteryCellDataModel, BatteryTelemetryModel
 from .soh_predictor import SOHPredictor
 from .thermal_runaway import ThermalRunawayPredictor
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __all__ = [
     "EVQAFramework",
     "BatteryTelemetryModel",

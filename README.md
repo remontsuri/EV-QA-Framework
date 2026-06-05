@@ -5,47 +5,47 @@
 ![CI](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/test.yml/badge.svg)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
-ML-powered QA framework for electric vehicle battery systems. Validates BMS telemetry, detects anomalies, predicts SOH degradation, and emulates CAN bus traffic — no commercial licenses, MIT licensed.
+ML-powered QA framework for electric vehicle battery systems. Validates BMS telemetry, detects anomalies, predicts SOH degradation, emulates CAN bus traffic, and evaluates thermal runaway risk — MIT licensed.
 
 ## What it does
 
 **Telemetry validation.** Pydantic schemas for voltage, current, temperature, SOC, SOH. Catches bad VINs, out-of-range values at the input layer.
 
-**ML anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, and number of estimators. Outputs anomaly list with severity (INFO / WARNING / CRITICAL).
+**ML anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, and number of estimators.
 
-**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry. TensorFlow is optional — the package works without it.
+**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry (TensorFlow optional).
 
-**Cell imbalance analysis.** Statistical analysis of cell group voltages: mean, median, std, max-min imbalance. Auto-detects outliers by std deviation and absolute deviation. Classifies severity, builds trend via linear regression, exports plots.
+**Cell imbalance analysis.** Statistical analysis of cell group voltages with configurable thresholds, outlier detection, linear regression trend, and plot export.
 
-**Thermal runaway prediction.** Two modes: rule-based with adjustable weights (dT/dt, max temperature, anomaly score) and ML (Isolation Forest on thermal features). Triggers CRITICAL at >65°C or heating rate >5°C/min.
+**Thermal runaway prediction.** Standalone `ThermalRunawayPredictor` with two modes:
+  - **rule** — configurable heuristic with adjustable weights (dT/dt, temperature, anomaly score)
+  - **ml** — Isolation Forest on thermal features
+  CRITICAL trigger at >65°C or heating rate >5°C/min.
 
-**CAN bus.** CAN 2.0B (11-bit ID) and J1939 (29-bit extended, PGN 0xFEF6-0xFEF9) simulation and reception. DBC parser: reads Vector CANdb format, decodes signals (Intel/Motorola byte order, signed/unsigned), compatible with SavvyCAN exports.
+**CAN bus.** CAN 2.0B (11-bit ID) and J1939 (29-bit extended) simulation and reception. DBC parser supports Vector CANdb format, SavvyCAN exports, Intel/Motorola byte order, signed/unsigned signals.
 
-**Dashboard.** FastAPI + WebSocket + Chart.js. Real-time telemetry: voltage, current, temperature, SOC/SOH, anomalies, cell voltage heatmap.
+**Dashboard.** FastAPI + WebSocket + Chart.js. Real-time telemetry and Prometheus `/metrics` endpoint with ready-to-import Grafana dashboard.
 
-**Prometheus metrics.** `/metrics` endpoint with temperature, voltage, current, SOC, SOH, anomaly counter (by severity), cell imbalance max. Ready-to-import Grafana dashboard in `dashboard/grafana/dashboard.json`.
-
-**CI/CD.** GitHub Actions: tests on 4 Python versions, ruff linting, release pipeline for PyPI.
+**CLI.** Analyze CSV telemetry, run CAN emulation, train SOH models, start dashboard.
 
 ## Quick start
 
 ```bash
-# Install directly from GitHub (no PyPI account needed)
+# Install from GitHub
 pip install git+https://github.com/remontsuri/EV-QA-Framework.git
-# or from a release: pip install https://github.com/remontsuri/EV-QA-Framework/releases/download/v1.0.0/ev_qa_framework-1.0.0.tar.gz
 
-# launch dashboard
+# Launch dashboard
 python -m ev_qa_framework.cli dashboard
 # → http://localhost:8000
 # → http://localhost:8000/metrics (Prometheus)
 
-# analyze a CSV
+# Analyze a CSV
 python -m ev_qa_framework.cli analyze -i examples/tesla_model_s_defective.csv -o report.json
 
-# CAN simulation from DBC file
+# CAN simulation from DBC
 python -m ev_qa_framework.cli emulate --dbc my_battery.dbc --duration 60
 
-# run tests
+# Run tests
 python -m pytest -v
 ```
 
@@ -63,7 +63,7 @@ data = {
     "soc": 78.5,
     "soh": 96.2
 }
-telemetry = validate_telemetry(data)  # Pydantic, field_validator for VIN and SOC
+telemetry = validate_telemetry(data)
 ```
 
 **Anomaly detection:**
@@ -75,7 +75,6 @@ df = pd.read_csv("battery_telemetry.csv")
 detector = AnomalyDetector(contamination=0.01, n_estimators=200)
 detector.train(df[["voltage", "current", "temperature"]])
 predictions, scores = detector.detect(new_data)
-# predictions: 1 = normal, -1 = anomaly
 ```
 
 **Cell imbalance:**
@@ -84,11 +83,19 @@ from ev_qa_framework.cell_balance import CellBalanceAnalyzer
 
 analyzer = CellBalanceAnalyzer(warning_threshold=0.02, critical_threshold=0.05)
 cell_v = [3.30, 3.31, 3.305, 3.312, 3.29]
-
 print(analyzer.compute_statistics(cell_v))
-# {'mean': 3.30, 'max_min_imbalance': 0.022, ...}
 print(analyzer.classify_severity(cell_v))
-# WARNING
+```
+
+**Thermal runaway (recommended API):**
+```python
+from ev_qa_framework.thermal_runaway import ThermalRunawayPredictor
+import pandas as pd
+
+predictor = ThermalRunawayPredictor(mode="rule")
+df = pd.DataFrame({"temperature": [35, 37, 42, 58, 62]})
+risk = predictor.predict_risk(df)
+# {'risk_level': 'HIGH', 'risk_score': 8.3, 'confidence': 0.85, ...}
 ```
 
 **DBC parsing:**
@@ -97,23 +104,8 @@ from ev_qa_framework.dbc_parser import DBCParser
 
 dbc = DBCParser("tesla_battery.dbc")
 msg = dbc.get_message(0x101)
-print(msg.signals.keys())
-# dict_keys(['Voltage', 'Current'])
-
-data = bytes([0x7D, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-vals = dbc.decode(0x101, data)
+vals = dbc.decode(0x101, bytes([0x7D, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
 # {'Voltage': 396.5}
-```
-
-**Thermal runaway:**
-```python
-from ev_qa_framework.thermal_runaway import ThermalRunawayPredictor
-import pandas as pd
-
-predictor = ThermalRunawayPredictor(mode="rule")
-df = pd.DataFrame({"temperature": [35, 37, 42, 58, 62]})
-risk = predictor.predict_risk(df)
-# {'risk_level': 'HIGH', 'risk_score': 8.3, ...}
 ```
 
 ## Project structure
@@ -124,7 +116,7 @@ ev_qa_framework/
   models.py            # Pydantic models
   config.py            # thresholds and ML config
   analysis.py          # Isolation Forest, EVBatteryAnalyzer
-  soh_predictor.py     # LSTM for SOH (TF optional)
+  soh_predictor.py     # LSTM for SOH (TensorFlow optional)
   can_bus.py           # CAN 2.0B + J1939 simulation
   dbc_parser.py        # .dbc file parser (Vector CANdb + SavvyCAN)
   cell_balance.py      # cell voltage imbalance analysis
@@ -134,18 +126,36 @@ ev_qa_framework/
 dashboard/
   app.py               # FastAPI
   grafana/             # Grafana dashboard JSON
-tests/                 # 95+ tests
+tests/                 # 160+ tests
 ```
 
-## Deploy
+## Development
 
 ```bash
-# Docker
-docker compose -f docker-compose.prod.yml up -d
+# Clone and install dev dependencies
+git clone https://github.com/remontsuri/EV-QA-Framework.git
+cd EV-QA-Framework
+pip install -e .[dev,ml]
 
-# or build from source
-docker build -t ev-qa-framework .
+# Run linting
+ruff check .
+
+# Run tests
+pytest -v
 ```
+
+## Changelog
+
+### v1.1.0
+- Thermal runaway deduplicated — `ThermalRunawayPredictor` is the single API (removed duplicate from `EVBatteryAnalyzer`)
+- Fixed risk score calculation: temperature contribution uses deviation from 50°C, not absolute value
+- CLI `analyze` now handles both `temperature` and `temp` column names
+- Migrated `setup.py` → `pyproject.toml`, added `uv.lock`
+- Applied ruff auto-fixes across the codebase
+- Fixed `BatteryCellDataModel` import in package `__init__.py`
+- Fixed SOHPredictor type hint (`Sequential` → `Any`)
+- Fixed example in `framework.py` (`__main__`) — uses pack voltage (396V) instead of cell voltage (3.9V)
+- Removed stale `build/` artifacts
 
 ## Compatibility
 
