@@ -53,6 +53,7 @@ dependencies = [
     "aiofiles>=23.1",
     "matplotlib>=3.5",
     "prometheus-client>=0.17",
+    "pyserial>=3.5",
 ]
 
 [project.urls]
