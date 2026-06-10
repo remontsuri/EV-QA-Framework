@@ -40,6 +40,7 @@ class SOHPredictor:
         self.sequence_length = sequence_length
         self.model: Any | None = None
         self.scaler = MinMaxScaler()
+        self._feature_scaler = MinMaxScaler()
         self.is_trained = False
 
     def _build_model(self, input_shape: tuple[int, int]):
@@ -66,8 +67,10 @@ class SOHPredictor:
         features = ["voltage", "current", "temperature"]
         data = df[features + [target_col]].values
 
-        # Scale data
-        scaled_data = self.scaler.fit_transform(data)
+        # Scale features and target separately
+        self.scaler.fit(data)  # full scaler for inverse transform
+        self._feature_scaler.fit(data[:, :-1])  # feature-only scaler for predict
+        scaled_data = self.scaler.transform(data)
 
         x_seq, y_seq = [], []
         for i in range(len(scaled_data) - self.sequence_length):
@@ -104,16 +107,13 @@ class SOHPredictor:
 
         data = recent_telemetry[features].values[-self.sequence_length:]
 
-        # Let's fix the scaler logic in a real implementation
-        scaled_feat = self.scaler.transform(
-            np.hstack([data, np.zeros((len(data), 1))])
-        )[:, :-1]
+        # Scale features using feature-only scaler
+        scaled_feat = self._feature_scaler.transform(data)
 
         x_input = np.expand_dims(scaled_feat, axis=0)
         prediction_scaled = self.model.predict(x_input, verbose=0)
 
-        # Inverse scale prediction
-        # Create a dummy array for inverse transform
+        # Inverse scale prediction using full scaler
         dummy = np.zeros((1, 4))
         dummy[0, -1] = prediction_scaled[0, 0]
         prediction = self.scaler.inverse_transform(dummy)[0, -1]
@@ -127,10 +127,12 @@ class SOHPredictor:
         os.makedirs(path, exist_ok=True)
         self.model.save(os.path.join(path, "soh_lstm.keras"))
         joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
+        joblib.dump(self._feature_scaler, os.path.join(path, "feature_scaler.joblib"))
 
     def load(self, path: str):
         """Load the model and scaler"""
         from tensorflow.keras.models import load_model
         self.model = load_model(os.path.join(path, "soh_lstm.keras"))
         self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
+        self._feature_scaler = joblib.load(os.path.join(path, "feature_scaler.joblib"))
         self.is_trained = True

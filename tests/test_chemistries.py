@@ -327,17 +327,30 @@ class TestFrameworkConfigChemistryIntegration:
         finally:
             os.unlink(tmppath)
 
-    def test_config_chemistry_builtin_json_files(self):
-        """Verify that each config/chemistry_*.json file can be loaded and matches its profile."""
+    def test_config_chemistry_builtin_yaml_profiles(self):
+        """Verify that each chemistry profile in the unified YAML matches its built-in profile."""
+        import yaml
+
         base = os.path.join(os.path.dirname(__file__), "..", "config")
+        yaml_path = os.path.join(base, "settings.yaml")
+        assert os.path.exists(yaml_path), f"Missing unified config: {yaml_path}"
+
+        with open(yaml_path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f)
+
+        profiles = raw.get("profiles", {})
+        # Keys in the YAML profile that are NOT part of BatteryChemistryProfile
+        framework_keys = {
+            "safety_thresholds", "ml_config", "default_vin",
+            "fail_on_anomaly", "chemistry", "cells_in_series",
+        }
         for key in ALL_CHEMISTRIES:
-            path = os.path.join(base, f"chemistry_{key}.json")
-            assert os.path.exists(path), f"Missing config file: {path}"
-            with open(path, encoding="utf-8") as f:
-                data = json.load(f)
-            profile = BatteryChemistryProfile.from_dict(data)
-            assert profile.short_name == key
-            assert profile.name == BUILTIN_PROFILES[key].name
+            assert key in profiles, f"Missing profile '{key}' in settings.yaml"
+            # Strip framework-level keys so we can parse as BatteryChemistryProfile
+            profile_data = {k: v for k, v in profiles[key].items() if k not in framework_keys}
+            yaml_profile = BatteryChemistryProfile.from_dict(profile_data)
+            assert yaml_profile.short_name == key
+            assert yaml_profile.name == BUILTIN_PROFILES[key].name
 
 
 class TestFrameworkConfigRegression:

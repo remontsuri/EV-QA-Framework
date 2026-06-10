@@ -1,21 +1,32 @@
-version: '3.8'
+version: '3.9'
+
 services:
   ev-qa-tests:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ev_qa_framework
     environment:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./tests:/app/tests
       - ./results:/app/results
-    command: pytest tests/ -v --cov=ev_qa_framework --cov-report=html
+    command: python -m pytest tests/ -v --cov=ev_qa_framework --cov-report=html --tb=short
     ports:
       - "8080:8080"
 
   ev-qa-dashboard:
-    image: python:3.8-slim
+    image: python:3.11-slim
     container_name: ev_qa_dashboard
     working_dir: /app
     volumes:
-      - ./:/app
+      - ./results:/app/results:ro
     command: python -m http.server 8080 --directory /app/results
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

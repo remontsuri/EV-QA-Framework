@@ -8,7 +8,10 @@ EV-QA-Framework Configuration Module
 import json
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+import yaml
 
 if TYPE_CHECKING:
     from .chemistries import ChemistryKey
@@ -212,6 +215,42 @@ class FrameworkConfig:
         with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
         return cls.from_dict(data)
+
+    @classmethod
+    def load_from_yaml(cls, filepath: str, profile: str | None = None) -> 'FrameworkConfig':
+        """Загрузка конфигурации из единого YAML-файла.
+
+        Args:
+            filepath: Путь к YAML-файлу (например ``config/settings.yaml``).
+            profile:  Имя профиля из секции ``profiles``.
+                      Если ``None`` — используется профиль ``default``.
+                      Если профиль содержит ключ ``chemistry``, пороги
+                      автоматически заполняются из встроенного профиля химии
+                      через механизм ``__post_init__``.
+        """
+        path = Path(filepath)
+        if not path.exists():
+            return cls()
+
+        with open(path, encoding="utf-8") as fh:
+            raw: dict = yaml.safe_load(fh) or {}
+
+        # Determine the profile name
+        profile_name = profile or "default"
+        profiles = raw.get("profiles", {})
+
+        if profiles and profile_name in profiles:
+            data = profiles[profile_name]
+        elif profile_name != "default":
+            # Fall back to default if named profile not found
+            data = profiles.get("default", {})
+        else:
+            data = {}
+
+        # If the profile section is just a dict (not a full FrameworkConfig dict),
+        # normalise it via from_dict which handles missing keys gracefully.
+        cfg = cls.from_dict(data)
+        return cfg
 
 
 # Глобальная дефолтная конфигурация (NMC, 96s)

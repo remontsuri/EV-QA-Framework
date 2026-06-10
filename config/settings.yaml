@@ -1,3 +1,14 @@
+# 🔧 EV-QA-Framework — Unified Configuration
+# ==========================================
+# Single source of truth for all framework settings.
+# Profiles: default, tesla, lfp, nmc, nca
+# Usage:
+#   from ev_qa_framework import FrameworkConfig
+#   config = FrameworkConfig.load_from_yaml("config/settings.yaml", profile="tesla")
+
+# -------------------------------------------------------------------
+# Top-level application settings (non-profile)
+# -------------------------------------------------------------------
 battery:
   voltage_min: 3.0
   voltage_max: 4.3
@@ -25,3 +36,226 @@ can:
   channel: "vcan0"
   bustype: "virtual"
   bitrate: 500000
+
+# -------------------------------------------------------------------
+# Named profiles
+# -------------------------------------------------------------------
+profiles:
+
+  # ── default ──────────────────────────────────────────────────────
+  # Mirrors config/default_config.json
+  default:
+    safety_thresholds:
+      max_temperature: 60.0
+      min_temperature: -40.0
+      max_temperature_jump: 5.0
+      min_voltage: 200.0
+      max_voltage: 900.0
+      min_soc: 10.0
+      critical_soh: 70.0
+      max_current: 500.0
+    ml_config:
+      contamination: 0.1
+      n_estimators: 200
+      random_state: 42
+      critical_score_threshold: -0.8
+      warning_score_threshold: -0.5
+    default_vin: "TESTVEHCLE0123456"
+    fail_on_anomaly: false
+
+  # ── tesla ───────────────────────────────────────────────────────
+  # Mirrors config/tesla_config.json — strict thresholds for Tesla packs
+  tesla:
+    safety_thresholds:
+      max_temperature: 55.0
+      min_temperature: -30.0
+      max_temperature_jump: 3.0
+      min_voltage: 250.0
+      max_voltage: 450.0
+      min_soc: 15.0
+      critical_soh: 75.0
+      max_current: 600.0
+    ml_config:
+      contamination: 0.05
+      n_estimators: 250
+      random_state: 42
+      critical_score_threshold: -0.9
+      warning_score_threshold: -0.6
+    default_vin: "5YJ3E1EA8KF000001"
+    fail_on_anomaly: true
+    chemistry: nca
+    cells_in_series: 108
+
+  # ── lfp ─────────────────────────────────────────────────────────
+  # LFP (LiFePO₄) — BYD Blade, CATL prismatic cells
+  # Mirrors config/chemistry_lfp.json
+  lfp:
+    name: "LFP (CATL / BYD Blade)"
+    short_name: "lfp"
+    manufacturer: "CATL / BYD"
+    description: "Lithium Iron Phosphate — long cycle life, excellent thermal stability. Used in BYD Blade, CATL prismatic cells. Lower energy density but safer."
+    cell_nominal_voltage: 3.2
+    cell_min_voltage: 2.5
+    cell_max_voltage: 3.65
+    cell_max_charge_current: 1.0
+    cell_max_discharge_current: 3.0
+    temp_min_charge: -10.0
+    temp_max_charge: 55.0
+    temp_min_discharge: -30.0
+    temp_max_discharge: 65.0
+    temp_max_jump: 8.0
+    temp_optimal_min: 10.0
+    temp_optimal_max: 40.0
+    overcharge_voltage: 3.8
+    overdischarge_voltage: 2.3
+    thermal_runaway_temp: 120.0
+    gas_venting_temp: 90.0
+    soh_params:
+      cycle_life_min: 2000
+      cycle_life_max: 5000
+      deg_knee_point_soh: 80.0
+      annual_fade_rate_pct: 1.5
+      calendric_fade_pct_per_year: 2.5
+    balance:
+      max_delta_mv: 150.0
+      warning_delta_mv: 80.0
+      recovery_rate_mv_per_h: 8.0
+    min_soc_pct: 10.0
+    max_soc_pct: 95.0
+    critical_soh_pct: 65.0
+    # Framework-level overrides derived from chemistry
+    safety_thresholds:
+      max_temperature: 55.0
+      min_temperature: -30.0
+      max_temperature_jump: 8.0
+      min_voltage: 240.0
+      max_voltage: 350.4
+      min_soc: 10.0
+      critical_soh: 65.0
+      max_current: 720.0
+    ml_config:
+      contamination: 0.1
+      n_estimators: 200
+      random_state: 42
+      critical_score_threshold: -0.8
+      warning_score_threshold: -0.5
+    default_vin: "TESTVEHCLE0123456"
+    fail_on_anomaly: false
+    chemistry: lfp
+    cells_in_series: 96
+
+  # ── nca ─────────────────────────────────────────────────────────
+  # NCA (LiNiCoAlO₂) — Tesla-style cylindrical cells
+  # Mirrors config/chemistry_nca.json
+  nca:
+    name: "NCA (Tesla-style)"
+    short_name: "nca"
+    manufacturer: "Panasonic / Tesla (4680, 2170)"
+    description: "Lithium Nickel Cobalt Aluminium Oxide — highest energy density, used by Tesla in 18650, 2170, and 4680 form factors. Slightly shorter cycle life than NMC."
+    cell_nominal_voltage: 3.6
+    cell_min_voltage: 3.0
+    cell_max_voltage: 4.2
+    cell_max_charge_current: 1.0
+    cell_max_discharge_current: 3.0
+    temp_min_charge: 0.0
+    temp_max_charge: 45.0
+    temp_min_discharge: -20.0
+    temp_max_discharge: 55.0
+    temp_max_jump: 5.0
+    temp_optimal_min: 15.0
+    temp_optimal_max: 35.0
+    overcharge_voltage: 4.25
+    overdischarge_voltage: 2.7
+    thermal_runaway_temp: 75.0
+    gas_venting_temp: 65.0
+    soh_params:
+      cycle_life_min: 500
+      cycle_life_max: 1000
+      deg_knee_point_soh: 80.0
+      annual_fade_rate_pct: 2.5
+      calendric_fade_pct_per_year: 5.0
+    balance:
+      max_delta_mv: 80.0
+      warning_delta_mv: 40.0
+      recovery_rate_mv_per_h: 12.0
+    min_soc_pct: 15.0
+    max_soc_pct: 90.0
+    critical_soh_pct: 75.0
+    # Framework-level overrides derived from chemistry
+    safety_thresholds:
+      max_temperature: 45.0
+      min_temperature: -20.0
+      max_temperature_jump: 5.0
+      min_voltage: 288.0
+      max_voltage: 403.2
+      min_soc: 15.0
+      critical_soh: 75.0
+      max_current: 720.0
+    ml_config:
+      contamination: 0.1
+      n_estimators: 200
+      random_state: 42
+      critical_score_threshold: -0.8
+      warning_score_threshold: -0.5
+    default_vin: "TESTVEHCLE0123456"
+    fail_on_anomaly: false
+    chemistry: nca
+    cells_in_series: 96
+
+  # ── nmc ─────────────────────────────────────────────────────────
+  # NMC (LiNiMnCoO₂) — standard Li-ion, most common EV chemistry
+  # Mirrors config/chemistry_nmc.json
+  nmc:
+    name: "NMC (Standard Li-ion)"
+    short_name: "nmc"
+    manufacturer: "LG / Samsung SDI / Panasonic"
+    description: "Lithium Nickel Manganese Cobalt Oxide — high energy density, good power. Most common EV chemistry. Used in LG Chem, Samsung SDI packs."
+    cell_nominal_voltage: 3.7
+    cell_min_voltage: 3.0
+    cell_max_voltage: 4.2
+    cell_max_charge_current: 1.0
+    cell_max_discharge_current: 3.0
+    temp_min_charge: 0.0
+    temp_max_charge: 45.0
+    temp_min_discharge: -20.0
+    temp_max_discharge: 60.0
+    temp_max_jump: 5.0
+    temp_optimal_min: 15.0
+    temp_optimal_max: 35.0
+    overcharge_voltage: 4.25
+    overdischarge_voltage: 2.7
+    thermal_runaway_temp: 80.0
+    gas_venting_temp: 70.0
+    soh_params:
+      cycle_life_min: 1000
+      cycle_life_max: 2000
+      deg_knee_point_soh: 80.0
+      annual_fade_rate_pct: 2.0
+      calendric_fade_pct_per_year: 4.0
+    balance:
+      max_delta_mv: 100.0
+      warning_delta_mv: 50.0
+      recovery_rate_mv_per_h: 15.0
+    min_soc_pct: 10.0
+    max_soc_pct: 95.0
+    critical_soh_pct: 70.0
+    # Framework-level overrides derived from chemistry
+    safety_thresholds:
+      max_temperature: 45.0
+      min_temperature: -20.0
+      max_temperature_jump: 5.0
+      min_voltage: 288.0
+      max_voltage: 403.2
+      min_soc: 10.0
+      critical_soh: 70.0
+      max_current: 720.0
+    ml_config:
+      contamination: 0.1
+      n_estimators: 200
+      random_state: 42
+      critical_score_threshold: -0.8
+      warning_score_threshold: -0.5
+    default_vin: "TESTVEHCLE0123456"
+    fail_on_anomaly: false
+    chemistry: nmc
+    cells_in_series: 96

@@ -16,6 +16,8 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
+from .physics_features import PhysicsFeatureExtractor
+
 warnings.filterwarnings("ignore")
 
 
@@ -74,6 +76,7 @@ class EVBatteryAnalyzer:
         self.contamination = contamination
         self.critical_threshold = critical_threshold
         self.warning_threshold = warning_threshold
+        self.physics_extractor = PhysicsFeatureExtractor()
 
     def analyze_telemetry(self, df_telemetry: pd.DataFrame) -> dict[str, Any]:
         """
@@ -350,6 +353,95 @@ class EVBatteryAnalyzer:
             "severity": severity,
             "outliers_count": int(np.sum(np.abs(np.array(cell_voltages) - avg_v) > 0.05))
         }
+
+    def get_physics_features(self, df: pd.DataFrame) -> dict[str, Any]:
+        """Extract all physics-informed features from a telemetry DataFrame.
+
+        Expects columns: 'voltage', 'current', 'temp', 'soc'.
+        Optional columns: 'capacity', 'time', 'charge_capacity',
+                          'discharge_capacity', 'cycle_number'.
+
+        Args:
+            df: DataFrame with battery telemetry data.
+
+        Returns:
+            Dictionary with all physics features:
+                - ic_curve: IC curve analysis results
+                - delta_q: Capacity fade analysis results
+                - resistance: Internal resistance estimation
+                - thermal_diffusivity: Thermal diffusivity estimation
+                - coulombic_efficiency: Coulombic efficiency results
+        """
+        result: dict[str, Any] = {}
+
+        # IC curve: dQ/dV
+        if "capacity" in df.columns and "voltage" in df.columns:
+            result["ic_curve"] = self.physics_extractor.extract_ic_curve(
+                df["voltage"].values,
+                df["capacity"].values,
+            )
+        else:
+            result["ic_curve"] = None
+
+        # Delta Q analysis
+        if "capacity" in df.columns:
+            cycle_col = "cycle_number" if "cycle_number" in df.columns else None
+            cycles = df[cycle_col].values if cycle_col else None
+            result["delta_q"] = self.physics_extractor.compute_delta_q(
+                df["capacity"].values,
+                cycles,
+            )
+        else:
+            result["delta_q"] = None
+
+        # Internal resistance estimation
+        if "voltage" in df.columns and "current" in df.columns:
+            voltage = df["voltage"].values
+            voltage_drop = np.abs(np.diff(voltage, prepend=voltage[0]))
+            current = df["current"].values
+            result["resistance"] = self.physics_extractor.estimate_resistance(
+                voltage_drop, current
+            )
+        else:
+            result["resistance"] = None
+
+        # Thermal diffusivity
+        if "temp" in df.columns:
+            time_col = None
+            for candidate in ("time", "timestamp", "elapsed_time"):
+                if candidate in df.columns:
+                    time_col = candidate
+                    break
+            if time_col:
+                result["thermal_diffusivity"] = (
+                    self.physics_extractor.compute_thermal_diffusivity(
+                        df["temp"].values,
+                        df[time_col].values,
+                    )
+                )
+            else:
+                # Use index as time proxy
+                result["thermal_diffusivity"] = (
+                    self.physics_extractor.compute_thermal_diffusivity(
+                        df["temp"].values,
+                        np.arange(len(df), dtype=float),
+                    )
+                )
+        else:
+            result["thermal_diffusivity"] = None
+
+        # Coulombic efficiency
+        if "charge_capacity" in df.columns and "discharge_capacity" in df.columns:
+            result["coulombic_efficiency"] = (
+                self.physics_extractor.compute_coulombic_efficiency(
+                    df["discharge_capacity"].values,
+                    df["charge_capacity"].values,
+                )
+            )
+        else:
+            result["coulombic_efficiency"] = None
+
+        return result
 
 
 class AnomalyDetector(EVBatteryAnalyzer):

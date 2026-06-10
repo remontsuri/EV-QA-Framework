@@ -1,15 +1,18 @@
-FROM python:3.8-slim
+FROM python:3.11-slim
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Copy project files
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy project manifest and lock file first (Docker layer caching)
+COPY pyproject.toml uv.lock ./
 
+# Install dependencies (skip optional ml and dev groups)
+RUN uv sync --no-extra ml --no-extra dev
+
+# Copy source code
 COPY . .
 
-# Run tests
-RUN pytest tests/ -v --cov=ev_qa_framework
-
-# Default command
-CMD ["python", "-m", "pytest", "tests/", "-v"]
+# Default command: run tests with coverage
+CMD ["python", "-m", "pytest", "tests/", "-v", "--cov=ev_qa_framework", "--tb=short"]
