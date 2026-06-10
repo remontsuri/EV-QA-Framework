@@ -4,18 +4,20 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ev_qa_framework.automl import AutoMLSOH, AutoMLAnomaly
+from ev_qa_framework.automl import AutoMLAnomaly, AutoMLSOH
 from ev_qa_framework.config import FrameworkConfig
 
 
 def make_telemetry_df(n_rows: int = 100, seed: int = 42) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    return pd.DataFrame({
-        "voltage": rng.normal(400, 10, n_rows),
-        "current": rng.normal(50, 5, n_rows),
-        "temperature": rng.normal(35, 2, n_rows),
-        "soh": np.linspace(100, 90, n_rows),
-    })
+    return pd.DataFrame(
+        {
+            "voltage": rng.normal(400, 10, n_rows),
+            "current": rng.normal(50, 5, n_rows),
+            "temperature": rng.normal(35, 2, n_rows),
+            "soh": np.linspace(100, 90, n_rows),
+        }
+    )
 
 
 class TestAutoMLSOH:

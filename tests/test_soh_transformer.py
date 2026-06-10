@@ -11,6 +11,7 @@ Tests cover:
 - Edge cases: NaN, single row, large dataset
 - Graceful handling when TensorFlow is not installed (mocked)
 """
+
 import importlib
 import os
 import sys
@@ -23,20 +24,22 @@ import pytest
 
 from ev_qa_framework.soh_transformer import SOHTransformer, _import_tensorflow
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_dataframe(n_rows: int = 50, seed: int = 42) -> pd.DataFrame:
     """Create a synthetic telemetry DataFrame for testing."""
     rng = np.random.default_rng(seed)
-    return pd.DataFrame({
-        "voltage": rng.normal(400, 10, n_rows),
-        "current": rng.normal(100, 5, n_rows),
-        "temperature": rng.normal(35, 2, n_rows),
-        "soh": np.linspace(100, 95, n_rows),
-    })
+    return pd.DataFrame(
+        {
+            "voltage": rng.normal(400, 10, n_rows),
+            "current": rng.normal(100, 5, n_rows),
+            "temperature": rng.normal(35, 2, n_rows),
+            "soh": np.linspace(100, 95, n_rows),
+        }
+    )
 
 
 def _make_mock_tensorflow():
@@ -62,9 +65,7 @@ def _make_mock_tensorflow():
     mock_model_instance.compile = MagicMock()
     mock_model_instance.fit = MagicMock(return_value=MagicMock())
     mock_model_instance.save = MagicMock()
-    mock_model_instance.predict = MagicMock(
-        side_effect=lambda x, **kw: np.random.rand(len(x), 1)
-    )
+    mock_model_instance.predict = MagicMock(side_effect=lambda x, **kw: np.random.rand(len(x), 1))
 
     def mock_model_constructor(inputs=None, outputs=None):
         mock_model_instance.inputs = inputs
@@ -77,11 +78,7 @@ def _make_mock_tensorflow():
     mock_models = MagicMock()
     mock_models.Model = mock_Model
     mock_models.load_model = MagicMock(
-        return_value=MagicMock(
-            predict=MagicMock(
-                return_value=np.array([[0.5], [0.6]])
-            )
-        )
+        return_value=MagicMock(predict=MagicMock(return_value=np.array([[0.5], [0.6]])))
     )
 
     # --- wire keras ---
@@ -107,6 +104,7 @@ def _patch_mock_tf(mock_tf):
 # ---------------------------------------------------------------------------
 # 1. Initialization tests
 # ---------------------------------------------------------------------------
+
 
 class TestInitialization:
     def test_default_params(self):
@@ -134,6 +132,7 @@ class TestInitialization:
 
     def test_scaler_is_minmax(self):
         from sklearn.preprocessing import MinMaxScaler
+
         transformer = SOHTransformer()
         assert isinstance(transformer.scaler, MinMaxScaler)
         assert isinstance(transformer._feature_scaler, MinMaxScaler)
@@ -146,6 +145,7 @@ class TestInitialization:
 # ---------------------------------------------------------------------------
 # 2. build_model tests (mocked TF)
 # ---------------------------------------------------------------------------
+
 
 class TestBuildModel:
     def test_build_model_returns_model(self):
@@ -183,6 +183,7 @@ class TestBuildModel:
 # ---------------------------------------------------------------------------
 # 3. prepare_data tests
 # ---------------------------------------------------------------------------
+
 
 class TestPrepareData:
     def test_output_shapes(self):
@@ -247,6 +248,7 @@ class TestPrepareData:
 # 4. Training tests (mocked TF)
 # ---------------------------------------------------------------------------
 
+
 class TestTrain:
     def test_train_success(self):
         mock_tf, mock_model_instance = _make_mock_tensorflow()
@@ -255,7 +257,7 @@ class TestTrain:
         with patches[0], patches[1], patches[2], patches[3]:
             transformer = SOHTransformer(sequence_length=5)
             df = make_dataframe(50)
-            history = transformer.train(df, epochs=2, batch_size=10)
+            transformer.train(df, epochs=2, batch_size=10)
 
             assert transformer.is_trained is True
             assert transformer.model is not None
@@ -323,6 +325,7 @@ class TestTrain:
 # ---------------------------------------------------------------------------
 # 5. Prediction tests
 # ---------------------------------------------------------------------------
+
 
 class TestPredict:
     def test_predict_before_training_raises(self):
@@ -397,6 +400,7 @@ class TestPredict:
 # 6. Save / Load tests
 # ---------------------------------------------------------------------------
 
+
 class TestSaveLoad:
     def test_save_creates_files(self, tmp_path):
         mock_tf, mock_model_instance = _make_mock_tensorflow()
@@ -417,9 +421,7 @@ class TestSaveLoad:
         transformer = SOHTransformer(sequence_length=5)
         model_dir = str(tmp_path / "untrained")
         transformer.save(model_dir)
-        assert not os.path.exists(
-            os.path.join(model_dir, "soh_transformer.keras")
-        )
+        assert not os.path.exists(os.path.join(model_dir, "soh_transformer.keras"))
 
     def test_save_creates_directory(self, tmp_path):
         mock_tf, mock_model_instance = _make_mock_tensorflow()
@@ -447,16 +449,10 @@ class TestSaveLoad:
             transformer.save(model_dir)
 
             loaded_model = MagicMock()
-            loaded_model.predict = MagicMock(
-                return_value=np.array([[0.5], [0.6]])
-            )
-            mock_tf.keras.models.load_model = MagicMock(
-                return_value=loaded_model
-            )
+            loaded_model.predict = MagicMock(return_value=np.array([[0.5], [0.6]]))
+            mock_tf.keras.models.load_model = MagicMock(return_value=loaded_model)
 
-            with patch(
-                "ev_qa_framework.soh_transformer.joblib.load"
-            ) as mock_joblib_load:
+            with patch("ev_qa_framework.soh_transformer.joblib.load") as mock_joblib_load:
                 from sklearn.preprocessing import MinMaxScaler
 
                 fitted_scaler = MinMaxScaler()
@@ -482,22 +478,14 @@ class TestSaveLoad:
             transformer.save(model_dir)
 
             loaded_model = MagicMock()
-            loaded_model.predict = MagicMock(
-                return_value=np.array([[0.5], [0.6], [0.7]])
-            )
-            mock_tf.keras.models.load_model = MagicMock(
-                return_value=loaded_model
-            )
+            loaded_model.predict = MagicMock(return_value=np.array([[0.5], [0.6], [0.7]]))
+            mock_tf.keras.models.load_model = MagicMock(return_value=loaded_model)
 
-            with patch(
-                "ev_qa_framework.soh_transformer.joblib.load"
-            ) as mock_joblib_load:
+            with patch("ev_qa_framework.soh_transformer.joblib.load") as mock_joblib_load:
                 from sklearn.preprocessing import MinMaxScaler
 
                 full_scaler = MinMaxScaler()
-                full_scaler.fit(
-                    [[400, 100, 35, 95], [300, 50, 20, 80]]
-                )
+                full_scaler.fit([[400, 100, 35, 95], [300, 50, 20, 80]])
                 feat_scaler = MinMaxScaler()
                 feat_scaler.fit([[400, 100, 35], [300, 50, 20]])
                 mock_joblib_load.side_effect = [full_scaler, feat_scaler]
@@ -513,6 +501,7 @@ class TestSaveLoad:
 # ---------------------------------------------------------------------------
 # 7. Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_single_row_dataframe(self):
@@ -539,12 +528,14 @@ class TestEdgeCases:
     def test_constant_values(self):
         transformer = SOHTransformer(sequence_length=5)
         n = 20
-        df = pd.DataFrame({
-            "voltage": np.full(n, 400.0),
-            "current": np.full(n, 100.0),
-            "temperature": np.full(n, 35.0),
-            "soh": np.linspace(100, 95, n),
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.full(n, 400.0),
+                "current": np.full(n, 100.0),
+                "temperature": np.full(n, 35.0),
+                "soh": np.linspace(100, 95, n),
+            }
+        )
         x, y = transformer.prepare_data(df)
         assert x.shape == (15, 5, 3)
         assert not np.isnan(x).any()
@@ -553,12 +544,14 @@ class TestEdgeCases:
         transformer = SOHTransformer(sequence_length=5)
         rng = np.random.default_rng(99)
         n = 30
-        df = pd.DataFrame({
-            "voltage": rng.normal(400, 10, n),
-            "current": rng.normal(-50, 5, n),  # negative current
-            "temperature": rng.normal(35, 2, n),
-            "soh": np.linspace(100, 95, n),
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": rng.normal(400, 10, n),
+                "current": rng.normal(-50, 5, n),  # negative current
+                "temperature": rng.normal(35, 2, n),
+                "soh": np.linspace(100, 95, n),
+            }
+        )
         x, y = transformer.prepare_data(df)
         assert x.shape == (25, 5, 3)
         assert not np.isnan(x).any()

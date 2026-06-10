@@ -76,7 +76,12 @@ class TestBatteryScorerInit:
 
     def test_default_weights_sum_to_one(self):
         scorer = BatteryScorer()
-        total = scorer.soh_weight + scorer.anomaly_weight + scorer.cell_balance_weight + scorer.thermal_weight
+        total = (
+            scorer.soh_weight
+            + scorer.anomaly_weight
+            + scorer.cell_balance_weight
+            + scorer.thermal_weight
+        )
         assert total == pytest.approx(1.0)
 
     def test_custom_weights(self):
@@ -90,7 +95,9 @@ class TestBatteryScorerInit:
 
     def test_invalid_weights_raise(self):
         with pytest.raises(ValueError, match="Weights must sum to 1.0"):
-            BatteryScorer(soh_weight=0.5, anomaly_weight=0.5, cell_balance_weight=0.5, thermal_weight=0.5)
+            BatteryScorer(
+                soh_weight=0.5, anomaly_weight=0.5, cell_balance_weight=0.5, thermal_weight=0.5
+            )
 
     def test_init_with_cell_voltages(self):
         scorer = BatteryScorer(cell_voltages=[3.3] * 12)
@@ -107,8 +114,13 @@ class TestComputeScore:
     def test_returns_expected_keys(self, scorer, healthy_telemetry):
         result = scorer.compute_score(healthy_telemetry)
         expected_keys = {
-            "score", "grade", "soh_score", "anomaly_score",
-            "cell_balance_score", "thermal_score", "details",
+            "score",
+            "grade",
+            "soh_score",
+            "anomaly_score",
+            "cell_balance_score",
+            "thermal_score",
+            "details",
         }
         assert expected_keys.issubset(result.keys())
 
@@ -171,19 +183,22 @@ class TestComputeScore:
 class TestGetGrade:
     """Letter grade boundaries."""
 
-    @pytest.mark.parametrize("score,expected", [
-        (100, "A"),
-        (95, "A"),
-        (90, "A"),
-        (89, "B"),
-        (75, "B"),
-        (74, "C"),
-        (60, "C"),
-        (59, "D"),
-        (40, "D"),
-        (39, "F"),
-        (0, "F"),
-    ])
+    @pytest.mark.parametrize(
+        "score,expected",
+        [
+            (100, "A"),
+            (95, "A"),
+            (90, "A"),
+            (89, "B"),
+            (75, "B"),
+            (74, "C"),
+            (60, "C"),
+            (59, "D"),
+            (40, "D"),
+            (39, "F"),
+            (0, "F"),
+        ],
+    )
     def test_grade_boundaries(self, score, expected):
         assert BatteryScorer.get_grade(score) == expected
 
@@ -197,46 +212,76 @@ class TestGetRecommendations:
     """Recommendation generation."""
 
     def test_excellent_score_no_critical(self):
-        recs = BatteryScorer.get_recommendations({
-            "score": 95, "soh_score": 95, "anomaly_score": 95,
-            "cell_balance_score": 95, "thermal_score": 95,
-        })
+        recs = BatteryScorer.get_recommendations(
+            {
+                "score": 95,
+                "soh_score": 95,
+                "anomaly_score": 95,
+                "cell_balance_score": 95,
+                "thermal_score": 95,
+            }
+        )
         assert any("excellent" in r.lower() for r in recs)
 
     def test_low_soh_critical(self):
-        recs = BatteryScorer.get_recommendations({
-            "score": 50, "soh_score": 45, "anomaly_score": 80,
-            "cell_balance_score": 90, "thermal_score": 90,
-        })
+        recs = BatteryScorer.get_recommendations(
+            {
+                "score": 50,
+                "soh_score": 45,
+                "anomaly_score": 80,
+                "cell_balance_score": 90,
+                "thermal_score": 90,
+            }
+        )
         assert any("SOH" in r for r in recs)
         assert any(r.startswith("CRITICAL") for r in recs)
 
     def test_low_anomaly_warning(self):
-        recs = BatteryScorer.get_recommendations({
-            "score": 70, "soh_score": 85, "anomaly_score": 70,
-            "cell_balance_score": 90, "thermal_score": 90,
-        })
+        recs = BatteryScorer.get_recommendations(
+            {
+                "score": 70,
+                "soh_score": 85,
+                "anomaly_score": 70,
+                "cell_balance_score": 90,
+                "thermal_score": 90,
+            }
+        )
         assert any("anomal" in r.lower() for r in recs)
 
     def test_low_cell_balance_critical(self):
-        recs = BatteryScorer.get_recommendations({
-            "score": 45, "soh_score": 80, "anomaly_score": 80,
-            "cell_balance_score": 30, "thermal_score": 90,
-        })
+        recs = BatteryScorer.get_recommendations(
+            {
+                "score": 45,
+                "soh_score": 80,
+                "anomaly_score": 80,
+                "cell_balance_score": 30,
+                "thermal_score": 90,
+            }
+        )
         assert any("imbalance" in r.lower() for r in recs)
 
     def test_low_thermal_critical(self):
-        recs = BatteryScorer.get_recommendations({
-            "score": 40, "soh_score": 80, "anomaly_score": 80,
-            "cell_balance_score": 90, "thermal_score": 30,
-        })
+        recs = BatteryScorer.get_recommendations(
+            {
+                "score": 40,
+                "soh_score": 80,
+                "anomaly_score": 80,
+                "cell_balance_score": 90,
+                "thermal_score": 30,
+            }
+        )
         assert any("thermal" in r.lower() for r in recs)
 
     def test_all_low_multiple_recommendations(self):
-        recs = BatteryScorer.get_recommendations({
-            "score": 20, "soh_score": 30, "anomaly_score": 30,
-            "cell_balance_score": 30, "thermal_score": 30,
-        })
+        recs = BatteryScorer.get_recommendations(
+            {
+                "score": 20,
+                "soh_score": 30,
+                "anomaly_score": 30,
+                "cell_balance_score": 30,
+                "thermal_score": 30,
+            }
+        )
         assert len(recs) >= 4  # one per failing component
 
 
@@ -268,13 +313,15 @@ class TestComponentScores:
     def test_low_temp_thermal_score(self, scorer):
         """Constant low temperature should yield LOW risk → score 100."""
         n = 100
-        df = pd.DataFrame({
-            "voltage": np.full(n, 400.0),
-            "current": np.full(n, 100.0),
-            "temp": np.full(n, 25.0),
-            "soc": np.full(n, 85.0),
-            "soh": np.full(n, 95.0),
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.full(n, 400.0),
+                "current": np.full(n, 100.0),
+                "temp": np.full(n, 25.0),
+                "soc": np.full(n, 85.0),
+                "soh": np.full(n, 95.0),
+            }
+        )
         result = scorer.compute_score(df)
         assert result["thermal_score"] == 100.0
 

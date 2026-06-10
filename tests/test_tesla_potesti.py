@@ -1,6 +1,5 @@
 """Специальные тесты для "Tesla Potesti" сценария"""
 
-
 import pytest
 
 from ev_qa_framework.config import TESLA_CONFIG

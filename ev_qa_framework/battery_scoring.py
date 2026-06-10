@@ -13,7 +13,6 @@ from .analysis import EVBatteryAnalyzer
 from .cell_balance import CellBalanceAnalyzer
 from .thermal_runaway import ThermalRunawayPredictor
 
-
 # ---------------------------------------------------------------------------
 # Default weights (must sum to 1.0)
 # ---------------------------------------------------------------------------
@@ -201,8 +200,7 @@ class BatteryScorer:
 
         if soh < 60:
             recs.append(
-                "CRITICAL: SOH is very low. Consider battery replacement or "
-                "deep diagnostic."
+                "CRITICAL: SOH is very low. Consider battery replacement or " "deep diagnostic."
             )
         elif soh < 75:
             recs.append(
@@ -223,8 +221,7 @@ class BatteryScorer:
 
         if balance < 60:
             recs.append(
-                "CRITICAL: Severe cell imbalance. Perform cell balancing "
-                "procedure immediately."
+                "CRITICAL: Severe cell imbalance. Perform cell balancing " "procedure immediately."
             )
         elif balance < 80:
             recs.append(

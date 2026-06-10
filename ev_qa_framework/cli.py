@@ -17,8 +17,8 @@ def analyze_csv(file_path: str, output: str = None):
     df = pd.read_csv(file_path)
 
     # Rename 'temperature' to 'temp' if needed
-    if 'temperature' in df.columns and 'temp' not in df.columns:
-        df = df.rename(columns={'temperature': 'temp'})
+    if "temperature" in df.columns and "temp" not in df.columns:
+        df = df.rename(columns={"temperature": "temp"})
 
     # Initialize framework with ML
     analyzer = EVBatteryAnalyzer()
@@ -53,10 +53,12 @@ def run_can_demo(duration: int = 10):
             i_val = data["current"]
             t_val = data["temperature"]
             s_val = data["soc"]
-            print(f"CAN Telemetry: V={v_val:.1f}V | "
-                  f"I={i_val:.1f}A | "
-                  f"T={t_val:.0f}C | "
-                  f"SOC={s_val:.0f}%")
+            print(
+                f"CAN Telemetry: V={v_val:.1f}V | "
+                f"I={i_val:.1f}A | "
+                f"T={t_val:.0f}C | "
+                f"SOC={s_val:.0f}%"
+            )
             time.sleep(1)
     finally:
         sim.stop()
@@ -104,20 +106,17 @@ def main():
 
     # CAN command
     can_p = subparsers.add_parser("can-demo", help="Run CAN emulation demo")
-    can_p.add_argument("--duration", "-d", type=int, default=10,
-                       help="Demo duration in seconds")
+    can_p.add_argument("--duration", "-d", type=int, default=10, help="Demo duration in seconds")
 
     # DBC emulate command
     dbc_p = subparsers.add_parser("emulate", help="Run DBC-driven CAN emulation")
     dbc_p.add_argument("--dbc", help="Path to .dbc file (default: built-in)")
-    dbc_p.add_argument("--duration", "-d", type=int, default=10,
-                       help="Duration in seconds")
+    dbc_p.add_argument("--duration", "-d", type=int, default=10, help="Duration in seconds")
 
     # Train command
     train_p = subparsers.add_parser("train-soh", help="Train SOH model")
     train_p.add_argument("--input", "-i", required=True, help="Historical CSV")
-    train_p.add_argument("--model-dir", "-m", required=True,
-                         help="Directory to save model")
+    train_p.add_argument("--model-dir", "-m", required=True, help="Directory to save model")
 
     # Dashboard command
     subparsers.add_parser("dashboard", help="Start web dashboard")
@@ -129,6 +128,7 @@ def main():
         import uvicorn  # pylint: disable=C0415
 
         from dashboard.app import app as dash_app  # pylint: disable=C0415
+
         uvicorn.run(dash_app, host="0.0.0.0", port=8000)
     elif args.command == "analyze":
         analyze_csv(args.input, args.output)

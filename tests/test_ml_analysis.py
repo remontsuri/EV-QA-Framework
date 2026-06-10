@@ -31,12 +31,14 @@ class TestEVBatteryAnalyzer:
 
         # Генерируем стабильные данные
         np.random.seed(42)
-        df = pd.DataFrame({
-            "voltage": np.full(100, 48.0),
-            "current": np.full(100, 100.0),
-            "temp": np.full(100, 35.0),
-            "soc": np.full(100, 85.0)
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.full(100, 48.0),
+                "current": np.full(100, 100.0),
+                "temp": np.full(100, 35.0),
+                "soc": np.full(100, 85.0),
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
 
@@ -54,23 +56,25 @@ class TestEVBatteryAnalyzer:
             "voltage": np.random.normal(48, 1, 90),
             "current": np.random.normal(100, 5, 90),
             "temp": np.random.normal(35, 2, 90),
-            "soc": np.random.normal(85, 5, 90)
+            "soc": np.random.normal(85, 5, 90),
         }
 
         # Добавляем 10 явных выбросов
         outliers = {
             "voltage": np.full(10, 100.0),  # Экстремальное напряжение
             "current": np.full(10, 500.0),  # Экстремальный ток
-            "temp": np.full(10, 90.0),      # Экстремальная температура
-            "soc": np.full(10, 5.0)
+            "temp": np.full(10, 90.0),  # Экстремальная температура
+            "soc": np.full(10, 5.0),
         }
 
-        df = pd.DataFrame({
-            "voltage": np.concatenate([normal_data["voltage"], outliers["voltage"]]),
-            "current": np.concatenate([normal_data["current"], outliers["current"]]),
-            "temp": np.concatenate([normal_data["temp"], outliers["temp"]]),
-            "soc": np.concatenate([normal_data["soc"], outliers["soc"]])
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.concatenate([normal_data["voltage"], outliers["voltage"]]),
+                "current": np.concatenate([normal_data["current"], outliers["current"]]),
+                "temp": np.concatenate([normal_data["temp"], outliers["temp"]]),
+                "soc": np.concatenate([normal_data["soc"], outliers["soc"]]),
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
 
@@ -83,12 +87,14 @@ class TestEVBatteryAnalyzer:
         analyzer = EVBatteryAnalyzer(contamination=0.2)
 
         # Данные с экстремальными выбросами
-        df = pd.DataFrame({
-            "voltage": [48]*80 + [200]*20,  # Экстремальный выброс
-            "current": [100]*80 + [1000]*20,
-            "temp": [35]*80 + [150]*20,
-            "soc": [85]*100
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": [48] * 80 + [200] * 20,  # Экстремальный выброс
+                "current": [100] * 80 + [1000] * 20,
+                "temp": [35] * 80 + [150] * 20,
+                "soc": [85] * 100,
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
         # При таких экстремальных выбросах severity может быть CRITICAL
@@ -100,12 +106,14 @@ class TestEVBatteryAnalyzer:
 
         # Почти идеальные данные с минимальными вариациями
         np.random.seed(42)
-        df = pd.DataFrame({
-            "voltage": np.random.normal(48, 0.1, 100),
-            "current": np.random.normal(100, 1, 100),
-            "temp": np.random.normal(35, 0.5, 100),
-            "soc": np.random.normal(85, 1, 100)
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.random.normal(48, 0.1, 100),
+                "current": np.random.normal(100, 1, 100),
+                "temp": np.random.normal(35, 0.5, 100),
+                "soc": np.random.normal(85, 1, 100),
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
         # Ожидаем INFO или WARNING на стабильных данных
@@ -116,12 +124,14 @@ class TestEVBatteryAnalyzer:
         analyzer = EVBatteryAnalyzer(contamination=0.1)
 
         np.random.seed(42)
-        df = pd.DataFrame({
-            "voltage": np.random.normal(48, 2, 100),
-            "current": np.random.normal(100, 10, 100),
-            "temp": np.random.normal(35, 3, 100),
-            "soc": np.random.normal(85, 5, 100)
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.random.normal(48, 2, 100),
+                "current": np.random.normal(100, 10, 100),
+                "temp": np.random.normal(35, 3, 100),
+                "soc": np.random.normal(85, 5, 100),
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
 
@@ -134,12 +144,14 @@ class TestEVBatteryAnalyzer:
         analyzer = EVBatteryAnalyzer(contamination=0.1)
 
         # Минимальный датасет (IsolationForest требует минимум данных)
-        df = pd.DataFrame({
-            "voltage": [48.0, 48.1, 48.2, 47.9, 48.0],
-            "current": [100, 101, 99, 100, 102],
-            "temp": [35, 35, 36, 35, 35],
-            "soc": [85, 85, 84, 86, 85]
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": [48.0, 48.1, 48.2, 47.9, 48.0],
+                "current": [100, 101, 99, 100, 102],
+                "temp": [35, 35, 36, 35, 35],
+                "soc": [85, 85, 84, 86, 85],
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
         assert results["total_samples"] == 5
@@ -153,12 +165,14 @@ class TestEVBatteryAnalyzerEdgeCases:
         """Данные с вариацией только в одной фиче"""
         analyzer = EVBatteryAnalyzer(contamination=0.1)
 
-        df = pd.DataFrame({
-            "voltage": np.random.normal(48, 5, 100),  # Вариация
-            "current": np.full(100, 100.0),           # Константа
-            "temp": np.full(100, 35.0),               # Константа
-            "soc": np.full(100, 85.0)                 # Константа
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.random.normal(48, 5, 100),  # Вариация
+                "current": np.full(100, 100.0),  # Константа
+                "temp": np.full(100, 35.0),  # Константа
+                "soc": np.full(100, 85.0),  # Константа
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
         assert results["total_samples"] == 100
@@ -168,12 +182,14 @@ class TestEVBatteryAnalyzerEdgeCases:
         """Отрицательные значения в данных"""
         analyzer = EVBatteryAnalyzer(contamination=0.1)
 
-        df = pd.DataFrame({
-            "voltage": [48]*95 + [-10]*5,  # Отрицательное напряжение (невалидно физически)
-            "current": [100]*100,
-            "temp": [35]*100,
-            "soc": [85]*100
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": [48] * 95 + [-10] * 5,  # Отрицательное напряжение (невалидно физически)
+                "current": [100] * 100,
+                "temp": [35] * 100,
+                "soc": [85] * 100,
+            }
+        )
 
         results = analyzer.analyze_telemetry(df)
         # Должно детектировать отрицательные значения как аномалии

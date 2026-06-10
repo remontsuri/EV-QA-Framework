@@ -3,8 +3,8 @@
 import pandas as pd
 import pytest
 
-from ev_qa_framework.v2g_scenarios import V2GScenarioGenerator, V2GHealthAnalyzer
 from ev_qa_framework.config import FrameworkConfig
+from ev_qa_framework.v2g_scenarios import V2GHealthAnalyzer, V2GScenarioGenerator
 
 
 class TestV2GScenarioGenerator:
@@ -63,18 +63,22 @@ class TestV2GScenarioGenerator:
 class TestV2GHealthAnalyzer:
     def test_compute_v2g_impact(self):
         analyzer = V2GHealthAnalyzer()
-        baseline = pd.DataFrame({
-            "voltage": [400.0] * 10,
-            "current": [50.0] * 10,
-            "temperature": [30.0] * 10,
-            "soh": [95.0] * 10,
-        })
-        v2g = pd.DataFrame({
-            "voltage": [380.0] * 10,
-            "current": [70.0] * 10,
-            "temperature": [35.0] * 10,
-            "soh": [90.0] * 10,
-        })
+        baseline = pd.DataFrame(
+            {
+                "voltage": [400.0] * 10,
+                "current": [50.0] * 10,
+                "temperature": [30.0] * 10,
+                "soh": [95.0] * 10,
+            }
+        )
+        v2g = pd.DataFrame(
+            {
+                "voltage": [380.0] * 10,
+                "current": [70.0] * 10,
+                "temperature": [35.0] * 10,
+                "soh": [90.0] * 10,
+            }
+        )
         result = analyzer.compute_v2g_impact(baseline, v2g)
         assert "baseline_score" in result
         assert "v2g_score" in result

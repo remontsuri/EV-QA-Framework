@@ -25,11 +25,7 @@ class TestSafetyThresholds:
 
     def test_custom_initialization(self):
         """Тест инициализации с кастомными значениями"""
-        thresholds = SafetyThresholds(
-            max_temperature=55.0,
-            min_voltage=250.0,
-            max_voltage=450.0
-        )
+        thresholds = SafetyThresholds(max_temperature=55.0, min_voltage=250.0, max_voltage=450.0)
         assert thresholds.max_temperature == 55.0
         assert thresholds.min_voltage == 250.0
         assert thresholds.max_voltage == 450.0
@@ -53,7 +49,7 @@ class TestSafetyThresholds:
             "max_temperature_jump": 5.0,
             "min_soc": 10.0,
             "critical_soh": 70.0,
-            "max_current": 500.0
+            "max_current": 500.0,
         }
         thresholds = SafetyThresholds.from_dict(data)
         assert thresholds.max_temperature == 70.0
@@ -88,11 +84,7 @@ class TestMLConfig:
 
     def test_custom_initialization(self):
         """Тест кастомной инициализации"""
-        config = MLConfig(
-            contamination=0.05,
-            n_estimators=300,
-            critical_score_threshold=-0.9
-        )
+        config = MLConfig(contamination=0.05, n_estimators=300, critical_score_threshold=-0.9)
         assert config.contamination == 0.05
         assert config.n_estimators == 300
         assert config.critical_score_threshold == -0.9
@@ -122,9 +114,7 @@ class TestFrameworkConfig:
         ml_config = MLConfig(contamination=0.05)
 
         config = FrameworkConfig(
-            safety_thresholds=thresholds,
-            ml_config=ml_config,
-            default_vin="CUSTOM123VIN45678"
+            safety_thresholds=thresholds, ml_config=ml_config, default_vin="CUSTOM123VIN45678"
         )
 
         assert config.safety_thresholds.max_temperature == 55.0
@@ -187,23 +177,13 @@ class TestFrameworkIntegration:
 
         # Температура 55°C должна быть отклонена (> 50°C)
         telemetry = BatteryTelemetryModel(
-            vin="TESTVEHCLE0123456",
-            voltage=400.0,
-            current=50,
-            temperature=55.0,
-            soc=80,
-            soh=98
+            vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=55.0, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry) is False
 
         # Температура 45°C должна пройти
         telemetry2 = BatteryTelemetryModel(
-            vin="TESTVEHCLE0123456",
-            voltage=400.0,
-            current=50,
-            temperature=45.0,
-            soc=80,
-            soh=98
+            vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=45.0, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry2) is True
 
@@ -217,23 +197,13 @@ class TestFrameworkIntegration:
 
         # 250V должно быть отклонено (< 300V)
         telemetry1 = BatteryTelemetryModel(
-            vin="TESTVEHCLE0123456",
-            voltage=250.0,
-            current=50,
-            temperature=35,
-            soc=80,
-            soh=98
+            vin="TESTVEHCLE0123456", voltage=250.0, current=50, temperature=35, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry1) is False
 
         # 400V должно пройти
         telemetry2 = BatteryTelemetryModel(
-            vin="TESTVEHCLE0123456",
-            voltage=400.0,
-            current=50,
-            temperature=35,
-            soc=80,
-            soh=98
+            vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=35, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry2) is True
 

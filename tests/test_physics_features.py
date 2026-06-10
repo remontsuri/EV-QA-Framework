@@ -37,9 +37,16 @@ class TestExtractIcCurve:
         capacity = voltage * 10 + np.sin(voltage) * 2
         result = extractor.extract_ic_curve(voltage, capacity)
         expected_keys = {
-            "ic_values", "voltage_mid", "peaks", "valleys",
-            "peak_voltages", "peak_heights", "valley_voltages",
-            "valley_depths", "num_peaks", "num_valleys",
+            "ic_values",
+            "voltage_mid",
+            "peaks",
+            "valleys",
+            "peak_voltages",
+            "peak_heights",
+            "valley_voltages",
+            "valley_depths",
+            "num_peaks",
+            "num_valleys",
         }
         assert expected_keys.issubset(result.keys())
 
@@ -159,16 +166,17 @@ class TestComputeThermalDiffusivity:
         temp = 25.0 + 0.1 * time_s
         result = extractor.compute_thermal_diffusivity(temp, time_s)
         expected_keys = {
-            "thermal_diffusivity", "mean_diffusivity",
-            "max_temp_rate", "temp_gradient", "time_gradient",
+            "thermal_diffusivity",
+            "mean_diffusivity",
+            "max_temp_rate",
+            "temp_gradient",
+            "time_gradient",
         }
         assert expected_keys.issubset(result.keys())
 
     def test_short_input(self, extractor: PhysicsFeatureExtractor):
         """Single-element arrays should return empty results."""
-        result = extractor.compute_thermal_diffusivity(
-            np.array([25.0]), np.array([0.0])
-        )
+        result = extractor.compute_thermal_diffusivity(np.array([25.0]), np.array([0.0]))
         assert len(result["thermal_diffusivity"]) == 0
 
 
@@ -214,6 +222,7 @@ class TestIntegrationWithAnalyzer:
     def test_analyzer_has_physics_extractor(self):
         """EVBatteryAnalyzer should have a physics_extractor attribute."""
         from ev_qa_framework.analysis import EVBatteryAnalyzer
+
         analyzer = EVBatteryAnalyzer()
         assert hasattr(analyzer, "physics_extractor")
         assert isinstance(analyzer.physics_extractor, PhysicsFeatureExtractor)
@@ -221,17 +230,20 @@ class TestIntegrationWithAnalyzer:
     def test_get_physics_features_returns_dict(self):
         """get_physics_features should return a dict with expected keys."""
         from ev_qa_framework.analysis import EVBatteryAnalyzer
+
         analyzer = EVBatteryAnalyzer()
-        df = pd.DataFrame({
-            "voltage": np.linspace(3.0, 4.2, 50),
-            "current": np.full(50, 10.0),
-            "temp": np.linspace(25, 35, 50),
-            "soc": np.linspace(100, 20, 50),
-            "capacity": np.linspace(50, 45, 50),
-            "time": np.linspace(0, 100, 50),
-            "charge_capacity": np.full(50, 50.0),
-            "discharge_capacity": np.full(50, 48.0),
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.linspace(3.0, 4.2, 50),
+                "current": np.full(50, 10.0),
+                "temp": np.linspace(25, 35, 50),
+                "soc": np.linspace(100, 20, 50),
+                "capacity": np.linspace(50, 45, 50),
+                "time": np.linspace(0, 100, 50),
+                "charge_capacity": np.full(50, 50.0),
+                "discharge_capacity": np.full(50, 48.0),
+            }
+        )
         result = analyzer.get_physics_features(df)
         assert isinstance(result, dict)
         assert "ic_curve" in result
@@ -243,13 +255,16 @@ class TestIntegrationWithAnalyzer:
     def test_get_physics_features_missing_columns(self):
         """get_physics_features should handle missing optional columns."""
         from ev_qa_framework.analysis import EVBatteryAnalyzer
+
         analyzer = EVBatteryAnalyzer()
-        df = pd.DataFrame({
-            "voltage": [3.0, 3.5, 4.0],
-            "current": [10.0, 10.0, 10.0],
-            "temp": [25.0, 26.0, 27.0],
-            "soc": [80, 75, 70],
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": [3.0, 3.5, 4.0],
+                "current": [10.0, 10.0, 10.0],
+                "temp": [25.0, 26.0, 27.0],
+                "soc": [80, 75, 70],
+            }
+        )
         result = analyzer.get_physics_features(df)
         assert result["ic_curve"] is None
         assert result["delta_q"] is None

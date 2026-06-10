@@ -50,18 +50,14 @@ class AutoMLSOH:
         X_scaled = self.scaler.fit_transform(X)
 
         models = {
-            "random_forest": RandomForestRegressor(
-                n_estimators=100, random_state=42
-            ),
+            "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
         }
 
         self.results = []
         best_name = None
         for name, model in models.items():
             try:
-                scores = cross_val_score(
-                    model, X_scaled, y, cv=3, scoring="r2"
-                )
+                scores = cross_val_score(model, X_scaled, y, cv=3, scoring="r2")
                 mean_score = scores.mean()
                 std_score = scores.std()
 
@@ -79,10 +75,12 @@ class AutoMLSOH:
                     best_name = name
 
             except Exception as e:
-                self.results.append({
-                    "model_name": name,
-                    "error": str(e),
-                })
+                self.results.append(
+                    {
+                        "model_name": name,
+                        "error": str(e),
+                    }
+                )
 
         if self.best_model is not None:
             self.best_model.fit(X_scaled, y)
@@ -155,9 +153,7 @@ class AutoMLAnomaly:
         contamination = self.config.ml_config.contamination
 
         models = {
-            "isolation_forest": IsolationForest(
-                contamination=contamination, random_state=42
-            ),
+            "isolation_forest": IsolationForest(contamination=contamination, random_state=42),
         }
 
         results = []
@@ -167,21 +163,25 @@ class AutoMLAnomaly:
                 scores = model.decision_function(X)
                 mean_score = scores.mean()
 
-                results.append({
-                    "model_name": name,
-                    "mean_anomaly_score": mean_score,
-                    "n_anomalies": int((model.predict(X) == -1).sum()),
-                })
+                results.append(
+                    {
+                        "model_name": name,
+                        "mean_anomaly_score": mean_score,
+                        "n_anomalies": int((model.predict(X) == -1).sum()),
+                    }
+                )
 
                 if mean_score > self.best_score:
                     self.best_score = mean_score
                     self.best_model = model
 
             except Exception as e:
-                results.append({
-                    "model_name": name,
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "model_name": name,
+                        "error": str(e),
+                    }
+                )
 
         return {
             "best_model": self.best_model.__class__.__name__ if self.best_model else None,

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Try to import python-can
 try:
     import can
+
     HAS_CAN = True
 except ImportError:
     HAS_CAN = False
@@ -31,6 +32,7 @@ except ImportError:
 @dataclass
 class CANMessage:
     """Represents a CAN message."""
+
     arbitration_id: int
     data: bytes
     timestamp: float = 0.0
@@ -42,9 +44,9 @@ class CANMessage:
         return cls(
             arbitration_id=msg.arbitration_id,
             data=bytes(msg.data),
-            timestamp=msg.timestamp if hasattr(msg, 'timestamp') else time.time(),
-            is_extended=msg.is_extended_id if hasattr(msg, 'is_extended_id') else False,
-            dlc=msg.dlc if hasattr(msg, 'dlc') else len(msg.data),
+            timestamp=msg.timestamp if hasattr(msg, "timestamp") else time.time(),
+            is_extended=msg.is_extended_id if hasattr(msg, "is_extended_id") else False,
+            dlc=msg.dlc if hasattr(msg, "dlc") else len(msg.data),
         )
 
     def to_can_msg(self):
@@ -62,6 +64,7 @@ class CANMessage:
 @dataclass
 class HILTestResult:
     """Result of a HIL test."""
+
     test_name: str
     passed: bool
     duration_s: float
@@ -107,9 +110,7 @@ class HILInterface:
 
         if not self.simulation:
             try:
-                self.bus = can.interface.Bus(
-                    channel=channel, bustype=bustype, bitrate=bitrate
-                )
+                self.bus = can.interface.Bus(channel=channel, bustype=bustype, bitrate=bitrate)
                 logger.info(f"CAN bus opened: {channel}@{bitrate}bps")
             except Exception as e:
                 logger.warning(f"Failed to open CAN bus: {e}. Using simulation mode.")
@@ -156,11 +157,14 @@ class HILInterface:
         soc_raw = int(soc * 2)  # 0.5% resolution
 
         data = [
-            (v_raw >> 8) & 0xFF, v_raw & 0xFF,
-            (i_raw >> 8) & 0xFF, i_raw & 0xFF,
+            (v_raw >> 8) & 0xFF,
+            v_raw & 0xFF,
+            (i_raw >> 8) & 0xFF,
+            i_raw & 0xFF,
             t_raw & 0xFF,
             soc_raw & 0xFF,
-            0, 0,
+            0,
+            0,
         ]
 
         msg = CANMessage(arbitration_id=msg_id, data=bytes(data))
@@ -208,11 +212,14 @@ class BMSHardwareEmulator:
         soc_raw = int(soc * 2)
 
         msg_data = [
-            (v_raw >> 8) & 0xFF, v_raw & 0xFF,
-            (i_raw >> 8) & 0xFF, i_raw & 0xFF,
+            (v_raw >> 8) & 0xFF,
+            v_raw & 0xFF,
+            (i_raw >> 8) & 0xFF,
+            i_raw & 0xFF,
             t_raw & 0xFF,
             soc_raw & 0xFF,
-            0, 0,
+            0,
+            0,
         ]
 
         return CANMessage(arbitration_id=msg_id, data=bytes(msg_data))

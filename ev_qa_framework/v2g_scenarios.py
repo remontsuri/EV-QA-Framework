@@ -66,10 +66,12 @@ class V2GScenarioGenerator:
         else:
             raise ValueError(f"Unknown profile: {grid_demand_profile}")
 
-        return pd.DataFrame({
-            "current": current,
-            "duration_h": np.ones(duration_hours),
-        })
+        return pd.DataFrame(
+            {
+                "current": current,
+                "duration_h": np.ones(duration_hours),
+            }
+        )
 
     def generate_peak_shaving_scenario(
         self,
@@ -109,10 +111,12 @@ class V2GScenarioGenerator:
         else:
             raise ValueError(f"Unknown signal profile: {signal_profile}")
 
-        return pd.DataFrame({
-            "current": current,
-            "duration_h": np.ones(n) / 60,  # minutes to hours
-        })
+        return pd.DataFrame(
+            {
+                "current": current,
+                "duration_h": np.ones(n) / 60,  # minutes to hours
+            }
+        )
 
 
 class V2GHealthAnalyzer:
@@ -143,7 +147,8 @@ class V2GHealthAnalyzer:
             "score_delta": v2g_score["score"] - baseline_score["score"],
             "baseline_soh": baseline_score.get("components", {}).get("soh", 0),
             "v2g_soh": v2g_score.get("components", {}).get("soh", 0),
-            "soh_delta": v2g_score.get("components", {}).get("soh", 0) - baseline_score.get("components", {}).get("soh", 0),
+            "soh_delta": v2g_score.get("components", {}).get("soh", 0)
+            - baseline_score.get("components", {}).get("soh", 0),
             "baseline_grade": baseline_score["grade"],
             "v2g_grade": v2g_score["grade"],
         }

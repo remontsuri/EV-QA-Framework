@@ -71,9 +71,11 @@ class EVQAFramework:
         self.ml_analyzer = EVBatteryAnalyzer(
             contamination=self.config.ml_config.contamination,
             n_estimators=self.config.ml_config.n_estimators,
-            random_state=self.config.ml_config.random_state
+            random_state=self.config.ml_config.random_state,
         )
-        logger.info(f"Initialized {self.name} with ML analyzer (contamination={self.config.ml_config.contamination})")
+        logger.info(
+            f"Initialized {self.name} with ML analyzer (contamination={self.config.ml_config.contamination})"
+        )
 
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
         """
@@ -141,7 +143,7 @@ class EVQAFramework:
         if len(telemetry_list) >= 2:
             temp_jump_threshold = thresholds.max_temperature_jump
             for i in range(1, len(telemetry_list)):
-                temp_change = abs(telemetry_list[i].temperature - telemetry_list[i-1].temperature)
+                temp_change = abs(telemetry_list[i].temperature - telemetry_list[i - 1].temperature)
                 if temp_change > temp_jump_threshold:
                     anomalies.append(
                         f"Резкий скачок температуры: {temp_change}°C "
@@ -157,7 +159,7 @@ class EVQAFramework:
             "failed": 0,
             "anomalies": [],
             "ml_analysis": None,
-            "critical_issues": []  # собираем ошибки валидации и критические замечания
+            "critical_issues": [],  # собираем ошибки валидации и критические замечания
         }
 
         telemetries: list[BatteryTelemetryModel] = []
@@ -204,9 +206,12 @@ class EVQAFramework:
             jump_indices: set[int] = set()
             for i in range(1, len(telemetries)):
                 # only consider jump if previous telemetry was not already failed
-                if i-1 < len(status) and not status[i-1]:
+                if i - 1 < len(status) and not status[i - 1]:
                     continue
-                if abs(telemetries[i].temperature - telemetries[i-1].temperature) > jump_threshold:
+                if (
+                    abs(telemetries[i].temperature - telemetries[i - 1].temperature)
+                    > jump_threshold
+                ):
                     jump_indices.add(i)
             # adjust status counts
             for idx in jump_indices:
@@ -235,9 +240,9 @@ if __name__ == "__main__":
 
     # Sample telemetry data
     test_data: list[dict[str, Any]] = [
-        {'voltage': 396.5, 'current': 50, 'temperature': 35, 'soc': 80, 'soh': 98},
-        {'voltage': 398.0, 'current': 45, 'temperature': 36, 'soc': 85, 'soh': 98},
-        {'voltage': 395.0, 'current': 60, 'temperature': 45, 'soc': 75, 'soh': 97},
+        {"voltage": 396.5, "current": 50, "temperature": 35, "soc": 80, "soh": 98},
+        {"voltage": 398.0, "current": 45, "temperature": 36, "soc": 85, "soh": 98},
+        {"voltage": 395.0, "current": 60, "temperature": 45, "soc": 75, "soh": 97},
     ]
 
     # Run tests

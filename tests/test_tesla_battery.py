@@ -42,19 +42,21 @@ def analyze_tesla_battery(csv_path: str = "examples/tesla_model_s_defective.csv"
             "current": row["current"],
             "temperature": row["temp"],
             "soc": row["soc"],
-            "soh": row["soh"]
+            "soh": row["soh"],
         }
 
-        # Проверяем каждую точку через Pydantic
+        # Validate each point through Pydantic
         try:
-            validated = validate_telemetry({
-                "vin": row["vin"],
-                "voltage": row["voltage"],
-                "current": row["current"],
-                "temperature": row["temp"],
-                "soc": row["soc"],
-                "soh": row["soh"]
-            })
+            validate_telemetry(
+                {
+                    "vin": row["vin"],
+                    "voltage": row["voltage"],
+                    "current": row["current"],
+                    "temperature": row["temp"],
+                    "soc": row["soc"],
+                    "soh": row["soh"],
+                }
+            )
         except Exception as e:
             critical_issues.append(f"Point {idx}: Validation failed - {e}")
 
@@ -62,26 +64,31 @@ def analyze_tesla_battery(csv_path: str = "examples/tesla_model_s_defective.csv"
 
         # Проверяем критические значения
         if row["voltage"] > 450:
-            critical_issues.append("CRITICAL: Overvoltage {}V at point {}".format(row["voltage"], idx))
+            critical_issues.append(
+                "CRITICAL: Overvoltage {}V at point {}".format(row["voltage"], idx)
+            )
         if row["voltage"] < 50:
-            critical_issues.append("CRITICAL: Undervoltage {}V at point {}".format(row["voltage"], idx))
+            critical_issues.append(
+                "CRITICAL: Undervoltage {}V at point {}".format(row["voltage"], idx)
+            )
         if row["temp"] > 70:
             critical_issues.append("CRITICAL: Overheating {}C at point {}".format(row["temp"], idx))
 
     # Запускаем полный анализ
     print("\nRunning ML-powered analysis...")
     import asyncio
+
     results = asyncio.run(qa.run_test_suite(telemetry_data))
 
     # Выводим результаты
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("TESLA MODEL S BATTERY TEST RESULTS")
-    print("="*50)
+    print("=" * 50)
 
     print("Total tests: {}".format(results["total_tests"]))
     print("Passed: {}".format(results["passed"]))
     print("Failed: {}".format(results["failed"]))
-    print("Success rate: {:.1f}%".format(results["passed"]/results["total_tests"]*100))
+    print("Success rate: {:.1f}%".format(results["passed"] / results["total_tests"] * 100))
 
     if results["ml_analysis"]:
         ml = results["ml_analysis"]
@@ -121,7 +128,11 @@ def analyze_tesla_battery(csv_path: str = "examples/tesla_model_s_defective.csv"
         "vin": df["vin"].iloc[0],
         "test_results": results,
         "critical_issues": critical_issues,
-        "diagnosis": "REJECTED" if failure_rate > 0.2 else "WARNING" if failure_rate > 0.1 else "APPROVED"
+        "diagnosis": "REJECTED"
+        if failure_rate > 0.2
+        else "WARNING"
+        if failure_rate > 0.1
+        else "APPROVED",
     }
 
     with open("tesla_battery_report.json", "w") as f:
@@ -131,11 +142,13 @@ def analyze_tesla_battery(csv_path: str = "examples/tesla_model_s_defective.csv"
 
     return results
 
+
 if __name__ == "__main__":
     try:
         results = analyze_tesla_battery()
     except Exception as e:
         print(f"Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

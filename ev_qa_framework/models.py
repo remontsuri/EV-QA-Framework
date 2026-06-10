@@ -13,8 +13,11 @@ class BatteryCellDataModel(BaseModel):
     Модель для детального анализа ячеек батареи.
     Используется для обнаружения разбалансировки (Cell Imbalance).
     """
+
     vin: str = Field(..., min_length=17, max_length=17)
-    cell_voltages: list[float] = Field(..., description="Напряжения групп ячеек (обычно 96 для Tesla)")
+    cell_voltages: list[float] = Field(
+        ..., description="Напряжения групп ячеек (обычно 96 для Tesla)"
+    )
     timestamp: datetime | None = Field(default_factory=datetime.now)
 
     @field_validator("cell_voltages")
@@ -89,9 +92,9 @@ class BatteryTelemetryModel(BaseModel):
                 "temperature": 35.2,
                 "soc": 78.5,
                 "soh": 96.2,
-                "timestamp": "2026-01-19T23:00:00"
+                "timestamp": "2026-01-19T23:00:00",
             }
-        }
+        },
     }
 
 

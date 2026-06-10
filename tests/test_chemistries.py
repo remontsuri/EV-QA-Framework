@@ -10,8 +10,8 @@ import pytest
 
 from ev_qa_framework.chemistries import (
     ALL_CHEMISTRIES,
-    BatteryChemistryProfile,
     BUILTIN_PROFILES,
+    BatteryChemistryProfile,
     CellImbalanceThresholds,
     SOHDegradationParams,
     get_profile,
@@ -21,9 +21,9 @@ from ev_qa_framework.chemistries import (
 )
 from ev_qa_framework.config import (
     DEFAULT_CONFIG,
+    TESLA_CONFIG,
     FrameworkConfig,
     SafetyThresholds,
-    TESLA_CONFIG,
 )
 
 
@@ -139,9 +139,7 @@ class TestBatteryChemistryProfile:
 
     def test_save_and_load_file(self):
         p = get_profile("nmc")
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             tmppath = f.name
         try:
             p.save_to_file(tmppath)
@@ -183,9 +181,7 @@ class TestBatteryChemistryProfile:
             cell_min_voltage=3.0,
             cell_max_voltage=4.5,
         )
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write(custom.to_json())
             tmppath = f.name
         try:
@@ -312,9 +308,7 @@ class TestFrameworkConfigChemistryIntegration:
             cells_in_series=128,
             default_vin="LFPVIN000000001",
         )
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             tmppath = f.name
         try:
             cfg.save_to_file(tmppath)
@@ -341,8 +335,12 @@ class TestFrameworkConfigChemistryIntegration:
         profiles = raw.get("profiles", {})
         # Keys in the YAML profile that are NOT part of BatteryChemistryProfile
         framework_keys = {
-            "safety_thresholds", "ml_config", "default_vin",
-            "fail_on_anomaly", "chemistry", "cells_in_series",
+            "safety_thresholds",
+            "ml_config",
+            "default_vin",
+            "fail_on_anomaly",
+            "chemistry",
+            "cells_in_series",
         }
         for key in ALL_CHEMISTRIES:
             assert key in profiles, f"Missing profile '{key}' in settings.yaml"

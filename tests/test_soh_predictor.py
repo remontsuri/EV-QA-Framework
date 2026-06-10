@@ -10,6 +10,7 @@ Tests cover:
 - Edge cases: NaN, single row, large dataset
 - Graceful handling when TensorFlow is not installed (mocked)
 """
+
 import importlib
 import os
 import sys
@@ -22,20 +23,22 @@ import pytest
 
 from ev_qa_framework.soh_predictor import SOHPredictor, _import_tensorflow
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_dataframe(n_rows: int = 50, seed: int = 42) -> pd.DataFrame:
     """Create a synthetic telemetry DataFrame for testing."""
     rng = np.random.default_rng(seed)
-    return pd.DataFrame({
-        "voltage": rng.normal(400, 10, n_rows),
-        "current": rng.normal(100, 5, n_rows),
-        "temperature": rng.normal(35, 2, n_rows),
-        "soh": np.linspace(100, 95, n_rows),
-    })
+    return pd.DataFrame(
+        {
+            "voltage": rng.normal(400, 10, n_rows),
+            "current": rng.normal(100, 5, n_rows),
+            "temperature": rng.normal(35, 2, n_rows),
+            "soh": np.linspace(100, 95, n_rows),
+        }
+    )
 
 
 def _make_mock_tensorflow():
@@ -59,7 +62,9 @@ def _make_mock_tensorflow():
 
     mock_models = MagicMock()
     mock_models.Sequential = mock_sequential_class
-    mock_models.load_model = MagicMock(return_value=MagicMock(predict=MagicMock(return_value=np.array([[0.5]]))))
+    mock_models.load_model = MagicMock(
+        return_value=MagicMock(predict=MagicMock(return_value=np.array([[0.5]])))
+    )
 
     # --- wire keras ---
     mock_keras = MagicMock()
@@ -74,6 +79,7 @@ def _make_mock_tensorflow():
 # ---------------------------------------------------------------------------
 # 1. Initialization tests
 # ---------------------------------------------------------------------------
+
 
 class TestInitialization:
     def test_default_params(self):
@@ -95,6 +101,7 @@ class TestInitialization:
 
     def test_scaler_is_minmax(self):
         from sklearn.preprocessing import MinMaxScaler
+
         predictor = SOHPredictor()
         assert isinstance(predictor.scaler, MinMaxScaler)
 
@@ -102,6 +109,7 @@ class TestInitialization:
 # ---------------------------------------------------------------------------
 # 2. prepare_data tests
 # ---------------------------------------------------------------------------
+
 
 class TestPrepareData:
     def test_output_shapes(self):
@@ -172,6 +180,7 @@ class TestPrepareData:
 # 3. Training tests (mocked TensorFlow)
 # ---------------------------------------------------------------------------
 
+
 class TestTrain:
     def test_train_success(self):
         """Successful training sets is_trained and creates a model."""
@@ -240,6 +249,7 @@ class TestTrain:
 # ---------------------------------------------------------------------------
 # 4. Prediction tests
 # ---------------------------------------------------------------------------
+
 
 class TestPredict:
     def test_predict_before_training_raises(self):
@@ -331,6 +341,7 @@ class TestPredict:
 # 5. Save / Load tests
 # ---------------------------------------------------------------------------
 
+
 class TestSaveLoad:
     def test_save_creates_files(self, tmp_path):
         """Save creates the model and scaler files."""
@@ -401,6 +412,7 @@ class TestSaveLoad:
 
                         with patch("ev_qa_framework.soh_predictor.joblib.load") as mock_joblib_load:
                             from sklearn.preprocessing import MinMaxScaler
+
                             fitted_scaler = MinMaxScaler()
                             fitted_scaler.fit([[400, 100, 35], [300, 50, 20]])
                             mock_joblib_load.side_effect = [fitted_scaler, fitted_scaler]
@@ -434,6 +446,7 @@ class TestSaveLoad:
 
                         with patch("ev_qa_framework.soh_predictor.joblib.load") as mock_joblib_load:
                             from sklearn.preprocessing import MinMaxScaler
+
                             # Full scaler (4 cols: 3 features + target) and feature scaler (3 cols)
                             full_scaler = MinMaxScaler()
                             full_scaler.fit([[400, 100, 35, 95], [300, 50, 20, 80]])
@@ -452,6 +465,7 @@ class TestSaveLoad:
 # ---------------------------------------------------------------------------
 # 6. Edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_single_row_dataframe(self):
@@ -482,12 +496,14 @@ class TestEdgeCases:
         """All-constant feature values (no variance) — scaler handles it."""
         predictor = SOHPredictor(sequence_length=5)
         n = 20
-        df = pd.DataFrame({
-            "voltage": np.full(n, 400.0),
-            "current": np.full(n, 100.0),
-            "temperature": np.full(n, 35.0),
-            "soh": np.linspace(100, 95, n),
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": np.full(n, 400.0),
+                "current": np.full(n, 100.0),
+                "temperature": np.full(n, 35.0),
+                "soh": np.linspace(100, 95, n),
+            }
+        )
         x, y = predictor.prepare_data(df)
         assert x.shape == (15, 5, 3)
         # With constant features, MinMaxScaler produces 0s
@@ -498,12 +514,14 @@ class TestEdgeCases:
         predictor = SOHPredictor(sequence_length=5)
         rng = np.random.default_rng(99)
         n = 30
-        df = pd.DataFrame({
-            "voltage": rng.normal(-10, 5, n),
-            "current": rng.normal(-50, 10, n),
-            "temperature": rng.normal(-5, 3, n),
-            "soh": np.linspace(100, 90, n),
-        })
+        df = pd.DataFrame(
+            {
+                "voltage": rng.normal(-10, 5, n),
+                "current": rng.normal(-50, 10, n),
+                "temperature": rng.normal(-5, 3, n),
+                "soh": np.linspace(100, 90, n),
+            }
+        )
         x, y = predictor.prepare_data(df)
         assert x.shape == (25, 5, 3)
 
@@ -552,6 +570,7 @@ class TestEdgeCases:
 # 7. TensorFlow import error handling
 # ---------------------------------------------------------------------------
 
+
 class TestTensorFlowImport:
     def test_import_error_raised_on_build_model(self):
         """_build_model raises ImportError when TF not installed."""
@@ -583,6 +602,7 @@ class TestTensorFlowImport:
 # ---------------------------------------------------------------------------
 # 8. _import_tensorflow function tests
 # ---------------------------------------------------------------------------
+
 
 class TestImportTensorFlow:
     def test_returns_module_when_available(self):

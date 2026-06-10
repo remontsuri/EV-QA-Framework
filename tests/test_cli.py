@@ -3,26 +3,28 @@
 import json
 import os
 import tempfile
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 import pandas as pd
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def sample_csv(tmp_path):
     """Create a minimal valid CSV file for analyze_csv / train_soh_model."""
     csv_path = tmp_path / "telemetry.csv"
-    df = pd.DataFrame({
-        "voltage": [396.0, 397.0, 395.0, 398.0, 396.5],
-        "current": [50.0, 51.0, 49.0, 52.0, 50.5],
-        "temperature": [35, 36, 34, 35, 36],
-        "soc": [80, 79, 78, 77, 76],
-    })
+    df = pd.DataFrame(
+        {
+            "voltage": [396.0, 397.0, 395.0, 398.0, 396.5],
+            "current": [50.0, 51.0, 49.0, 52.0, 50.5],
+            "temperature": [35, 36, 34, 35, 36],
+            "soc": [80, 79, 78, 77, 76],
+        }
+    )
     df.to_csv(csv_path, index=False)
     return str(csv_path)
 
@@ -31,12 +33,14 @@ def sample_csv(tmp_path):
 def sample_csv_with_temp_col(tmp_path):
     """CSV that uses 'temp' instead of 'temperature'."""
     csv_path = tmp_path / "telemetry_temp.csv"
-    df = pd.DataFrame({
-        "voltage": [396.0, 397.0],
-        "current": [50.0, 51.0],
-        "temp": [35, 36],
-        "soc": [80, 79],
-    })
+    df = pd.DataFrame(
+        {
+            "voltage": [396.0, 397.0],
+            "current": [50.0, 51.0],
+            "temp": [35, 36],
+            "soc": [80, 79],
+        }
+    )
     df.to_csv(csv_path, index=False)
     return str(csv_path)
 
@@ -45,12 +49,14 @@ def sample_csv_with_temp_col(tmp_path):
 def sample_csv_temperature_only(tmp_path):
     """CSV that uses 'temperature' column (needs rename to 'temp')."""
     csv_path = tmp_path / "telemetry_temperature.csv"
-    df = pd.DataFrame({
-        "voltage": [396.0, 397.0],
-        "current": [50.0, 51.0],
-        "temperature": [35, 36],
-        "soc": [80, 79],
-    })
+    df = pd.DataFrame(
+        {
+            "voltage": [396.0, 397.0],
+            "current": [50.0, 51.0],
+            "temperature": [35, 36],
+            "soc": [80, 79],
+        }
+    )
     df.to_csv(csv_path, index=False)
     return str(csv_path)
 
@@ -113,6 +119,7 @@ def mock_soh_predictor():
 # Tests for analyze_csv
 # ---------------------------------------------------------------------------
 
+
 class TestAnalyzeCsv:
     """Tests for the analyze_csv function."""
 
@@ -128,9 +135,7 @@ class TestAnalyzeCsv:
         assert "Anomalies: 1" in captured.out
         assert "Severity: WARNING" in captured.out
 
-    def test_success_with_output(
-        self, sample_csv, mock_analyzer, tmp_path, capsys
-    ):
+    def test_success_with_output(self, sample_csv, mock_analyzer, tmp_path, capsys):
         """Successful analysis with JSON output file."""
         from ev_qa_framework.cli import analyze_csv
 
@@ -154,9 +159,7 @@ class TestAnalyzeCsv:
         with pytest.raises(FileNotFoundError):
             analyze_csv("/nonexistent/path/data.csv")
 
-    def test_temperature_column_renamed(
-        self, sample_csv_temperature_only, mock_analyzer, capsys
-    ):
+    def test_temperature_column_renamed(self, sample_csv_temperature_only, mock_analyzer, capsys):
         """CSV with 'temperature' column is renamed to 'temp'."""
         from ev_qa_framework.cli import analyze_csv
 
@@ -166,9 +169,7 @@ class TestAnalyzeCsv:
         _, instance = mock_analyzer
         assert instance.analyze_telemetry.call_count == 1
 
-    def test_temp_column_no_rename(
-        self, sample_csv_with_temp_col, mock_analyzer, capsys
-    ):
+    def test_temp_column_no_rename(self, sample_csv_with_temp_col, mock_analyzer, capsys):
         """CSV already having 'temp' column should not be renamed."""
         from ev_qa_framework.cli import analyze_csv
 
@@ -177,9 +178,7 @@ class TestAnalyzeCsv:
         _, instance = mock_analyzer
         assert instance.analyze_telemetry.call_count == 1
 
-    def test_analyzer_called_with_dataframe(
-        self, sample_csv, mock_analyzer
-    ):
+    def test_analyzer_called_with_dataframe(self, sample_csv, mock_analyzer):
         """Verify pd.read_csv is called and analyzer receives a DataFrame."""
         from ev_qa_framework.cli import analyze_csv
 
@@ -219,12 +218,11 @@ class TestAnalyzeCsv:
 # Tests for run_can_demo
 # ---------------------------------------------------------------------------
 
+
 class TestRunCanDemo:
     """Tests for the run_can_demo function."""
 
-    def test_success_default_duration(
-        self, mock_can_simulator, mock_can_receiver, capsys
-    ):
+    def test_success_default_duration(self, mock_can_simulator, mock_can_receiver, capsys):
         """CAN demo runs with default duration and prints telemetry."""
         from ev_qa_framework.cli import run_can_demo
 
@@ -245,9 +243,7 @@ class TestRunCanDemo:
         assert "CAN Demo finished" in captured.out
         assert "CAN Telemetry" in captured.out
 
-    def test_success_custom_duration(
-        self, mock_can_simulator, mock_can_receiver, capsys
-    ):
+    def test_success_custom_duration(self, mock_can_simulator, mock_can_receiver, capsys):
         """CAN demo respects custom duration."""
         from ev_qa_framework.cli import run_can_demo
 
@@ -270,9 +266,7 @@ class TestRunCanDemo:
         sim.stop.assert_called_once()
         receiver.stop.assert_called_once()
 
-    def test_telemetry_format(
-        self, mock_can_simulator, mock_can_receiver, capsys
-    ):
+    def test_telemetry_format(self, mock_can_simulator, mock_can_receiver, capsys):
         """Verify telemetry line format."""
         from ev_qa_framework.cli import run_can_demo
 
@@ -286,9 +280,7 @@ class TestRunCanDemo:
         assert "T=35C" in captured.out
         assert "SOC=80%" in captured.out
 
-    def test_stop_called_on_exception(
-        self, mock_can_simulator, mock_can_receiver
-    ):
+    def test_stop_called_on_exception(self, mock_can_simulator, mock_can_receiver):
         """Simulator and receiver are stopped even if an error occurs."""
         from ev_qa_framework.cli import run_can_demo
 
@@ -306,6 +298,7 @@ class TestRunCanDemo:
 # ---------------------------------------------------------------------------
 # Tests for run_dbc_emulate
 # ---------------------------------------------------------------------------
+
 
 class TestRunDbcEmulate:
     """Tests for the run_dbc_emulate function."""
@@ -389,6 +382,7 @@ class TestRunDbcEmulate:
 # Tests for train_soh_model
 # ---------------------------------------------------------------------------
 
+
 class TestTrainSohModel:
     """Tests for the train_soh_model function."""
 
@@ -426,9 +420,7 @@ class TestTrainSohModel:
             train_soh_model(sample_csv, "/tmp/model")
             mock_read.assert_called_once_with(sample_csv)
 
-    def test_predictor_train_receives_dataframe(
-        self, sample_csv, mock_soh_predictor
-    ):
+    def test_predictor_train_receives_dataframe(self, sample_csv, mock_soh_predictor):
         """Verify the predictor.train receives a DataFrame."""
         from ev_qa_framework.cli import train_soh_model
 
@@ -443,6 +435,7 @@ class TestTrainSohModel:
 # ---------------------------------------------------------------------------
 # Tests for main() CLI entry point
 # ---------------------------------------------------------------------------
+
 
 class TestMain:
     """Tests for the main() CLI entry point."""
@@ -532,8 +525,6 @@ class TestMain:
 
         # uvicorn is imported inline inside main(), so we patch it via sys.modules
         mock_uvicorn = MagicMock()
-        mock_dash_app = MagicMock()
-
         with patch("sys.argv", ["ev-qa", "dashboard"]):
             with patch.dict("sys.modules", {"uvicorn": mock_uvicorn}):
                 with patch.dict("sys.modules", {"dashboard": MagicMock()}):
@@ -565,15 +556,17 @@ class TestMain:
 # Tests for start_dashboard (inline in main)
 # ---------------------------------------------------------------------------
 
+
 class TestStartDashboard:
     """Tests for the dashboard command path in main()."""
 
     def test_dashboard_imports_uvicorn(self):
         """Verify dashboard command attempts to import uvicorn."""
-        from ev_qa_framework.cli import main
-
         # We test this by checking the source code contains the expected logic
         import inspect
+
+        from ev_qa_framework.cli import main
+
         source = inspect.getsource(main)
         assert "uvicorn" in source
         assert "dashboard" in source
@@ -583,12 +576,11 @@ class TestStartDashboard:
 # Edge-case tests
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeCases:
     """Edge-case and boundary tests."""
 
-    def test_analyze_csv_output_json_content(
-        self, sample_csv, mock_analyzer, tmp_path
-    ):
+    def test_analyze_csv_output_json_content(self, sample_csv, mock_analyzer, tmp_path):
         """Verify JSON output is valid and contains expected keys."""
         from ev_qa_framework.cli import analyze_csv
 
@@ -602,9 +594,7 @@ class TestEdgeCases:
         assert "anomalies_detected" in data
         assert "severity" in data
 
-    def test_analyze_csv_nonexistent_output_dir(
-        self, sample_csv, mock_analyzer, tmp_path
-    ):
+    def test_analyze_csv_nonexistent_output_dir(self, sample_csv, mock_analyzer, tmp_path):
         """Output to a non-existent directory should raise FileNotFoundError."""
         from ev_qa_framework.cli import analyze_csv
 
@@ -612,9 +602,7 @@ class TestEdgeCases:
         with pytest.raises(FileNotFoundError):
             analyze_csv(sample_csv, output=output_path)
 
-    def test_run_can_demo_negative_duration(
-        self, mock_can_simulator, mock_can_receiver
-    ):
+    def test_run_can_demo_negative_duration(self, mock_can_simulator, mock_can_receiver):
         """Negative duration should result in zero iterations."""
         from ev_qa_framework.cli import run_can_demo
 
@@ -639,9 +627,7 @@ class TestEdgeCases:
 
             instance.stop.assert_called_once()
 
-    def test_train_soh_model_creates_output_dir(
-        self, sample_csv, mock_soh_predictor
-    ):
+    def test_train_soh_model_creates_output_dir(self, sample_csv, mock_soh_predictor):
         """train_soh_model should work with a non-existent output directory."""
         from ev_qa_framework.cli import train_soh_model
 

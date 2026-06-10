@@ -4,6 +4,7 @@ SOH Predictor Module: LSTM-based battery health degradation forecasting.
 Note: TensorFlow is an optional dependency. Without it, SOHPredictor
 will raise an ImportError only when instantiated, not at import time.
 """
+
 from __future__ import annotations
 
 import os
@@ -20,6 +21,7 @@ def _import_tensorflow():
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
     try:
         import tensorflow as tf
+
         return tf
     except ImportError:
         raise ImportError(
@@ -47,20 +49,23 @@ class SOHPredictor:
         _import_tensorflow()
         from tensorflow.keras.layers import LSTM, Dense, Dropout
         from tensorflow.keras.models import Sequential
-        model = Sequential([
-            LSTM(64, activation="relu", input_shape=input_shape,
-                 return_sequences=True),
-            Dropout(0.2),
-            LSTM(32, activation="relu"),
-            Dropout(0.2),
-            Dense(16, activation="relu"),
-            Dense(1)
-        ])
+
+        model = Sequential(
+            [
+                LSTM(64, activation="relu", input_shape=input_shape, return_sequences=True),
+                Dropout(0.2),
+                LSTM(32, activation="relu"),
+                Dropout(0.2),
+                Dense(16, activation="relu"),
+                Dense(1),
+            ]
+        )
         model.compile(optimizer="adam", loss="mse")
         return model
 
-    def prepare_data(self, df: pd.DataFrame,
-                     target_col: str = "soh") -> tuple[np.ndarray, np.ndarray]:
+    def prepare_data(
+        self, df: pd.DataFrame, target_col: str = "soh"
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Prepare time-series sequences for LSTM.
         """
@@ -74,7 +79,7 @@ class SOHPredictor:
 
         x_seq, y_seq = [], []
         for i in range(len(scaled_data) - self.sequence_length):
-            x_seq.append(scaled_data[i:i + self.sequence_length, :-1])
+            x_seq.append(scaled_data[i : i + self.sequence_length, :-1])
             y_seq.append(scaled_data[i + self.sequence_length, -1])
 
         return np.array(x_seq), np.array(y_seq)
@@ -88,8 +93,7 @@ class SOHPredictor:
             raise ValueError("Not enough data to create sequences for LSTM")
 
         self.model = self._build_model((x_train.shape[1], x_train.shape[2]))
-        self.model.fit(x_train, y_train, epochs=epochs,
-                       batch_size=batch_size, verbose=0)
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0)
         self.is_trained = True
 
     def predict_next(self, recent_telemetry: pd.DataFrame) -> float:
@@ -102,10 +106,9 @@ class SOHPredictor:
         features = ["voltage", "current", "temperature"]
 
         if len(recent_telemetry) < self.sequence_length:
-            raise ValueError(f"Need at least {self.sequence_length} "
-                             "data points")
+            raise ValueError(f"Need at least {self.sequence_length} " "data points")
 
-        data = recent_telemetry[features].values[-self.sequence_length:]
+        data = recent_telemetry[features].values[-self.sequence_length :]
 
         # Scale features using feature-only scaler
         scaled_feat = self._feature_scaler.transform(data)
@@ -132,6 +135,7 @@ class SOHPredictor:
     def load(self, path: str):
         """Load the model and scaler"""
         from tensorflow.keras.models import load_model
+
         self.model = load_model(os.path.join(path, "soh_lstm.keras"))
         self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
         self._feature_scaler = joblib.load(os.path.join(path, "feature_scaler.joblib"))

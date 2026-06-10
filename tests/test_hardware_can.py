@@ -3,13 +3,13 @@ Tests for hardware CAN support (socketCAN, OBD-II, error handling).
 
 Run with: .venv/bin/python -m pytest tests/test_hardware_can.py -v
 """
+
 import builtins
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import can as python_can
+import pytest
 
 from ev_qa_framework.can_bus import (
     CANBatterySimulator,
@@ -70,7 +70,11 @@ class TestDetectCANInterfaces:
     @patch("ev_qa_framework.can_bus.os.path.isdir")
     @patch("ev_qa_framework.can_bus.os.path.isfile")
     def test_detect_vcan_only(
-        self, mock_isfile, mock_isdir, mock_listdir, mock_system,
+        self,
+        mock_isfile,
+        mock_isdir,
+        mock_listdir,
+        mock_system,
     ):
         """Detect only virtual CAN interfaces"""
         mock_system.return_value = "Linux"
@@ -101,7 +105,11 @@ class TestDetectCANInterfaces:
     @patch("ev_qa_framework.can_bus.os.path.isdir")
     @patch("ev_qa_framework.can_bus.os.path.isfile")
     def test_detect_hardware_can(
-        self, mock_isfile, mock_isdir, mock_listdir, mock_system,
+        self,
+        mock_isfile,
+        mock_isdir,
+        mock_listdir,
+        mock_system,
     ):
         mock_system.return_value = "Linux"
         mock_listdir.return_value = ["can0", "vcan0"]
@@ -393,8 +401,11 @@ class TestOBD2Adapter:
         telemetry = adapter.get_telemetry()
         assert isinstance(telemetry, dict)
         expected_keys = [
-            "battery_voltage", "battery_current",
-            "battery_temperature", "soc", "odometer",
+            "battery_voltage",
+            "battery_current",
+            "battery_temperature",
+            "soc",
+            "odometer",
         ]
         for key in expected_keys:
             assert key in telemetry

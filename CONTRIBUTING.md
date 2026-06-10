@@ -21,7 +21,20 @@
    ```
    This creates a virtual environment and installs all dependencies (including dev and ML extras) in one step.
 
-3. **Activate the virtual environment** (optional — `uv run` handles this automatically)
+3. **Install pre-commit hooks**
+   ```bash
+   uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+   ```
+   This installs two hooks:
+   - `pre-commit` — runs ruff lint + format on staged files before each commit
+   - `pre-push` — runs full test suite before each push to remote
+
+   To run manually without committing:
+   ```
+   uv run pre-commit run --all-files
+   ```
+
+4. **Activate the virtual environment** (optional — `uv run` handles this automatically)
    ```bash
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```

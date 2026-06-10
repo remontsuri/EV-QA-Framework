@@ -24,6 +24,7 @@ from .physics_features import PhysicsFeatureExtractor
 @dataclass
 class BatteryState:
     """Current state of the battery digital twin."""
+
     voltage: float = 400.0
     current: float = 0.0
     temperature: float = 25.0
@@ -102,7 +103,7 @@ class BatteryDigitalTwin:
         s.current = current
 
         # Thermal model: dT = I²R * coeff - cooling
-        heat_generated = (current ** 2) * s.internal_resistance * self._thermal_coeff
+        heat_generated = (current**2) * s.internal_resistance * self._thermal_coeff
         cooling = 0.1 * (s.temperature - s.ambient_temperature)
         s.temperature += (heat_generated - cooling) * dt
 
@@ -130,9 +131,7 @@ class BatteryDigitalTwin:
         s.capacity_ah = 100.0 * s.soh / 100.0
 
         # Resistance growth
-        s.internal_resistance = 0.05 * math.exp(
-            self._resistance_growth_rate * s.cycle_count
-        )
+        s.internal_resistance = 0.05 * math.exp(self._resistance_growth_rate * s.cycle_count)
 
     def simulate_drive_cycle(
         self,

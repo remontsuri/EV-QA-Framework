@@ -366,9 +366,9 @@ class PhysicsFeatureExtractor:
 
         result: dict[str, Any] = {
             "efficiency": efficiency,
-            "efficiency_percent": float(efficiency.flat[0] * 100.0) if efficiency.size == 1 else (
-                np.asarray(efficiency * 100.0) if efficiency.size > 1 else np.array([])
-            ),
+            "efficiency_percent": float(efficiency.flat[0] * 100.0)
+            if efficiency.size == 1
+            else (np.asarray(efficiency * 100.0) if efficiency.size > 1 else np.array([])),
             "irreversible_loss": np.asarray(1.0 - efficiency),
         }
 

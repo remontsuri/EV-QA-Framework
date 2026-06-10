@@ -47,7 +47,13 @@ class TestIntegrationFlow:
             {"voltage": 400.0, "current": 50, "temperature": 50, "soc": 77, "soh": 98},
             # Rule-based аномалия (скачок температуры > 5)
             {"voltage": 400.0, "current": 50, "temperature": 30, "soc": 76, "soh": 98},
-            {"voltage": 400.0, "current": 50, "temperature": 40, "soc": 75, "soh": 98}, # Скачок +10
+            {
+                "voltage": 400.0,
+                "current": 50,
+                "temperature": 40,
+                "soc": 75,
+                "soh": 98,
+            },  # Скачок +10
         ]
 
         # 4. Запуск
@@ -78,7 +84,7 @@ class TestIntegrationFlow:
         # Данные для обучения
         train_data = [
             {"voltage": 400.0, "current": 50, "temperature": 30, "soc": 80, "soh": 95}
-        ] * 20 # 20 одинаковых точек для стабильности
+        ] * 20  # 20 одинаковых точек для стабильности
 
         # 1. Обучаем
         qa_train = EVQAFramework("Trainer")
@@ -98,7 +104,13 @@ class TestIntegrationFlow:
 
             # 4. Проверяем на аномалии (без дополнительного обучения)
             anomaly_data = [
-                {"voltage": 800.0, "current": 300, "temperature": 55, "soc": 20, "soh": 90} # Сильное отклонение
+                {
+                    "voltage": 800.0,
+                    "current": 300,
+                    "temperature": 55,
+                    "soc": 20,
+                    "soh": 90,
+                }  # Сильное отклонение
             ]
 
             # Мы используем напрямую ml_analyzer, так как run_test_suite вызывает analyze_telemetry
@@ -106,6 +118,7 @@ class TestIntegrationFlow:
             # Но если мы загрузили модель, она уже fitted.
 
             import pandas as pd
+
             df_anomaly = pd.DataFrame(anomaly_data)
             ml_results = qa_prod.ml_analyzer.analyze_telemetry(df_anomaly)
 
@@ -144,9 +157,7 @@ class TestIntegrationFlow:
         qa = EVQAFramework("Error-Handler")
 
         # Данные с пропущенным обязательным полем 'voltage'
-        invalid_data = [
-            {"current": 50, "temperature": 30, "soc": 80, "soh": 98}
-        ]
+        invalid_data = [{"current": 50, "temperature": 30, "soc": 80, "soh": 98}]
 
         # run_test_suite возвращает результаты даже если были ошибки валидации,
         # логируя их как проваленные тесты.
@@ -155,6 +166,7 @@ class TestIntegrationFlow:
         assert results["total_tests"] == 1
         assert results["failed"] == 1
         assert any("Validation failed" in msg for msg in results["critical_issues"])
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

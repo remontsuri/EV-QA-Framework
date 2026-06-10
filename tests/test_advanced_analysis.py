@@ -11,25 +11,32 @@ def test_cell_imbalance_normal():
     assert results["severity"] == "NORMAL"
     assert results["max_imbalance"] <= 0.05
 
+
 def test_cell_imbalance_critical():
     analyzer = EVBatteryAnalyzer()
-    voltages = [3.8, 3.8, 3.65, 3.8] # 0.15 imbalance
+    voltages = [3.8, 3.8, 3.65, 3.8]  # 0.15 imbalance
     results = analyzer.detect_cell_imbalance(voltages)
     assert results["severity"] == "CRITICAL"
     assert results["max_imbalance"] > 0.1
 
+
 def test_thermal_runaway_risk_low():
     predictor = ThermalRunawayPredictor(mode="rule")
-    df = pd.DataFrame({
-        "temperature": [35.0, 35.1, 35.0, 35.2],
-    })
+    df = pd.DataFrame(
+        {
+            "temperature": [35.0, 35.1, 35.0, 35.2],
+        }
+    )
     results = predictor.predict_risk(df)
     assert results["risk_level"] == "LOW"
 
+
 def test_thermal_runaway_risk_critical():
     predictor = ThermalRunawayPredictor(mode="rule")
-    df = pd.DataFrame({
-        "temperature": [35.0, 45.0, 55.0, 68.0],
-    })
+    df = pd.DataFrame(
+        {
+            "temperature": [35.0, 45.0, 55.0, 68.0],
+        }
+    )
     results = predictor.predict_risk(df)
     assert results["risk_level"] == "CRITICAL"

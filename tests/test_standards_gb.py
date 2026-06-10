@@ -53,7 +53,6 @@ class TestGB38031Safety:
         twin = BatteryDigitalTwin()
 
         # Simulate crush: internal resistance increases
-        initial_r = twin.state.internal_resistance
         twin.state.internal_resistance *= 2.0  # deformation
 
         twin.step(0.1, 50.0)

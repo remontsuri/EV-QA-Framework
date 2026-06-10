@@ -60,11 +60,11 @@ class SafetyThresholds:
             "max_voltage": self.max_voltage,
             "min_soc": self.min_soc,
             "critical_soh": self.critical_soh,
-            "max_current": self.max_current
+            "max_current": self.max_current,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'SafetyThresholds':
+    def from_dict(cls, data: dict) -> "SafetyThresholds":
         """Создание из словаря"""
         return cls(**data)
 
@@ -74,7 +74,7 @@ class SafetyThresholds:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load_from_file(cls, filepath: str) -> 'SafetyThresholds':
+    def load_from_file(cls, filepath: str) -> "SafetyThresholds":
         """Загрузка конфигурации из JSON файла"""
         with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
@@ -108,11 +108,11 @@ class MLConfig:
             "n_estimators": self.n_estimators,
             "random_state": self.random_state,
             "critical_score_threshold": self.critical_score_threshold,
-            "warning_score_threshold": self.warning_score_threshold
+            "warning_score_threshold": self.warning_score_threshold,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'MLConfig':
+    def from_dict(cls, data: dict) -> "MLConfig":
         """Создание из словаря"""
         return cls(**data)
 
@@ -188,7 +188,7 @@ class FrameworkConfig:
         return d
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'FrameworkConfig':
+    def from_dict(cls, data: dict) -> "FrameworkConfig":
         """Создание из словаря"""
         cfg = cls(
             safety_thresholds=SafetyThresholds.from_dict(data.get("safety_thresholds", {})),
@@ -206,7 +206,7 @@ class FrameworkConfig:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load_from_file(cls, filepath: str) -> 'FrameworkConfig':
+    def load_from_file(cls, filepath: str) -> "FrameworkConfig":
         """Загрузка конфигурации из JSON файла"""
         if not os.path.exists(filepath):
             # Если файла нет, возвращаем дефолтную конфигурацию
@@ -217,7 +217,7 @@ class FrameworkConfig:
         return cls.from_dict(data)
 
     @classmethod
-    def load_from_yaml(cls, filepath: str, profile: str | None = None) -> 'FrameworkConfig':
+    def load_from_yaml(cls, filepath: str, profile: str | None = None) -> "FrameworkConfig":
         """Загрузка конфигурации из единого YAML-файла.
 
         Args:
@@ -275,7 +275,7 @@ if __name__ == "__main__":
     tesla_thresholds = SafetyThresholds(
         max_temperature=55.0,  # Tesla более консервативна
         min_voltage=250.0,
-        max_voltage=450.0
+        max_voltage=450.0,
     )
     config.safety_thresholds = tesla_thresholds
 

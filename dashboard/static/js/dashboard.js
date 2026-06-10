@@ -57,7 +57,7 @@ ws.onmessage = function(event) {
     const data = JSON.parse(event.data);
     updateUI(data);
     updateChart(data);
-    
+
     if (data.is_anomaly) {
         showAlert('Anomaly detected!', 'critical');
     }
@@ -74,13 +74,13 @@ function updateChart(data) {
     chart.data.labels.push(data.timestamp);
     chart.data.datasets[0].data.push(data.voltage);
     chart.data.datasets[1].data.push(data.temperature);
-    
+
     if (chart.data.labels.length > maxDataPoints) {
         chart.data.labels.shift();
         chart.data.datasets[0].data.shift();
         chart.data.datasets[1].data.shift();
     }
-    
+
     chart.update('none');
 }
 
@@ -89,10 +89,10 @@ function showAlert(message, type) {
     const alert = document.createElement('div');
     alert.className = `alert ${type}`;
     alert.textContent = message;
-    
+
     alertsDiv.appendChild(alert);
     alertsDiv.style.display = 'block';
-    
+
     setTimeout(() => {
         alert.remove();
         if (alertsDiv.children.length === 0) {

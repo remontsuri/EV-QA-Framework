@@ -10,6 +10,7 @@ Architecture:
 Note: TensorFlow is an optional dependency. Without it, SOHTransformer
 will raise an ImportError only when model methods are called, not at import time.
 """
+
 from __future__ import annotations
 
 import os
@@ -26,6 +27,7 @@ def _import_tensorflow():
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
     try:
         import tensorflow as tf
+
         return tf
     except ImportError:
         raise ImportError(
@@ -76,15 +78,15 @@ class SOHTransformer:
         tensorflow.keras.Model
             Compiled Keras model with MAE loss.
         """
-        tf = _import_tensorflow()
+        _import_tensorflow()
         from tensorflow.keras.layers import (
             LSTM,
-            MultiHeadAttention,
             Dense,
             Dropout,
-            LayerNormalization,
-            Input,
             GlobalAveragePooling1D,
+            Input,
+            LayerNormalization,
+            MultiHeadAttention,
         )
         from tensorflow.keras.models import Model
 
@@ -95,9 +97,7 @@ class SOHTransformer:
         x = LSTM(64, return_sequences=True)(inputs)
 
         # Multi-Head Self-Attention — captures long-range dependencies
-        attn_output = MultiHeadAttention(
-            num_heads=4, key_dim=16
-        )(x, x)
+        attn_output = MultiHeadAttention(num_heads=4, key_dim=16)(x, x)
         # Residual connection + LayerNorm
         x = LayerNormalization()(x + attn_output)
 
@@ -148,9 +148,7 @@ class SOHTransformer:
 
         return np.array(x_seq), np.array(y_seq)
 
-    def train(
-        self, df: pd.DataFrame, epochs: int = 20, batch_size: int = 32
-    ):
+    def train(self, df: pd.DataFrame, epochs: int = 20, batch_size: int = 32):
         """
         Train the LSTM-Transformer model on historical data.
 
@@ -172,9 +170,7 @@ class SOHTransformer:
             raise ValueError("Not enough data to create sequences for training")
 
         self.model = self.build_model()
-        history = self.model.fit(
-            x_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0
-        )
+        history = self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0)
         self.is_trained = True
         return history
 
@@ -203,8 +199,7 @@ class SOHTransformer:
 
         if len(data) < self.sequence_length:
             raise ValueError(
-                f"Need at least {self.sequence_length} data points, "
-                f"got {len(data)}"
+                f"Need at least {self.sequence_length} data points, " f"got {len(data)}"
             )
 
         scaled_data = self._feature_scaler.transform(data)
@@ -238,9 +233,7 @@ class SOHTransformer:
         os.makedirs(path, exist_ok=True)
         self.model.save(os.path.join(path, "soh_transformer.keras"))
         joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
-        joblib.dump(
-            self._feature_scaler, os.path.join(path, "feature_scaler.joblib")
-        )
+        joblib.dump(self._feature_scaler, os.path.join(path, "feature_scaler.joblib"))
 
     def load(self, path: str):
         """
@@ -251,14 +244,10 @@ class SOHTransformer:
         path : str
             Directory path to load from.
         """
-        tf = _import_tensorflow()
+        _import_tensorflow()
         from tensorflow.keras.models import load_model
 
-        self.model = load_model(
-            os.path.join(path, "soh_transformer.keras")
-        )
+        self.model = load_model(os.path.join(path, "soh_transformer.keras"))
         self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
-        self._feature_scaler = joblib.load(
-            os.path.join(path, "feature_scaler.joblib")
-        )
+        self._feature_scaler = joblib.load(os.path.join(path, "feature_scaler.joblib"))
         self.is_trained = True

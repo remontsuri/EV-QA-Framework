@@ -140,10 +140,10 @@ model = EVBatteryAnalyzer.load_model('models/production/baseline_v2.0')
 # Использование для real-time inference
 def process_telemetry(incoming_batch):
     results = model.analyze_telemetry(incoming_batch)
-    
+
     if results['severity'] == 'CRITICAL':
         send_alert(results)
-    
+
     return results
 ```
 
@@ -248,7 +248,7 @@ def handle_request(data):
 class ModelService:
     def __init__(self):
         self.model = EVBatteryAnalyzer.load_model('model.joblib')
-    
+
     def predict(self, data):
         return self.model.analyze_telemetry(data)
 ```

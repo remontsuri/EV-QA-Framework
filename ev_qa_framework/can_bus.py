@@ -8,6 +8,7 @@ Supports:
 - Automatic detection of available CAN interfaces
 - Error handling with reconnection, bus-off monitoring, and timeouts
 """
+
 from __future__ import annotations
 
 import logging
@@ -112,12 +113,14 @@ def detect_can_interfaces() -> list[dict[str, str]]:
                     except OSError:
                         pass
 
-        interfaces.append({
-            "name": iface,
-            "type": iface_type,
-            "up": is_up,
-            "driver": driver,
-        })
+        interfaces.append(
+            {
+                "name": iface,
+                "type": iface_type,
+                "up": is_up,
+                "driver": driver,
+            }
+        )
 
     return interfaces
 
@@ -176,9 +179,7 @@ def find_available_can_channel(
     if hardware:
         return hardware[0]["name"]
 
-    raise CANHardwareNotFoundError(
-        "No CAN interfaces found after full scan."
-    )
+    raise CANHardwareNotFoundError("No CAN interfaces found after full scan.")
 
 
 # ── CAN Hardware Interface Manager ─────────────────────────────────────────
@@ -273,7 +274,8 @@ class CANHardwareInterface:
                 )
                 logger.info(
                     "Connected to CAN interface %s via %s backend",
-                    channel, backend,
+                    channel,
+                    backend,
                 )
                 self._reconnect_count = 0
                 return True
@@ -322,9 +324,7 @@ class CANHardwareInterface:
         except can.CanError as e:
             error_str = str(e).lower()
             if "bus off" in error_str or "bus-off" in error_str:
-                raise CANBusOffError(
-                    f"CAN controller entered bus-off on {self.channel}"
-                ) from e
+                raise CANBusOffError(f"CAN controller entered bus-off on {self.channel}") from e
             logger.warning("CAN send error on %s: %s", self.channel, e)
             return self._handle_transient_error(e)
         except OSError as e:
@@ -348,9 +348,7 @@ class CANHardwareInterface:
         except can.CanError as e:
             error_str = str(e).lower()
             if "bus off" in error_str or "bus-off" in error_str:
-                raise CANBusOffError(
-                    f"CAN controller entered bus-off on {self.channel}"
-                ) from e
+                raise CANBusOffError(f"CAN controller entered bus-off on {self.channel}") from e
             logger.warning("CAN receive error on %s: %s", self.channel, e)
             self._handle_transient_error(e)
             return None
@@ -405,10 +403,7 @@ class CANHardwareInterface:
         if not self.auto_reconnect:
             return False
 
-        if (
-            self.max_reconnect_attempts > 0
-            and self._reconnect_count >= self.max_reconnect_attempts
-        ):
+        if self.max_reconnect_attempts > 0 and self._reconnect_count >= self.max_reconnect_attempts:
             logger.error(
                 "Max reconnect attempts (%d) reached for %s",
                 self.max_reconnect_attempts,
@@ -572,7 +567,9 @@ class OBD2Adapter:
             self._connected = True
             logger.info(
                 "Connected to OBD-II adapter on %s (v%s, protocol: %s)",
-                port, self._version, self._protocol,
+                port,
+                self._version,
+                self._protocol,
             )
             return True
         except (OBD2ConnectionError, OBD2ProtocolError) as e:
@@ -629,7 +626,7 @@ class OBD2Adapter:
             # Strip the echo (command echo back) and prompt
             cmd_clean = command.strip()
             if result.startswith(cmd_clean):
-                result = result[len(cmd_clean):].strip()
+                result = result[len(cmd_clean) :].strip()
             result = result.rstrip(">").strip()
 
             if not result or result.upper() in ("NO DATA", "ERROR", "UNABLE TO CONNECT", "?"):
@@ -664,7 +661,7 @@ class OBD2Adapter:
 
         # Parse hex bytes from response
         # Typical response: "41 42 0E E8" (mode+0x40, pid, data bytes)
-        hex_values = re.findall(r'[0-9A-Fa-f]{2}', response)
+        hex_values = re.findall(r"[0-9A-Fa-f]{2}", response)
         if not hex_values:
             return None
 
@@ -691,9 +688,7 @@ class OBD2Adapter:
                     value = pid_info["formula"](raw)
                     telemetry[key] = round(value, 2)
                 except (IndexError, ValueError, TypeError) as e:
-                    logger.debug(
-                        "Failed to decode PID %s: %s", key, e
-                    )
+                    logger.debug("Failed to decode PID %s: %s", key, e)
                     telemetry[key] = None
             else:
                 telemetry[key] = None
@@ -719,13 +714,17 @@ class OBD2Adapter:
         elif platform.system() == "Linux":
             # Linux: check common serial ports
             candidates = [
-                "/dev/ttyUSB0", "/dev/ttyUSB1",
-                "/dev/ttyAMA0", "/dev/ttyS0",
-                "/dev/rfcomm0", "/dev/rfcomm1",
+                "/dev/ttyUSB0",
+                "/dev/ttyUSB1",
+                "/dev/ttyAMA0",
+                "/dev/ttyS0",
+                "/dev/rfcomm0",
+                "/dev/rfcomm1",
             ]
         else:
             candidates = [
-                "/dev/tty.usbserial*", "/dev/cu.usbserial*",
+                "/dev/tty.usbserial*",
+                "/dev/cu.usbserial*",
             ]
 
         for candidate in candidates:
@@ -865,9 +864,7 @@ class CANBatterySimulator:
 
     @property
     def is_hardware(self) -> bool:
-        return self.hardware or (
-            self._hw_interface is not None and self._hw_interface.is_hardware
-        )
+        return self.hardware or (self._hw_interface is not None and self._hw_interface.is_hardware)
 
     def start(self):
         """Start simulation on the configured CAN interface."""
@@ -882,22 +879,20 @@ class CANBatterySimulator:
             )
             connected = self._hw_interface.connect()
             if not connected:
-                logger.warning(
-                    "Hardware CAN not available, falling back to log-only mode"
-                )
+                logger.warning("Hardware CAN not available, falling back to log-only mode")
                 self._hw_interface = None
         else:
             # Use standard python-can Bus (virtual or socketcan)
             try:
                 self.bus = can.interface.Bus(
                     channel=self.channel,
-                    interface="socketcan" if not self.channel.startswith("vcan")
-                    else "virtual",
+                    interface="socketcan" if not self.channel.startswith("vcan") else "virtual",
                 )
             except (can.CanError, OSError, ValueError) as e:
                 logger.warning(
                     "CAN bus %s not available, using log-only mode: %s",
-                    self.channel, e,
+                    self.channel,
+                    e,
                 )
                 self.bus = None
 
@@ -938,18 +933,27 @@ class CANBatterySimulator:
             v_scaled = int(voltage * 10)
             c_scaled = int(current * 10)
             data1 = [
-                (v_scaled >> 8) & 0xFF, v_scaled & 0xFF,
-                (c_scaled >> 8) & 0xFF, c_scaled & 0xFF,
-                0, 0, 0, 0,
+                (v_scaled >> 8) & 0xFF,
+                v_scaled & 0xFF,
+                (c_scaled >> 8) & 0xFF,
+                c_scaled & 0xFF,
+                0,
+                0,
+                0,
+                0,
             ]
             msg1 = can.Message(
-                arbitration_id=0x101, data=data1, is_extended_id=False,
+                arbitration_id=0x101,
+                data=data1,
+                is_extended_id=False,
             )
 
             # Pack 0x102: Temperature (1 byte), SOC (1 byte)
             data2 = [temp & 0xFF, soc & 0xFF, 0, 0, 0, 0, 0, 0]
             msg2 = can.Message(
-                arbitration_id=0x102, data=data2, is_extended_id=False,
+                arbitration_id=0x102,
+                data=data2,
+                is_extended_id=False,
             )
 
             if self._hw_interface:
@@ -1000,9 +1004,7 @@ class CANTelemetryReceiver:
 
     @property
     def is_hardware(self) -> bool:
-        return self.hardware or (
-            self._hw_interface is not None and self._hw_interface.is_hardware
-        )
+        return self.hardware or (self._hw_interface is not None and self._hw_interface.is_hardware)
 
     def start(self):
         """Start receiving from the configured CAN interface."""
@@ -1016,16 +1018,13 @@ class CANTelemetryReceiver:
             )
             connected = self._hw_interface.connect()
             if not connected:
-                logger.warning(
-                    "Hardware CAN not available for receiver, running idle"
-                )
+                logger.warning("Hardware CAN not available for receiver, running idle")
                 self._hw_interface = None
         else:
             try:
                 self.bus = can.interface.Bus(
                     channel=self.channel,
-                    interface="socketcan" if not self.channel.startswith("vcan")
-                    else "virtual",
+                    interface="socketcan" if not self.channel.startswith("vcan") else "virtual",
                 )
             except (can.CanError, OSError, ValueError):
                 self.bus = None
@@ -1114,7 +1113,9 @@ class DBCFileSimulator:
             import tempfile
 
             tmp = tempfile.NamedTemporaryFile(
-                mode="w", suffix=".dbc", delete=False,
+                mode="w",
+                suffix=".dbc",
+                delete=False,
             )
             tmp.write(battery_dbc_content())
             tmp.close()
@@ -1152,21 +1153,17 @@ class DBCFileSimulator:
             connected = self._hw_interface.connect()
             if not connected:
                 logger.warning(
-                    "Hardware CAN not available for DBC simulator, "
-                    "running in log-only mode"
+                    "Hardware CAN not available for DBC simulator, " "running in log-only mode"
                 )
                 self._hw_interface = None
         else:
             try:
                 self._bus = can.interface.Bus(
                     channel=channel,
-                    interface="socketcan" if not channel.startswith("vcan")
-                    else "virtual",
+                    interface="socketcan" if not channel.startswith("vcan") else "virtual",
                 )
             except (can.CanError, OSError, ValueError) as e:
-                logger.warning(
-                    "CAN bus not available, running in log-only mode: %s", e
-                )
+                logger.warning("CAN bus not available, running in log-only mode: %s", e)
                 self._bus = None
 
         self.running = True
@@ -1236,11 +1233,7 @@ class DBCFileSimulator:
     def _place_raw(data: list[int], sig, raw: int):
         """Place a raw integer into the CAN data bytes."""
         for i in range(sig.length):
-            bit_pos = (
-                sig.start_bit + i
-                if sig.byte_order == "Intel"
-                else sig.start_bit - i
-            )
+            bit_pos = sig.start_bit + i if sig.byte_order == "Intel" else sig.start_bit - i
             byte_idx = bit_pos // 8
             bit_in_byte = bit_pos % 8
             if byte_idx >= len(data):

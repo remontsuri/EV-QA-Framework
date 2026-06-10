@@ -1,6 +1,7 @@
 """
 Test module for CAN Bus integration (legacy compatibility).
 """
+
 from unittest.mock import MagicMock, patch
 
 import can
@@ -45,6 +46,7 @@ def test_can_sim_receiver(mock_bus):
     receiver.start()
 
     import time
+
     time.sleep(0.5)
 
     data = receiver.get_telemetry()

@@ -3,11 +3,13 @@ Tesla-Specific Advanced Analysis Demo
 Demonstrates cell imbalance detection and thermal runaway risk prediction.
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from ev_qa_framework.analysis import EVBatteryAnalyzer
 from ev_qa_framework.models import BatteryCellDataModel
 from ev_qa_framework.thermal_runaway import ThermalRunawayPredictor
+
 
 def simulate_tesla_pack_data(vin="5YJSA1E26HF000337", num_cells=96):
     """Simulates 96 cell group voltages for a Tesla Model S/X pack."""
@@ -16,6 +18,7 @@ def simulate_tesla_pack_data(vin="5YJSA1E26HF000337", num_cells=96):
     # Introduce one lagging cell group (imbalance)
     voltages[42] = 3.72
     return BatteryCellDataModel(vin=vin, cell_voltages=voltages)
+
 
 def main():
     print("=== Tesla Advanced Battery Analysis Demo ===\n")
@@ -30,18 +33,20 @@ def main():
     print(f"   Avg Voltage: {imbalance_results['average_voltage']:.3f}V")
     print(f"   Max Imbalance: {imbalance_results['max_imbalance']:.3f}V")
     print(f"   Severity: {imbalance_results['severity']}")
-    if imbalance_results['severity'] != "NORMAL":
-        print(f"   🚨 Warning: Cell imbalance detected above Tesla safety limits!")
+    if imbalance_results["severity"] != "NORMAL":
+        print("   🚨 Warning: Cell imbalance detected above Tesla safety limits!")
     print()
 
     # 2. Thermal Runaway Risk Prediction
     print("2️⃣ Predicting Thermal Runaway Risk (Simulated Overheating):")
     # Simulate rapidly rising temperature
-    time_series = pd.DataFrame({
-        'voltage': [400] * 10,
-        'current': [150] * 10,
-        'temp': [35.0, 36.5, 38.2, 40.5, 43.1, 46.8, 51.2, 56.5, 62.1, 68.5]
-    })
+    time_series = pd.DataFrame(
+        {
+            "voltage": [400] * 10,
+            "current": [150] * 10,
+            "temp": [35.0, 36.5, 38.2, 40.5, 43.1, 46.8, 51.2, 56.5, 62.1, 68.5],
+        }
+    )
 
     predictor = ThermalRunawayPredictor(mode="rule")
     risk_results = predictor.predict_risk(time_series)
@@ -50,8 +55,9 @@ def main():
     print(f"   Risk Level: {risk_results['risk_level']}")
     print(f"   Risk Score: {risk_results['risk_score']:.2f}")
 
-    if risk_results['risk_level'] == "CRITICAL":
+    if risk_results["risk_level"] == "CRITICAL":
         print("   🔥 EMERGENCY: High risk of Thermal Runaway! Disconnecting contactors...")
+
 
 if __name__ == "__main__":
     main()

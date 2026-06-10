@@ -18,12 +18,14 @@ class TestModelPersistence:
     def setup_method(self):
         """Подготовка тестовых данных"""
         np.random.seed(42)
-        self.test_data = pd.DataFrame({
-            "voltage": np.random.normal(48, 2, 100),
-            "current": np.random.normal(100, 10, 100),
-            "temp": np.random.normal(35, 3, 100),
-            "soc": np.random.normal(85, 5, 100)
-        })
+        self.test_data = pd.DataFrame(
+            {
+                "voltage": np.random.normal(48, 2, 100),
+                "current": np.random.normal(100, 10, 100),
+                "temp": np.random.normal(35, 3, 100),
+                "soc": np.random.normal(85, 5, 100),
+            }
+        )
 
     def test_save_model_basic(self):
         """Тест базового сохранения модели"""
@@ -45,11 +47,7 @@ class TestModelPersistence:
         analyzer = EVBatteryAnalyzer()
         analyzer.analyze_telemetry(self.test_data)
 
-        metadata = {
-            "version": "1.0",
-            "dataset": "test_battery_data",
-            "contamination": 0.1
-        }
+        metadata = {"version": "1.0", "dataset": "test_battery_data", "contamination": 0.1}
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as f:
             filepath = f.name
@@ -78,8 +76,7 @@ class TestModelPersistence:
     def test_load_model_basic(self):
         """Тест базовой загрузки модели"""
         # Обучаем и сохраняем
-        analyzer = EVBatteryAnalyzer(contamination=0.1,
-                                     critical_threshold=-0.9)
+        analyzer = EVBatteryAnalyzer(contamination=0.1, critical_threshold=-0.9)
         analyzer.analyze_telemetry(self.test_data)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as f:
@@ -106,7 +103,7 @@ class TestModelPersistence:
         test_data = self.test_data.iloc[80:]
 
         analyzer = EVBatteryAnalyzer()
-        results1 = analyzer.analyze_telemetry(train_data)
+        analyzer.analyze_telemetry(train_data)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as f:
             filepath = f.name
@@ -187,19 +184,23 @@ class TestAnomalyDetectorPersistence:
     def setup_method(self):
         """Подготовка тестовых данных"""
         np.random.seed(42)
-        self.train_data = pd.DataFrame({
-            "voltage": np.random.normal(48, 1, 100),
-            "current": np.random.normal(100, 5, 100),
-            "temp": np.random.normal(35, 2, 100),
-            "soc": np.random.normal(85, 3, 100)
-        })
+        self.train_data = pd.DataFrame(
+            {
+                "voltage": np.random.normal(48, 1, 100),
+                "current": np.random.normal(100, 5, 100),
+                "temp": np.random.normal(35, 2, 100),
+                "soc": np.random.normal(85, 3, 100),
+            }
+        )
 
-        self.test_data = pd.DataFrame({
-            "voltage": [48, 48, 100],  # 100 - аномалия
-            "current": [100, 100, 100],
-            "temp": [35, 35, 35],
-            "soc": [85, 85, 85]
-        })
+        self.test_data = pd.DataFrame(
+            {
+                "voltage": [48, 48, 100],  # 100 - аномалия
+                "current": [100, 100, 100],
+                "temp": [35, 35, 35],
+                "soc": [85, 85, 85],
+            }
+        )
 
     def test_anomaly_detector_save_load(self):
         """Тест save/load для AnomalyDetector"""
@@ -235,12 +236,14 @@ class TestModelVersioning:
     def setup_method(self):
         """Подготовка тестовых данных"""
         np.random.seed(42)
-        self.data = pd.DataFrame({
-            "voltage": np.random.normal(48, 2, 50),
-            "current": np.random.normal(100, 10, 50),
-            "temp": np.random.normal(35, 3, 50),
-            "soc": np.random.normal(85, 5, 50)
-        })
+        self.data = pd.DataFrame(
+            {
+                "voltage": np.random.normal(48, 2, 50),
+                "current": np.random.normal(100, 10, 50),
+                "temp": np.random.normal(35, 3, 50),
+                "soc": np.random.normal(85, 5, 50),
+            }
+        )
 
     def test_multiple_versions(self):
         """Тест сохранения нескольких версий модели"""

@@ -1,5 +1,16 @@
 """EV-QA-Framework — ML-powered QA Framework for Electric Vehicle & IoT Battery Testing."""
 
+# v2.0 new modules
+from . import (
+    automl,
+    battery_scoring,
+    digital_twin,
+    fleet_analytics,
+    hil,
+    physics_features,
+    soh_transformer,
+    v2g_scenarios,
+)
 from .analysis import AnomalyDetector, EVBatteryAnalyzer
 from .can_bus import (
     CANBatterySimulator,
@@ -45,16 +56,6 @@ from .metrics import (
 from .models import BatteryCellDataModel, BatteryTelemetryModel
 from .soh_predictor import SOHPredictor
 from .thermal_runaway import ThermalRunawayPredictor
-
-# v2.0 new modules
-from . import battery_scoring
-from . import physics_features
-from . import fleet_analytics
-from . import digital_twin
-from . import v2g_scenarios
-from . import automl
-from . import soh_transformer
-from . import hil
 
 __version__ = "2.0.0"
 

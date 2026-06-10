@@ -119,9 +119,7 @@ class CellBalanceAnalyzer:
             return "WARNING"
         return "CRITICAL"
 
-    def predict_trend(
-        self, timeline_measurements: list[list[float]]
-    ) -> tuple[float, float]:
+    def predict_trend(self, timeline_measurements: list[list[float]]) -> tuple[float, float]:
         """
         Fit linear regression to max-min imbalance over recent snapshots.
 
@@ -140,9 +138,7 @@ class CellBalanceAnalyzer:
 
         imbalances = [max(snap) - min(snap) for snap in timeline_measurements]
         window = (
-            imbalances[-self.trend_window :]
-            if len(imbalances) > self.trend_window
-            else imbalances
+            imbalances[-self.trend_window :] if len(imbalances) > self.trend_window else imbalances
         )
         n = len(window)
         if n < 2:

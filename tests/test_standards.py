@@ -22,7 +22,6 @@ from ev_qa_framework.framework import EVQAFramework
 from ev_qa_framework.models import BatteryTelemetryModel
 from ev_qa_framework.thermal_runaway import ThermalRunawayPredictor
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -61,6 +60,7 @@ def _make_config(**overrides) -> FrameworkConfig:
 # 1. UN 38.3 — Transport Safety
 # ===========================================================================
 
+
 class TestUN383MechanicalShock:
     """UN 38.3 — Mechanical shock / vibration profile simulation."""
 
@@ -69,11 +69,17 @@ class TestUN383MechanicalShock:
         qa = EVQAFramework("UN38.3-Shock")
         # Vibration causes small voltage/temperature ripples — all within safe range
         data = [
-            {"voltage": 390.0 + i * 0.1, "current": 50.0, "temperature": 35.0 + i * 0.2,
-             "soc": 80.0, "soh": 98.0}
+            {
+                "voltage": 390.0 + i * 0.1,
+                "current": 50.0,
+                "temperature": 35.0 + i * 0.2,
+                "soc": 80.0,
+                "soh": 98.0,
+            }
             for i in range(10)
         ]
         import asyncio
+
         results = asyncio.run(qa.run_test_suite(data))
         assert results["failed"] == 0
         assert results["passed"] == 10
@@ -83,10 +89,17 @@ class TestUN383MechanicalShock:
         qa = EVQAFramework("UN38.3-Shock-Spike")
         data = [
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
-            {"voltage": 950.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},  # spike > max_voltage
+            {
+                "voltage": 950.0,
+                "current": 50.0,
+                "temperature": 35.0,
+                "soc": 80.0,
+                "soh": 98.0,
+            },  # spike > max_voltage
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
         ]
         import asyncio
+
         results = asyncio.run(qa.run_test_suite(data))
         assert results["failed"] >= 1
 
@@ -95,9 +108,16 @@ class TestUN383MechanicalShock:
         qa = EVQAFramework("UN38.3-Shock-Temp", config=_make_config(fail_on_anomaly=True))
         data = [
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
-            {"voltage": 390.0, "current": 50.0, "temperature": 55.0, "soc": 80.0, "soh": 98.0},  # 20°C jump
+            {
+                "voltage": 390.0,
+                "current": 50.0,
+                "temperature": 55.0,
+                "soc": 80.0,
+                "soh": 98.0,
+            },  # 20°C jump
         ]
         import asyncio
+
         results = asyncio.run(qa.run_test_suite(data))
         assert results["failed"] >= 1
 
@@ -114,6 +134,7 @@ class TestUN383ThermalRunaway:
     def test_thermal_runaway_predictor_critical(self):
         """ThermalRunawayPredictor should flag CRITICAL for rapid temp rise."""
         import pandas as pd
+
         predictor = ThermalRunawayPredictor(mode="rule")
         temps = [30.0, 35.0, 42.0, 50.0, 58.0, 66.0]
         df = pd.DataFrame({"temp": temps})
@@ -123,6 +144,7 @@ class TestUN383ThermalRunaway:
     def test_normal_temperature_not_flagged_as_runaway(self):
         """Stable normal temperature should not trigger thermal runaway."""
         import pandas as pd
+
         predictor = ThermalRunawayPredictor(mode="rule")
         # Very stable temps with minimal variance — all below 50°C
         temps = [25.0, 25.1, 25.0, 25.2, 25.1]
@@ -162,9 +184,16 @@ class TestUN383ShortCircuitDetection:
         # Short circuit: voltage collapses, current spikes
         data = [
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
-            {"voltage": 50.0, "current": 500.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},  # near-short
+            {
+                "voltage": 50.0,
+                "current": 500.0,
+                "temperature": 35.0,
+                "soc": 80.0,
+                "soh": 98.0,
+            },  # near-short
         ]
         import asyncio
+
         results = asyncio.run(qa.run_test_suite(data))
         # The low-voltage entry should fail validation
         assert results["failed"] >= 1
@@ -180,6 +209,7 @@ class TestUN383ShortCircuitDetection:
 # 2. IEC 62660-1/-2 — Cell Performance
 # ===========================================================================
 
+
 class TestIEC62660Capacity:
     """IEC 62660-1 — Discharge capacity measurement."""
 
@@ -191,7 +221,7 @@ class TestIEC62660Capacity:
 
     def test_capacity_degraded_below_critical(self):
         """SOH below critical_soh should trigger a warning (but not fail validation)."""
-        qa = EVQAFramework("IEC62660-Capacity-Degraded")
+        EVQAFramework("IEC62660-Capacity-Degraded")
         telemetry = _make_telemetry(soh=65.0)  # < 70% critical_soh
         # validate_telemetry returns True because SOH check is a warning, not a hard fail
         # but the telemetry should still be valid
@@ -213,10 +243,17 @@ class TestIEC62660CycleLife:
         qa = EVQAFramework("IEC62660-CycleLife")
         # Simulate 5 cycles with decreasing SOH
         data = [
-            {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0 - i * 2}
+            {
+                "voltage": 390.0,
+                "current": 50.0,
+                "temperature": 35.0,
+                "soc": 80.0,
+                "soh": 98.0 - i * 2,
+            }
             for i in range(5)
         ]
         import asyncio
+
         results = asyncio.run(qa.run_test_suite(data))
         assert results["total_tests"] == 5
         # All should pass since SOH is still above critical (70%)
@@ -226,11 +263,18 @@ class TestIEC62660CycleLife:
         """After many cycles, SOH drops below critical threshold."""
         qa = EVQAFramework("IEC62660-CycleLife-Critical")
         data = [
-            {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 75.0 - i * 2}
+            {
+                "voltage": 390.0,
+                "current": 50.0,
+                "temperature": 35.0,
+                "soc": 80.0,
+                "soh": 75.0 - i * 2,
+            }
             for i in range(5)
         ]
         import asyncio
-        results = asyncio.run(qa.run_test_suite(data))
+
+        asyncio.run(qa.run_test_suite(data))
         # Last entries have SOH < 70% — they should still pass validation
         # (SOH is a warning, not a hard fail) but be below critical
         soh_values = [d["soh"] for d in data]
@@ -261,7 +305,7 @@ class TestIEC62660InternalResistance:
 
     def test_internal_resistance_high_detected(self):
         """Excessive voltage drop indicates high internal resistance (degraded cell)."""
-        qa = EVQAFramework("IEC62660-Resistance-High")
+        EVQAFramework("IEC62660-Resistance-High")
         no_load = _make_telemetry(voltage=400.0, current=0.0)
         under_load = _make_telemetry(voltage=350.0, current=100.0)  # 50V drop — excessive
         voltage_drop = no_load.voltage - under_load.voltage
@@ -271,6 +315,7 @@ class TestIEC62660InternalResistance:
 # ===========================================================================
 # 3. SAE J2464 — Abuse Testing
 # ===========================================================================
+
 
 class TestSAEJ2464OverchargeAbuse:
     """SAE J2464 — Overcharge abuse test (voltage > max)."""
@@ -344,6 +389,7 @@ class TestSAEJ2464ThermalAbuse:
 # 4. ISO 12405 — Traction Battery
 # ===========================================================================
 
+
 class TestISO12405SafetyThreshold:
     """ISO 12405 — Safety threshold validation for traction batteries."""
 
@@ -358,11 +404,13 @@ class TestISO12405SafetyThreshold:
 
     def test_safety_thresholds_custom(self):
         """Custom safety thresholds should be configurable."""
-        config = _make_config(safety_thresholds={
-            "max_temperature": 55.0,
-            "min_voltage": 250.0,
-            "max_voltage": 450.0,
-        })
+        config = _make_config(
+            safety_thresholds={
+                "max_temperature": 55.0,
+                "min_voltage": 250.0,
+                "max_voltage": 450.0,
+            }
+        )
         st = config.safety_thresholds
         assert st.max_temperature == 55.0
         assert st.min_voltage == 250.0
@@ -424,6 +472,7 @@ class TestISO12405EnergyMeasurement:
 # Cross-standard integration tests
 # ===========================================================================
 
+
 class TestCrossStandardIntegration:
     """Integration tests spanning multiple standards."""
 
@@ -447,7 +496,13 @@ class TestCrossStandardIntegration:
         qa = EVQAFramework("CrossStandard-Abuse")
         data = [
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
-            {"voltage": 950.0, "current": 200.0, "temperature": 70.0, "soc": 80.0, "soh": 98.0},  # abuse
+            {
+                "voltage": 950.0,
+                "current": 200.0,
+                "temperature": 70.0,
+                "soc": 80.0,
+                "soh": 98.0,
+            },  # abuse
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
         ]
         results = await qa.run_test_suite(data)

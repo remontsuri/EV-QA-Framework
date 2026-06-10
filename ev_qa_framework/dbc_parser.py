@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Signal:
     """A single CAN signal defined in a DBC file."""
@@ -27,7 +28,7 @@ class Signal:
     name: str
     start_bit: int
     length: int
-    byte_order: str          # 'Intel' (little-endian) or 'Motorola' (big-endian)
+    byte_order: str  # 'Intel' (little-endian) or 'Motorola' (big-endian)
     signed: bool
     scale: float
     offset: float
@@ -52,16 +53,17 @@ class Message:
 
     id: int
     name: str
-    dlc: int                # data length code (bytes)
+    dlc: int  # data length code (bytes)
     transmitter: str
     signals: dict[str, Signal] = field(default_factory=dict)
     comment: str = ""
-    is_extended: bool = False   # True = 29-bit (J1939 style)
+    is_extended: bool = False  # True = 29-bit (J1939 style)
 
 
 # ---------------------------------------------------------------------------
 # DBC parser
 # ---------------------------------------------------------------------------
+
 
 class DBCParser:
     """
@@ -72,10 +74,10 @@ class DBCParser:
 
     def __init__(self, filepath: str):
         self.filepath = filepath
-        self.messages: dict[int, Message] = {}      # keyed by CAN ID
-        self._by_name: dict[str, Message] = {}      # keyed by message name
+        self.messages: dict[int, Message] = {}  # keyed by CAN ID
+        self._by_name: dict[str, Message] = {}  # keyed by message name
         self.version: str = ""
-        self.comments: dict[str, str] = {}           # node->comment, etc.
+        self.comments: dict[str, str] = {}  # node->comment, etc.
         self._raw = ""
 
         with open(filepath, encoding="latin-1") as f:
@@ -99,18 +101,14 @@ class DBCParser:
         """Return all parsed messages."""
         return list(self.messages.values())
 
-    def get_signal(
-        self, can_id: int, signal_name: str
-    ) -> Signal | None:
+    def get_signal(self, can_id: int, signal_name: str) -> Signal | None:
         """Look up a specific signal within a message."""
         msg = self.messages.get(can_id)
         if msg is None:
             return None
         return msg.signals.get(signal_name)
 
-    def decode(
-        self, can_id: int, data: bytes
-    ) -> dict[str, float]:
+    def decode(self, can_id: int, data: bytes) -> dict[str, float]:
         """
         Decode raw CAN data bytes into physical signal values.
 
@@ -135,9 +133,7 @@ class DBCParser:
             result[sig_name] = sig.raw_to_physical(raw)
         return result
 
-    def get_signal_value(
-        self, can_id: int, data: bytes, signal_name: str
-    ) -> float | None:
+    def get_signal_value(self, can_id: int, data: bytes, signal_name: str) -> float | None:
         """Decode a single named signal from raw CAN data."""
         msg = self.messages.get(can_id)
         if msg is None:
@@ -191,7 +187,7 @@ class DBCParser:
         dlc = int(m.group(3))
         transmitter = m.group(4)
 
-        is_extended = can_id > 0x7FF   # 29-bit if > 11-bit max
+        is_extended = can_id > 0x7FF  # 29-bit if > 11-bit max
 
         msg = Message(
             id=can_id,
@@ -210,7 +206,7 @@ class DBCParser:
                 if sig is not None:
                     msg.signals[sig.name] = sig
             elif s.startswith("BO_ "):
-                break   # next message starts
+                break  # next message starts
             idx += 1
 
         self.messages[can_id] = msg
@@ -234,12 +230,12 @@ class DBCParser:
 
         pattern = (
             r"SG_\s+"
-            r"(\S+)\s*:\s*"              # signal name
+            r"(\S+)\s*:\s*"  # signal name
             r"(\d+)\|(\d+)@(\d)([\+\-])\s*"  # start|len@byteorder+sign
-            r"\(([^,]+),([^)]+)\)\s*"     # (scale, offset)
-            r"\[([^|]*)\|([^\]]*)\]\s*"   # [min|max]
-            r'"([^"]*)"\s*'               # "unit"
-            r"(\S*)"                       # receivers (optional)
+            r"\(([^,]+),([^)]+)\)\s*"  # (scale, offset)
+            r"\[([^|]*)\|([^\]]*)\]\s*"  # [min|max]
+            r'"([^"]*)"\s*'  # "unit"
+            r"(\S*)"  # receivers (optional)
         )
         m = re.match(pattern, line_clean)
         if not m:
@@ -321,9 +317,7 @@ class DBCParser:
                 continue
 
             # CM_ SG_ <id> <signal_name> "<comment>";
-            m = re.match(
-                r'CM_\s+SG_\s+(\d+)\s+(\S+)\s+"([^"]*)"\s*;', stripped
-            )
+            m = re.match(r'CM_\s+SG_\s+(\d+)\s+(\S+)\s+"([^"]*)"\s*;', stripped)
             if m:
                 can_id = int(m.group(1))
                 sig_name = m.group(2)
@@ -392,6 +386,7 @@ class DBCParser:
 # Convenience: built-in battery DBC
 # ---------------------------------------------------------------------------
 
+
 def battery_dbc_content() -> str:
     """
     Return a DBC string describing the standard battery telemetry messages
@@ -444,10 +439,12 @@ CM_ SG_ 258 Temperature "Battery temperature in Celsius";
 CM_ SG_ 65270 CellTemp_1 "Cell 1 temperature";
 """
 
+
 def builtin_dbc() -> DBCParser:
     """Return a DBCParser loaded with the built-in battery definition."""
     import os
     import tempfile
+
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
     tmp.write(battery_dbc_content())
     tmp.close()

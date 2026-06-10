@@ -17,7 +17,7 @@ import pytest
 
 from ev_qa_framework.analysis import EVBatteryAnalyzer
 from ev_qa_framework.battery_scoring import BatteryScorer
-from ev_qa_framework.fleet_analytics import FleetAnalytics, FleetAlert
+from ev_qa_framework.fleet_analytics import FleetAlert, FleetAnalytics
 from ev_qa_framework.physics_features import PhysicsFeatureExtractor
 
 
@@ -53,25 +53,29 @@ def make_degraded_telemetry(
 ) -> pd.DataFrame:
     """Telemetry for a degraded battery with declining SOH."""
     rng = np.random.default_rng(seed)
-    return pd.DataFrame({
-        "voltage": rng.normal(380, 5, n),
-        "current": rng.normal(100, 8, n),
-        "temp": rng.normal(42, 3, n),
-        "soc": rng.normal(80, 5, n),
-        "soh": np.linspace(soh_start, soh_start - 5, n),
-    })
+    return pd.DataFrame(
+        {
+            "voltage": rng.normal(380, 5, n),
+            "current": rng.normal(100, 8, n),
+            "temp": rng.normal(42, 3, n),
+            "soc": rng.normal(80, 5, n),
+            "soh": np.linspace(soh_start, soh_start - 5, n),
+        }
+    )
 
 
 def make_anomalous_telemetry(n: int = 50, n_anomalies: int = 15, seed: int = 7) -> pd.DataFrame:
     """Telemetry with injected anomalies (extreme values)."""
     rng = np.random.default_rng(seed)
-    df = pd.DataFrame({
-        "voltage": rng.normal(400, 2, n),
-        "current": rng.normal(100, 3, n),
-        "temp": rng.normal(35, 1, n),
-        "soc": rng.normal(85, 2, n),
-        "soh": np.full(n, 80.0),
-    })
+    df = pd.DataFrame(
+        {
+            "voltage": rng.normal(400, 2, n),
+            "current": rng.normal(100, 3, n),
+            "temp": rng.normal(35, 1, n),
+            "soc": rng.normal(85, 2, n),
+            "soh": np.full(n, 80.0),
+        }
+    )
     # Inject anomalies
     anomaly_idx = rng.choice(n, n_anomalies, replace=False)
     df.loc[anomaly_idx, "voltage"] = rng.uniform(500, 600, n_anomalies)
@@ -110,6 +114,7 @@ def mixed_fleet() -> FleetAnalytics:
 # ===================================================================
 # 1. Battery management tests
 # ===================================================================
+
 
 class TestBatteryManagement:
     def test_add_battery(self, fleet: FleetAnalytics):
@@ -173,6 +178,7 @@ class TestBatteryManagement:
 # 2. Fleet summary tests
 # ===================================================================
 
+
 class TestFleetSummary:
     def test_empty_fleet_summary(self, fleet: FleetAnalytics):
         summary = fleet.get_fleet_summary()
@@ -197,9 +203,16 @@ class TestFleetSummary:
     def test_summary_has_all_keys(self, populated_fleet: FleetAnalytics):
         summary = populated_fleet.get_fleet_summary()
         expected_keys = {
-            "fleet_size", "avg_score", "min_score", "max_score",
-            "std_score", "avg_soh", "avg_anomaly_pct",
-            "avg_thermal_risk", "grade_distribution", "batteries",
+            "fleet_size",
+            "avg_score",
+            "min_score",
+            "max_score",
+            "std_score",
+            "avg_soh",
+            "avg_anomaly_pct",
+            "avg_thermal_risk",
+            "grade_distribution",
+            "batteries",
         }
         assert expected_keys.issubset(summary.keys())
 
@@ -207,9 +220,15 @@ class TestFleetSummary:
         summary = populated_fleet.get_fleet_summary()
         entry = summary["batteries"][0]
         expected = {
-            "battery_id", "score", "grade", "soh_score",
-            "anomaly_score", "cell_balance_score", "thermal_score",
-            "anomaly_percentage", "num_samples",
+            "battery_id",
+            "score",
+            "grade",
+            "soh_score",
+            "anomaly_score",
+            "cell_balance_score",
+            "thermal_score",
+            "anomaly_percentage",
+            "num_samples",
         }
         assert expected.issubset(entry.keys())
 
@@ -222,6 +241,7 @@ class TestFleetSummary:
 # ===================================================================
 # 3. Battery comparison tests
 # ===================================================================
+
 
 class TestCompareBatteries:
     def test_compare_all(self, populated_fleet: FleetAnalytics):
@@ -246,9 +266,15 @@ class TestCompareBatteries:
     def test_compare_columns(self, populated_fleet: FleetAnalytics):
         df = populated_fleet.compare_batteries()
         expected_cols = {
-            "battery_id", "score", "grade", "soh_score",
-            "anomaly_score", "cell_balance_score", "thermal_score",
-            "anomaly_percentage", "num_samples",
+            "battery_id",
+            "score",
+            "grade",
+            "soh_score",
+            "anomaly_score",
+            "cell_balance_score",
+            "thermal_score",
+            "anomaly_percentage",
+            "num_samples",
         }
         assert expected_cols.issubset(set(df.columns))
 
@@ -256,6 +282,7 @@ class TestCompareBatteries:
 # ===================================================================
 # 4. Fleet degradation tests
 # ===================================================================
+
 
 class TestFleetDegradation:
     def test_no_soh_data(self, fleet: FleetAnalytics):
@@ -300,6 +327,7 @@ class TestFleetDegradation:
 # ===================================================================
 # 5. Fleet anomaly detection tests
 # ===================================================================
+
 
 class TestFleetAnomalies:
     def test_no_anomalies_healthy_fleet(self, populated_fleet: FleetAnalytics):
@@ -356,6 +384,7 @@ class TestFleetAnomalies:
 # ===================================================================
 # 6. Integration / custom components
 # ===================================================================
+
 
 class TestCustomComponents:
     def test_custom_scorer(self):

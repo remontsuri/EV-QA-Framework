@@ -6,7 +6,6 @@ Thermal Runaway Prediction Module.
 - ml: Isolation Forest на темповых признаках
 """
 
-
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
@@ -133,11 +132,16 @@ class ThermalRunawayPredictor:
             risk_score += (current_temp - 50) * 0.5
 
         risk_level = "LOW"
-        if risk_score > self.thresholds["critical_risk"] or current_temp > self.thresholds["critical_temp"]:
+        if (
+            risk_score > self.thresholds["critical_risk"]
+            or current_temp > self.thresholds["critical_temp"]
+        ):
             risk_level = "CRITICAL"
         elif features["dt_dt"] > self.thresholds["critical_dtdt"]:
             risk_level = "CRITICAL"
-        elif risk_score > self.thresholds["high_risk"] or current_temp > self.thresholds["high_temp"]:
+        elif (
+            risk_score > self.thresholds["high_risk"] or current_temp > self.thresholds["high_temp"]
+        ):
             risk_level = "HIGH"
         elif risk_score > self.thresholds["medium_risk"]:
             risk_level = "MEDIUM"

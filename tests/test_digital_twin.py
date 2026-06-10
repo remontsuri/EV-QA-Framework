@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ev_qa_framework.digital_twin import BatteryDigitalTwin, BatteryState
 from ev_qa_framework.config import FrameworkConfig
+from ev_qa_framework.digital_twin import BatteryDigitalTwin, BatteryState
 
 
 class TestBatteryState:

@@ -11,6 +11,7 @@ from ev_qa_framework.dbc_parser import DBCParser, battery_dbc_content, builtin_d
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def minimal_dbc():
     """Create a minimal temporary DBC file."""
@@ -42,6 +43,7 @@ def builtin():
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestDBCParser:
     """DBC parsing tests."""
@@ -186,6 +188,7 @@ class TestBatteryDBCContent:
     def test_content_is_valid_dbc(self):
         """battery_dbc_content can be parsed."""
         import tempfile
+
         tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
         tmp.write(battery_dbc_content())
         tmp.close()
@@ -198,6 +201,7 @@ class TestBatteryDBCContent:
     def test_raw_to_physical(self):
         """Signal raw_to_physical conversion."""
         from ev_qa_framework.dbc_parser import Signal
+
         sig = Signal("Test", 0, 16, "Intel", False, 0.1, 0.0, 0, 1000, "V")
         assert sig.raw_to_physical(4000) == 400.0
         assert sig.raw_to_physical(0) == 0.0
@@ -205,6 +209,7 @@ class TestBatteryDBCContent:
     def test_physical_to_raw(self):
         """Signal physical_to_raw conversion."""
         from ev_qa_framework.dbc_parser import Signal
+
         sig = Signal("Test", 0, 16, "Intel", False, 0.1, 0.0, 0, 1000, "V")
         assert sig.physical_to_raw(400.0) == 4000
         assert sig.physical_to_raw(0.0) == 0

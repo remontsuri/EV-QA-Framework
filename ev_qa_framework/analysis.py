@@ -37,8 +37,14 @@ class EVBatteryAnalyzer:
         contamination: Доля аномалий в датасете (по умолчанию 0.1 = 10%)
     """
 
-    def __init__(self, contamination: float = 0.1, n_estimators: int = 200, random_state: int = 42,
-                 critical_threshold: float = -0.8, warning_threshold: float = -0.5):
+    def __init__(
+        self,
+        contamination: float = 0.1,
+        n_estimators: int = 200,
+        random_state: int = 42,
+        critical_threshold: float = -0.8,
+        warning_threshold: float = -0.5,
+    ):
         """
         Инициализация анализатора телеметрии.
 
@@ -57,11 +63,11 @@ class EVBatteryAnalyzer:
         """
         # Создаем модель Isolation Forest с настроенными параметрами
         self.model = IsolationForest(
-            contamination=contamination,    # Ожидаемая доля аномалий
-            n_estimators=n_estimators,      # Количество деревьев (больше = стабильнее)
-            max_samples="auto",             # Авто-выбор размера подвыборки
-            random_state=random_state,      # Для воспроизводимости
-            n_jobs=-1                       # Использовать все CPU ядра
+            contamination=contamination,  # Ожидаемая доля аномалий
+            n_estimators=n_estimators,  # Количество деревьев (больше = стабильнее)
+            max_samples="auto",  # Авто-выбор размера подвыборки
+            random_state=random_state,  # Для воспроизводимости
+            n_jobs=-1,  # Использовать все CPU ядра
         )
 
         # StandardScaler нормализует данные: (x - mean) / std
@@ -159,7 +165,7 @@ class EVBatteryAnalyzer:
             "total_samples": total,
             "anomalies_detected": count,
             "anomaly_percentage": (count / total) * 100 if total else 0.0,
-            "severity": self._assess_severity(anomaly_scores)
+            "severity": self._assess_severity(anomaly_scores),
         }
 
     def _assess_severity(self, scores: np.ndarray) -> str:
@@ -189,8 +195,8 @@ class EVBatteryAnalyzer:
         if min_score < self.critical_threshold:
             return "CRITICAL"  # Экстремальная аномалия — критический уровень
         elif min_score < self.warning_threshold:
-            return "WARNING"   # Умеренная аномалия — предупреждение
-        return "INFO"          # Слабая аномалия или норма
+            return "WARNING"  # Умеренная аномалия — предупреждение
+        return "INFO"  # Слабая аномалия или норма
 
     def save_model(self, filepath: str, metadata: dict[str, Any] | None = None) -> None:
         """
@@ -217,9 +223,7 @@ class EVBatteryAnalyzer:
         """
         # Проверка, что модель обучена (scaler должен быть fitted)
         if not hasattr(self.scaler, "mean_"):
-            raise ValueError(
-                "Модель не обучена! Сначала вызовите analyze_telemetry() или train()"
-            )
+            raise ValueError("Модель не обучена! Сначала вызовите analyze_telemetry() или train()")
 
         # Подготовка данных для сохранения
         model_data = {
@@ -229,7 +233,7 @@ class EVBatteryAnalyzer:
             "critical_threshold": self.critical_threshold,
             "warning_threshold": self.warning_threshold,
             "save_timestamp": datetime.now().isoformat(),
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         # Добавляем расширение .joblib если его нет
@@ -247,7 +251,7 @@ class EVBatteryAnalyzer:
             print(f"   Метаданные: {metadata}")
 
     @classmethod
-    def load_model(cls, filepath: str) -> 'EVBatteryAnalyzer':
+    def load_model(cls, filepath: str) -> "EVBatteryAnalyzer":
         """
         Загрузка сохраненной модели из файла.
 
@@ -283,7 +287,7 @@ class EVBatteryAnalyzer:
             analyzer = cls(
                 contamination=model_data["contamination"],
                 critical_threshold=model_data.get("critical_threshold", -0.8),
-                warning_threshold=model_data.get("warning_threshold", -0.5)
+                warning_threshold=model_data.get("warning_threshold", -0.5),
             )
 
             # Восстановление модели и scaler
@@ -316,7 +320,7 @@ class EVBatteryAnalyzer:
             "n_estimators": getattr(self.model, "n_estimators", None),
             "critical_threshold": self.critical_threshold,
             "warning_threshold": self.warning_threshold,
-            "is_fitted": hasattr(self.scaler, "mean_")
+            "is_fitted": hasattr(self.scaler, "mean_"),
         }
 
     def detect_cell_imbalance(self, cell_voltages: list[float]) -> dict[str, Any]:
@@ -351,7 +355,7 @@ class EVBatteryAnalyzer:
             "max_imbalance": float(imbalance),
             "std_dev": float(std_v),
             "severity": severity,
-            "outliers_count": int(np.sum(np.abs(np.array(cell_voltages) - avg_v) > 0.05))
+            "outliers_count": int(np.sum(np.abs(np.array(cell_voltages) - avg_v) > 0.05)),
         }
 
     def get_physics_features(self, df: pd.DataFrame) -> dict[str, Any]:
@@ -399,9 +403,7 @@ class EVBatteryAnalyzer:
             voltage = df["voltage"].values
             voltage_drop = np.abs(np.diff(voltage, prepend=voltage[0]))
             current = df["current"].values
-            result["resistance"] = self.physics_extractor.estimate_resistance(
-                voltage_drop, current
-            )
+            result["resistance"] = self.physics_extractor.estimate_resistance(voltage_drop, current)
         else:
             result["resistance"] = None
 
@@ -413,30 +415,24 @@ class EVBatteryAnalyzer:
                     time_col = candidate
                     break
             if time_col:
-                result["thermal_diffusivity"] = (
-                    self.physics_extractor.compute_thermal_diffusivity(
-                        df["temp"].values,
-                        df[time_col].values,
-                    )
+                result["thermal_diffusivity"] = self.physics_extractor.compute_thermal_diffusivity(
+                    df["temp"].values,
+                    df[time_col].values,
                 )
             else:
                 # Use index as time proxy
-                result["thermal_diffusivity"] = (
-                    self.physics_extractor.compute_thermal_diffusivity(
-                        df["temp"].values,
-                        np.arange(len(df), dtype=float),
-                    )
+                result["thermal_diffusivity"] = self.physics_extractor.compute_thermal_diffusivity(
+                    df["temp"].values,
+                    np.arange(len(df), dtype=float),
                 )
         else:
             result["thermal_diffusivity"] = None
 
         # Coulombic efficiency
         if "charge_capacity" in df.columns and "discharge_capacity" in df.columns:
-            result["coulombic_efficiency"] = (
-                self.physics_extractor.compute_coulombic_efficiency(
-                    df["discharge_capacity"].values,
-                    df["charge_capacity"].values,
-                )
+            result["coulombic_efficiency"] = self.physics_extractor.compute_coulombic_efficiency(
+                df["discharge_capacity"].values,
+                df["charge_capacity"].values,
             )
         else:
             result["coulombic_efficiency"] = None
@@ -456,7 +452,9 @@ class AnomalyDetector(EVBatteryAnalyzer):
     данных, а затем используется для real-time детекции.
     """
 
-    def __init__(self, contamination: float = 0.01, n_estimators: int = 200, random_state: int = 42):
+    def __init__(
+        self, contamination: float = 0.01, n_estimators: int = 200, random_state: int = 42
+    ):
         """
         Инициализация детектора аномалий.
 
@@ -556,7 +554,7 @@ if __name__ == "__main__":
         "voltage": np.random.normal(48, 2, 1000),
         "current": np.random.normal(100, 15, 1000),
         "temp": np.random.normal(35, 5, 1000),
-        "soc": np.random.normal(85, 10, 1000)
+        "soc": np.random.normal(85, 10, 1000),
     }
     df = pd.DataFrame(data)
 
@@ -571,22 +569,25 @@ if __name__ == "__main__":
     detector = AnomalyDetector(contamination=0.01, n_estimators=200)
 
     # Обучение на нормальных данных
-    normal_data = pd.DataFrame({
-        "voltage": np.random.normal(48, 1, 500),
-        "current": np.random.normal(100, 5, 500),
-        "temp": np.random.normal(35, 2, 500),
-        "soc": np.random.normal(85, 5, 500)
-    })
+    normal_data = pd.DataFrame(
+        {
+            "voltage": np.random.normal(48, 1, 500),
+            "current": np.random.normal(100, 5, 500),
+            "temp": np.random.normal(35, 2, 500),
+            "soc": np.random.normal(85, 5, 500),
+        }
+    )
     detector.train(normal_data)
 
     # Детекция на новых данных с аномалией
-    test_data = pd.DataFrame({
-        "voltage": [48, 48, 200, 48],  # 200V — явная аномалия
-        "current": [100, 100, 100, 100],
-        "temp": [35, 35, 35, 35],
-        "soc": [85, 85, 85, 85]
-    })
+    test_data = pd.DataFrame(
+        {
+            "voltage": [48, 48, 200, 48],  # 200V — явная аномалия
+            "current": [100, 100, 100, 100],
+            "temp": [35, 35, 35, 35],
+            "soc": [85, 85, 85, 85],
+        }
+    )
     predictions, scores = detector.detect(test_data)
     print(f"Предсказания: {predictions}")
     print(f"Scores: {scores}")
-

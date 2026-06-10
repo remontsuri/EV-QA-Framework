@@ -7,14 +7,16 @@ applies ML anomaly detection, and predicts battery health.
 """
 
 import asyncio
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from ev_qa_framework import (
-    EVQAFramework,
+    BatteryTelemetryModel,
     CANBatterySimulator,
     CANTelemetryReceiver,
+    EVQAFramework,
     SOHPredictor,
-    BatteryTelemetryModel
 )
 
 
@@ -29,10 +31,10 @@ async def run_advanced_demo():
     # Pre-train SOH model with mock historical data
     print("🧠 Pre-training SOH prediction model...")
     hist_data = {
-        'voltage': np.random.normal(396, 5, 50),
-        'current': np.random.normal(100, 10, 50),
-        'temperature': np.random.normal(35, 2, 50),
-        'soh': np.linspace(100, 99.5, 50)
+        "voltage": np.random.normal(396, 5, 50),
+        "current": np.random.normal(100, 10, 50),
+        "temperature": np.random.normal(35, 2, 50),
+        "soh": np.linspace(100, 99.5, 50),
     }
     predictor.train(pd.DataFrame(hist_data), epochs=5)
 
@@ -51,9 +53,8 @@ async def run_advanced_demo():
         for i in range(10):
             # Get data from CAN
             raw_data = receiver.get_telemetry()
-            raw_data['vin'] = "DEMOVEHICLE001XYZ".replace('I', '1') \
-                .replace('O', '0')
-            raw_data['soh'] = tele_buf['soh'].iloc[-1]
+            raw_data["vin"] = "DEMOVEHICLE001XYZ".replace("I", "1").replace("O", "0")
+            raw_data["soh"] = tele_buf["soh"].iloc[-1]
 
             # Pydantic Validation
             try:
@@ -65,8 +66,7 @@ async def run_advanced_demo():
 
             # ML Anomaly Detection (Isolation Forest)
             # Add new data to buffer
-            new_row = pd.DataFrame([raw_data])[['voltage', 'current',
-                                                'temperature', 'soh']]
+            new_row = pd.DataFrame([raw_data])[["voltage", "current", "temperature", "soh"]]
             tele_buf = pd.concat([tele_buf, new_row]).tail(10)
 
             # SOH Prediction (LSTM)
@@ -77,9 +77,11 @@ async def run_advanced_demo():
             v_v = telemetry.voltage
             t_v = telemetry.temperature
             s_v = telemetry.soh
-            print(f"[{i:02d}] V={v_v:.1f}V | T={t_v:.1f}°C | "
-                  f"SOH={s_v:.2f}% | Next SOH Pred={next_soh:.2f}% | "
-                  f"Status: {status}")
+            print(
+                f"[{i:02d}] V={v_v:.1f}V | T={t_v:.1f}°C | "
+                f"SOH={s_v:.2f}% | Next SOH Pred={next_soh:.2f}% | "
+                f"Status: {status}"
+            )
 
             await asyncio.sleep(1)
 

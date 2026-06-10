@@ -348,9 +348,7 @@ def get_profile(key: ChemistryKey) -> BatteryChemistryProfile:
     """
     if key not in BUILTIN_PROFILES:
         valid = ", ".join(sorted(BUILTIN_PROFILES))
-        raise KeyError(
-            f"Unknown chemistry '{key}'. Valid options: {valid}"
-        )
+        raise KeyError(f"Unknown chemistry '{key}'. Valid options: {valid}")
     return BUILTIN_PROFILES[key]
 
 

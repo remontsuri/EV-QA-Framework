@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from ev_qa_framework.config import FrameworkConfig
 from ev_qa_framework.hil import (
+    BMSHardwareEmulator,
     CANMessage,
     HILInterface,
     HILTestResult,
     HILTestRunner,
-    BMSHardwareEmulator,
 )
-from ev_qa_framework.config import FrameworkConfig
 
 
 class TestCANMessage:
@@ -105,14 +105,18 @@ class TestHILTestRunner:
 
     def test_compare_expected_vs_actual(self):
         runner = HILTestRunner(simulation=True)
-        expected = pd.DataFrame({
-            "voltage": [400.0, 401.0, 402.0],
-            "current": [50.0, 51.0, 52.0],
-        })
-        actual = pd.DataFrame({
-            "voltage": [400.5, 401.5, 402.5],
-            "current": [50.5, 51.5, 52.5],
-        })
+        expected = pd.DataFrame(
+            {
+                "voltage": [400.0, 401.0, 402.0],
+                "current": [50.0, 51.0, 52.0],
+            }
+        )
+        actual = pd.DataFrame(
+            {
+                "voltage": [400.5, 401.5, 402.5],
+                "current": [50.5, 51.5, 52.5],
+            }
+        )
         diff = runner.compare_expected_vs_actual(expected, actual)
         assert "voltage" in diff
         assert "current" in diff
@@ -122,7 +126,9 @@ class TestHILTestRunner:
         runner = HILTestRunner(simulation=True)
         results = [
             HILTestResult(test_name="t1", passed=True, duration_s=1.0, messages_sent=10),
-            HILTestResult(test_name="t2", passed=False, duration_s=2.0, messages_sent=20, errors=["err"]),
+            HILTestResult(
+                test_name="t2", passed=False, duration_s=2.0, messages_sent=20, errors=["err"]
+            ),
         ]
         report = runner.generate_hil_report(results)
         assert report["total_tests"] == 2

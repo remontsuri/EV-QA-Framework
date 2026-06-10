@@ -88,6 +88,7 @@ class TestCellBalanceAnalyzer:
         save_path = str(tmp_path / "test_plot.png")
         analyzer.plot_imbalance(timeline, save_path=save_path)
         import os
+
         assert os.path.exists(save_path)
         assert os.path.getsize(save_path) > 0
 

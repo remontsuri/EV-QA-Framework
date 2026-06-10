@@ -1,16 +1,18 @@
 """
 Dashboard Application: FastAPI-based real-time telemetry visualization.
 """
-import json
+
 import asyncio
+import json
+import os
 import random
 import sys
-import os
 from datetime import datetime
 from typing import List
+
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -18,10 +20,11 @@ from fastapi.templating import Jinja2Templates
 # Setup system path to include parent directory
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # pylint: disable=wrong-import-position
-from ev_qa_framework import SOHPredictor  # noqa: E402
-from api.routes import router  # noqa: E402
 from fastapi.responses import Response
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+from api.routes import router  # noqa: E402
+from ev_qa_framework import SOHPredictor  # noqa: E402
 from ev_qa_framework.metrics import *  # noqa: F401,F403 — register metrics
 
 app = FastAPI(title="EV Battery Monitor", version="1.0.0")
@@ -34,6 +37,7 @@ async def metrics():
         content=generate_latest(),
         media_type=CONTENT_TYPE_LATEST,
     )
+
 
 # Include API routes
 app.include_router(router, prefix="/api")
@@ -50,6 +54,7 @@ templates = Jinja2Templates(directory="dashboard/templates")
 
 class ConnectionManager:
     """Manage WebSocket connections"""
+
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
@@ -97,12 +102,14 @@ async def telemetry_streamer():
     and ML-based SOH prediction
     """
     # Simulation data for SOH predictor
-    df_history = pd.DataFrame({
-        'voltage': [396.0] * 20,
-        'current': [100.0] * 20,
-        'temperature': [35.0] * 20,
-        'soh': np.linspace(100, 99.8, 20)
-    })
+    df_history = pd.DataFrame(
+        {
+            "voltage": [396.0] * 20,
+            "current": [100.0] * 20,
+            "temperature": [35.0] * 20,
+            "soh": np.linspace(100, 99.8, 20),
+        }
+    )
 
     predictor = SOHPredictor(sequence_length=10)
     predictor.train(df_history, epochs=5)
@@ -131,8 +138,9 @@ async def telemetry_streamer():
         v_min = min(cell_voltages)
         v_max = max(cell_voltages)
         imbalance = v_max - v_min
-        outlier_cells = [i for i, v in enumerate(cell_voltages)
-                        if abs(v - np.mean(cell_voltages)) > 0.05]
+        outlier_cells = [
+            i for i, v in enumerate(cell_voltages) if abs(v - np.mean(cell_voltages)) > 0.05
+        ]
 
         data = {
             "timestamp": datetime.now().strftime("%H:%M:%S"),
@@ -149,25 +157,24 @@ async def telemetry_streamer():
 
         # 5% chance of anomaly
         if random.random() > 0.95:
-            anomaly_type = random.choice(['voltage', 'temperature'])
-            if anomaly_type == 'voltage':
+            anomaly_type = random.choice(["voltage", "temperature"])
+            if anomaly_type == "voltage":
                 v_ano = round(random.uniform(950, 1000), 2)
-                data['voltage'] = v_ano
+                data["voltage"] = v_ano
             else:
                 t_ano = round(base_temp + random.uniform(30, 45), 1)
-                data['temperature'] = t_ano
-            data['is_anomaly'] = True
+                data["temperature"] = t_ano
+            data["is_anomaly"] = True
 
         # Update history for prediction
-        new_row = pd.DataFrame([data])[['voltage', 'current',
-                                        'temperature', 'soh']]
+        new_row = pd.DataFrame([data])[["voltage", "current", "temperature", "soh"]]
         df_history = pd.concat([df_history, new_row]).tail(20)
 
         # Predict SOH degradation (very slowly)
         try:
             predictor.predict_next(df_history)
             # In simulation, we'll slowly decrease real SOH based on temp
-            degradation = 0.001 if data['temperature'] < 45 else 0.005
+            degradation = 0.001 if data["temperature"] < 45 else 0.005
             current_soh -= degradation
         except (ValueError, RuntimeError):
             pass
@@ -184,4 +191,5 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

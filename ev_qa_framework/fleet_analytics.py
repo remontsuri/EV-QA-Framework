@@ -27,6 +27,7 @@ warnings.filterwarnings("ignore")
 @dataclass
 class FleetAlert:
     """Represents a fleet-level anomaly alert."""
+
     battery_id: str
     alert_type: str
     severity: str  # CRITICAL, WARNING, INFO
@@ -207,17 +208,19 @@ class FleetAnalytics:
             anomaly_pcts.append(anomaly_result.get("anomaly_percentage", 0.0))
             thermal_risks.append(score_result.get("thermal_score", 0.0))
 
-            battery_summaries.append({
-                "battery_id": bid,
-                "score": s,
-                "grade": score_result["grade"],
-                "soh_score": score_result.get("soh_score", 0.0),
-                "anomaly_score": score_result.get("anomaly_score", 0.0),
-                "cell_balance_score": score_result.get("cell_balance_score", 0.0),
-                "thermal_score": score_result.get("thermal_score", 0.0),
-                "anomaly_percentage": anomaly_result.get("anomaly_percentage", 0.0),
-                "num_samples": len(self._batteries[bid]),
-            })
+            battery_summaries.append(
+                {
+                    "battery_id": bid,
+                    "score": s,
+                    "grade": score_result["grade"],
+                    "soh_score": score_result.get("soh_score", 0.0),
+                    "anomaly_score": score_result.get("anomaly_score", 0.0),
+                    "cell_balance_score": score_result.get("cell_balance_score", 0.0),
+                    "thermal_score": score_result.get("thermal_score", 0.0),
+                    "anomaly_percentage": anomaly_result.get("anomaly_percentage", 0.0),
+                    "num_samples": len(self._batteries[bid]),
+                }
+            )
 
         scores_arr = np.array(scores)
         grade_dist: dict[str, int] = {}
@@ -263,17 +266,19 @@ class FleetAnalytics:
                 raise KeyError(f"Battery '{bid}' not found in fleet")
             sr = self.score_battery(bid)
             ar = self._analyze_anomaly(bid)
-            rows.append({
-                "battery_id": bid,
-                "score": sr["score"],
-                "grade": sr["grade"],
-                "soh_score": sr.get("soh_score", 0.0),
-                "anomaly_score": sr.get("anomaly_score", 0.0),
-                "cell_balance_score": sr.get("cell_balance_score", 0.0),
-                "thermal_score": sr.get("thermal_score", 0.0),
-                "anomaly_percentage": ar.get("anomaly_percentage", 0.0),
-                "num_samples": len(self._batteries[bid]),
-            })
+            rows.append(
+                {
+                    "battery_id": bid,
+                    "score": sr["score"],
+                    "grade": sr["grade"],
+                    "soh_score": sr.get("soh_score", 0.0),
+                    "anomaly_score": sr.get("anomaly_score", 0.0),
+                    "cell_balance_score": sr.get("cell_balance_score", 0.0),
+                    "thermal_score": sr.get("thermal_score", 0.0),
+                    "anomaly_percentage": ar.get("anomaly_percentage", 0.0),
+                    "num_samples": len(self._batteries[bid]),
+                }
+            )
         return pd.DataFrame(rows)
 
     # ------------------------------------------------------------------
@@ -385,45 +390,53 @@ class FleetAnalytics:
             sr = self.score_battery(bid)
             score = sr["score"]
             if score < 40.0:
-                alerts.append(FleetAlert(
-                    battery_id=bid,
-                    alert_type="LOW_HEALTH_SCORE",
-                    severity="CRITICAL",
-                    message=f"Battery {bid} health score is critical: {score:.1f}/100",
-                    value=score,
-                    threshold=40.0,
-                ))
+                alerts.append(
+                    FleetAlert(
+                        battery_id=bid,
+                        alert_type="LOW_HEALTH_SCORE",
+                        severity="CRITICAL",
+                        message=f"Battery {bid} health score is critical: {score:.1f}/100",
+                        value=score,
+                        threshold=40.0,
+                    )
+                )
             elif score < score_threshold:
-                alerts.append(FleetAlert(
-                    battery_id=bid,
-                    alert_type="LOW_HEALTH_SCORE",
-                    severity="WARNING",
-                    message=f"Battery {bid} health score is low: {score:.1f}/100",
-                    value=score,
-                    threshold=score_threshold,
-                ))
+                alerts.append(
+                    FleetAlert(
+                        battery_id=bid,
+                        alert_type="LOW_HEALTH_SCORE",
+                        severity="WARNING",
+                        message=f"Battery {bid} health score is low: {score:.1f}/100",
+                        value=score,
+                        threshold=score_threshold,
+                    )
+                )
 
             # --- Anomaly-based alerts ---
             ar = self._analyze_anomaly(bid)
             pct = ar.get("anomaly_percentage", 0.0)
             if pct > 50.0:
-                alerts.append(FleetAlert(
-                    battery_id=bid,
-                    alert_type="HIGH_ANOMALY_RATE",
-                    severity="CRITICAL",
-                    message=f"Battery {bid} anomaly rate is critical: {pct:.1f}%",
-                    value=pct,
-                    threshold=50.0,
-                ))
+                alerts.append(
+                    FleetAlert(
+                        battery_id=bid,
+                        alert_type="HIGH_ANOMALY_RATE",
+                        severity="CRITICAL",
+                        message=f"Battery {bid} anomaly rate is critical: {pct:.1f}%",
+                        value=pct,
+                        threshold=50.0,
+                    )
+                )
             elif pct > anomaly_pct_threshold:
-                alerts.append(FleetAlert(
-                    battery_id=bid,
-                    alert_type="HIGH_ANOMALY_RATE",
-                    severity="WARNING",
-                    message=f"Battery {bid} anomaly rate is elevated: {pct:.1f}%",
-                    value=pct,
-                    threshold=anomaly_pct_threshold,
-                ))
+                alerts.append(
+                    FleetAlert(
+                        battery_id=bid,
+                        alert_type="HIGH_ANOMALY_RATE",
+                        severity="WARNING",
+                        message=f"Battery {bid} anomaly rate is elevated: {pct:.1f}%",
+                        value=pct,
+                        threshold=anomaly_pct_threshold,
+                    )
+                )
 
         return alerts
 
