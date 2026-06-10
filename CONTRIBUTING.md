@@ -1,13 +1,11 @@
 # Contributing to EV-QA-Framework
 
-Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
-
 ## Code of Conduct
 
-- Be respectful and constructive
-- Follow PEP 8 style guide
-- Write clear, descriptive commit messages
-- Test your changes before submitting
+- Be respectful and constructive.
+- Follow PEP 8 style guide.
+- Write clear, descriptive commit messages.
+- Test your changes before submitting.
 
 ## Getting Started
 
@@ -21,7 +19,6 @@ Thank you for your interest in contributing! This document provides guidelines f
    ```bash
    uv sync --all-extras
    ```
-
    This creates a virtual environment and installs all dependencies (including dev and ML extras) in one step.
 
 3. **Activate the virtual environment** (optional — `uv run` handles this automatically)
@@ -38,7 +35,7 @@ Thank you for your interest in contributing! This document provides guidelines f
    git checkout -b feature/your-feature-name
    ```
 
-2. Make your changes
+2. Make your changes.
 
 3. Run linting:
    ```bash
@@ -71,18 +68,18 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ## Code Style
 
-- Follow PEP 8
-- Use type hints where possible
-- Write docstrings for all public functions and classes (Google style)
-- Use meaningful variable names
-- Maximum line length: 100 characters (enforced by ruff)
+- Follow PEP 8.
+- Use type hints where possible.
+- Write docstrings for all public functions and classes (Google style).
+- Use meaningful variable names.
+- Maximum line length: 100 characters (enforced by ruff).
 
 ## Testing Requirements
 
-- All new features must include tests
-- Maintain or improve code coverage (currently 86%)
-- Tests must pass before merging
-- Use `pytest` with `pytest-cov` for coverage
+- All new features must include tests.
+- Maintain or improve code coverage (currently 86%).
+- Tests must pass before merging.
+- Use `pytest` with `pytest-cov` for coverage.
 - Place tests in the `tests/` directory, mirroring the source structure:
   ```
   tests/
@@ -96,25 +93,25 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ## Pull Request Process
 
-1. Update documentation (README.md, docstrings, examples)
-2. Ensure all tests pass: `uv run pytest -v`
-3. Ensure linting passes: `uv run ruff check .`
-4. Request review from maintainers
-5. Address feedback
-6. Merge after approval
+1. Update documentation (README.md, docstrings, examples).
+2. Ensure all tests pass: `uv run pytest -v`.
+3. Ensure linting passes: `uv run ruff check .`.
+4. Request review from maintainers.
+5. Address feedback.
+6. Merge after approval.
 
 ## Areas for Contribution
 
-- Battery management algorithms
-- Test coverage improvements
-- Documentation enhancements
-- Performance optimizations
-- Bug fixes
-- CI/CD improvements
-- New battery chemistry definitions
-- Additional V2G scenarios
-- Hardware-in-the-Loop driver support
-- Compliance testing for additional standards
+- Battery management algorithms.
+- Test coverage improvements.
+- Documentation enhancements.
+- Performance optimizations.
+- Bug fixes.
+- CI/CD improvements.
+- New battery chemistry definitions.
+- Additional V2G scenarios.
+- Hardware-in-the-Loop driver support.
+- Compliance testing for additional standards.
 
 ## Project Structure
 
@@ -130,8 +127,4 @@ uv.lock                   # Reproducible dependency lockfile
 
 ## Questions?
 
-Open an issue or discussion for questions!
-
----
-
-**Thank you for contributing!** 🔋
+Open an issue or discussion.

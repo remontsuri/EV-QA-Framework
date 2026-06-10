@@ -2,46 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepacngelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0] - 2026-06-10
 
 ### Added — New Modules (10)
 
-- **`battery_scoring`** — Composite battery health scoring algorithm. Combines SOH, internal resistance, cell balance, and thermal history into a single 0–100 score with letter grades (A+ through F). Configurable weights per chemistry type.
+- **`battery_scoring`** — Composite battery health scoring. Combines SOH, internal resistance, cell balance, and thermal history into a 0–100 score with letter grades (A+ through F). Configurable weights per chemistry type.
 - **`physics_features`** — Electrochemical and thermal feature extraction from raw telemetry. Computes diffusion rates, heat generation estimates (Joule + entropic), and equivalent circuit model parameters (R0, R1, C1).
-- **`fleet_analytics`** — Fleet-wide aggregate analysis. Degradation curve fitting, anomaly distribution heatmaps, comparative benchmarking across vehicle groups, and fleet-wide SOH histograms. Supports CSV and Parquet input.
+- **`fleet_analytics`** — Fleet-wide aggregate analysis. Degradation curve fitting, anomaly distribution heatmaps, comparative benchmarking across vehicle groups, fleet-wide SOH histograms. Supports CSV and Parquet input.
 - **`digital_twin`** — Real-time battery digital twin simulation. Mirrors physical pack behavior using electrochemical models. Supports what-if scenarios for arbitrary charge/discharge profiles and long-term aging projections.
-- **`v2g_scenarios`** — Vehicle-to-Grid simulation module. Models bidirectional energy flow, grid demand response events, cycling impact on battery health, and revenue estimation. Includes pre-built scenarios: peak_shaving, frequency_regulation, solar_buffering.
+- **`v2g_scenarios`** — Vehicle-to-Grid simulation. Models bidirectional energy flow, grid demand response events, cycling impact on battery health, revenue estimation. Pre-built scenarios: peak_shaving, frequency_regulation, solar_buffering.
 - **`automl`** — Automated model selection and hyperparameter optimization for SOH prediction and anomaly detection. Supports scikit-learn and TensorFlow backends. Bayesian optimization via Optuna (optional).
-- **`soh_transformer`** — Transformer-based SOH prediction architecture. Multi-head attention over temporal telemetry sequences. Outperforms LSTM on sequences >500 steps. Compatible with the `AutoML` pipeline.
+- **`soh_transformer`** — Transformer-based SOH prediction. Multi-head attention over temporal telemetry sequences. Outperforms LSTM on sequences >500 steps. Compatible with the AutoML pipeline.
 - **`hil`** — Hardware-in-the-Loop interface. Connects the framework to physical BMS hardware and test stands via TCP/Serial. Supports real-time data exchange, closed-loop testing, and automated test sequence execution.
-- **`test_standards`** — Compliance testing against international battery safety standards (UN 38.3, IEC 62660, UL 1973, UL 2054). Automated test report generation with pass/fail criteria.
-- **`test_standards_gb`** — Compliance testing against Chinese GB/T standards (GB/T 31484, GB/T 31485, GB/T 31486, GB 38031). Includes GB-specific test profiles and report templates.
+- **`test_standards`** — Compliance testing against UN 38.3, IEC 62660, UL 1973, UL 2054. Automated test report generation with pass/fail criteria.
+- **`test_standards_gb`** — Compliance testing against Chinese GB/T standards (GB/T 31484, GB/T 31485, GB/T 31486, GB 38031). GB-specific test profiles and report templates.
 
 ### Added — Tests
 
-- Expanded test suite from **235 to 592 tests** (+153% increase).
-- Coverage improved from ~60% to **86%**.
-- Added unit tests for all 10 new modules.
-- Added integration tests for CAN bus + DBC parser pipeline.
-- Added end-to-end tests for CLI commands (analyze, emulate, dashboard, fleet-report).
-- Added property-based tests for telemetry validation models (Hypothesis).
-- Added regression tests for SOH predictor serialization round-trips.
+- Expanded test suite from 235 to 592 tests (+153%).
+- Coverage improved from ~60% to 86%.
+- Unit tests for all 10 new modules.
+- Integration tests for CAN bus + DBC parser pipeline.
+- End-to-end tests for CLI commands (analyze, emulate, dashboard, fleet-report).
+- Property-based tests for telemetry validation models (Hypothesis).
+- Regression tests for SOH predictor serialization round-trips.
 
 ### Added — Infrastructure
 
-- Added `pyproject.toml` `[dependency-groups]` for dev, ml, and docs extras.
-- Added `uv.lock` for reproducible dependency resolution.
-- Added GitHub Actions workflow for multi-version Python testing (3.9, 3.10, 3.11, 3.12, 3.13).
-- Added pre-commit hooks: ruff, mypy, and conventional-commit linting.
-- Added Dockerfile with multi-stage build (builder + runtime).
+- `pyproject.toml` `[dependency-groups]` for dev, ml, and docs extras.
+- `uv.lock` for reproducible dependency resolution.
+- GitHub Actions workflow for multi-version Python testing (3.10, 3.11, 3.12).
+- Pre-commit hooks: ruff, mypy, conventional-commit linting.
+- Dockerfile with multi-stage build (builder + runtime).
 
 ### Changed
 
-- Migrated all tooling from **pip to uv** — faster dependency resolution, lockfile support.
-- Updated minimum Python version from **3.8 to 3.9**.
+- Migrated all tooling from pip to uv.
+- Updated minimum Python version from 3.8 to 3.9.
 - Refactored `config.py` — nested dictionary merge now uses deep merge strategy.
 - Refactored `cli.py` — added `fleet-report` and `hil-test` subcommands.
 - Refactored `metrics.py` — added fleet-level Prometheus gauges.
@@ -51,9 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **SOH scaler serialization** — `StandardScaler` state was not correctly serialized/deserialized when saving and loading SOH predictor models. Fixed by implementing custom `get_params()` / `set_params()` round-trip.
 - **Dockerfile** — multi-stage build was failing due to missing build dependencies in the runtime stage. Fixed by properly separating build and runtime layers.
-- **Config merge** — `Config.merge()` was performing shallow merge on nested dictionaries, causing nested keys to be overwritten instead of deep-merged. Fixed with recursive deep merge.
+- **Config merge** — `Config.merge()` was performing shallow merge on nested dictionaries, causing nested keys to be overwritten. Fixed with recursive deep merge.
 - **DBC parser** — Motorola byte order signals with offset=0 were off by one bit. Fixed bit indexing in `_decode_motorola()`.
-- **Thermal runaway** — `predict_risk()` returned incorrect confidence for single-row DataFrames. Fixed confidence calculation to handle edge cases.
+- **Thermal runaway** — `predict_risk()` returned incorrect confidence for single-row DataFrames. Fixed confidence calculation edge case.
 - **CAN bus** — J1939 extended frame IDs > 0x1FFFFFFF were not rejected. Added validation for 29-bit ID range.
 
 ### Deprecated
@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactored project structure: moved core models to `ev_qa_framework.models` and consolidated ML analysis.
 - Cleaned up redundant scripts and moved utility tools to `scripts/`.
-- Simplified documentation and removed AI-generated reports for a more developer-focused experience.
+- Simplified documentation and removed AI-generated reports.
 - Improved test organization by moving all tests to the `tests/` directory.
 
 ### Fixed
@@ -76,13 +76,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed risk score calculation: temperature contribution uses deviation from 50°C, not absolute value.
 - CLI `analyze` now handles both `temperature` and `temp` column names.
 - Fixed `BatteryCellDataModel` import in package `__init__.py`.
-- Fixed SOHPredictor type hint (`Sequential` → `Any`).
+- Fixed SOHPredictor type hint (`Sequential` to `Any`).
 - Fixed example in `framework.py` (`__main__`) — uses pack voltage (396V) instead of cell voltage (3.9V).
 - Removed stale `build/` artifacts.
 
 ### Infrastructure
 
-- Migrated `setup.py` → `pyproject.toml`, added `uv.lock`.
+- Migrated `setup.py` to `pyproject.toml`, added `uv.lock`.
 - Applied ruff auto-fixes across the codebase.
 
 ## [1.0.0] - 2026-01-20

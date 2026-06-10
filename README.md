@@ -7,42 +7,43 @@
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
-ML-powered QA framework for electric vehicle battery systems. Validates BMS telemetry, detects anomalies, predicts SOH degradation, emulates CAN bus traffic, evaluates thermal runaway risk, scores battery health, runs fleet analytics, simulates V2G scenarios, and provides digital twin capabilities — MIT licensed.
+QA framework for electric vehicle battery systems. Validates BMS telemetry, detects anomalies, predicts SOH degradation, emulates CAN bus traffic, evaluates thermal runaway risk, scores battery health, runs fleet analytics, simulates V2G scenarios, and provides a battery digital twin.
+
+22 modules. 592 tests. 86% coverage. MIT licensed.
 
 ## What it does
 
-**Telemetry validation.** Pydantic schemas for voltage, current, temperature, SOC, SOH. Catches bad VINs, out-of-range values at the input layer.
+**Telemetry validation.** Pydantic schemas for voltage, current, temperature, SOC, SOH. Catches bad VINs and out-of-range values at the input layer.
 
 **ML anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, and number of estimators.
 
-**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry (TensorFlow optional). Transformer-based SOH prediction via `soh_transformer` module.
+**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry (TensorFlow optional). Transformer-based prediction via `soh_transformer` for longer sequences.
 
-**Cell imbalance analysis.** Statistical analysis of cell group voltages with configurable thresholds, outlier detection, linear regression trend, and plot export.
+**Cell imbalance analysis.** Statistical analysis of cell group voltages with configurable thresholds, outlier detection, and linear regression trend.
 
-**Thermal runaway prediction.** Standalone `ThermalRunawayPredictor` with two modes:
-  - **rule** — configurable heuristic with adjustable weights (dT/dt, temperature, anomaly score)
-  - **ml** — Isolation Forest on thermal features
-  CRITICAL trigger at >65°C or heating rate >5°C/min.
+**Thermal runaway prediction.** `ThermalRunawayPredictor` with two modes: rule-based heuristic (dT/dt, temperature, anomaly score) and ML (Isolation Forest). CRITICAL trigger at >65°C or heating rate >5°C/min.
 
-**CAN bus.** CAN 2.0B (11-bit ID) and J1939 (29-bit extended) simulation and reception. DBC parser supports Vector CANdb format, SavvyCAN exports, Intel/Motorola byte order, signed/unsigned signals.
+**CAN bus.** CAN 2.0B (11-bit) and J1939 (29-bit extended) simulation and reception. DBC parser supports Vector CANdb format, SavvyCAN exports, Intel/Motorola byte order.
 
-**Battery scoring.** Composite health scoring algorithm combining SOH, internal resistance, cell balance, and thermal history into a single 0–100 score with letter grades.
+**Battery scoring.** Composite health score (0–100) with letter grades (A+ through F). Combines SOH, internal resistance, cell balance, and thermal history.
 
-**Physics-based features.** Electrochemical and thermal feature extraction from telemetry — diffusion rates, heat generation estimates, and equivalent circuit model parameters.
+**Physics-based features.** Electrochemical and thermal feature extraction — diffusion rates, heat generation estimates, equivalent circuit model parameters.
 
-**Fleet analytics.** Aggregate analysis across vehicle fleets — degradation curves, anomaly distribution, comparative benchmarking, and fleet-wide SOH histograms.
+**Fleet analytics.** Aggregate analysis across vehicle fleets: degradation curves, anomaly distribution, comparative benchmarking, SOH histograms.
 
 **Digital twin.** Real-time battery simulation mirroring physical pack behavior. Supports what-if scenarios for charge/discharge profiles and aging projections.
 
-**V2G scenarios.** Vehicle-to-Grid simulation module. Models bidirectional energy flow, grid demand response, cycling impact on battery health, and revenue estimation.
+**V2G scenarios.** Vehicle-to-Grid simulation: bidirectional energy flow, grid demand response, cycling impact on battery health, revenue estimation.
 
-**AutoML.** Automated model selection and hyperparameter optimization for SOH prediction and anomaly detection. Supports scikit-learn and TensorFlow backends.
+**AutoML.** Automated model selection and hyperparameter optimization for SOH prediction and anomaly detection.
 
-**HIL integration.** Hardware-in-the-Loop interface for connecting the framework to physical BMS hardware and test stands. Supports real-time data exchange and closed-loop testing.
+**HIL integration.** Hardware-in-the-Loop interface for connecting to physical BMS hardware and test stands via TCP/Serial.
 
-**Dashboard.** FastAPI + WebSocket + Chart.js. Real-time telemetry and Prometheus `/metrics` endpoint with ready-to-import Grafana dashboard.
+**Test standards.** Compliance testing against UN 38.3, IEC 62660, SAE J2464, ISO 12405, GB/T 31484, GB/T 31486, GB 38031.
 
-**CLI.** Analyze CSV telemetry, run CAN emulation, train SOH models, start dashboard, run fleet reports, and more.
+**Dashboard.** FastAPI + WebSocket + Chart.js. Real-time telemetry and Prometheus `/metrics` endpoint with Grafana dashboard.
+
+**CLI.** Analyze CSV telemetry, run CAN emulation, train SOH models, start dashboard, run fleet reports.
 
 ## Quick start
 
@@ -103,7 +104,7 @@ print(analyzer.compute_statistics(cell_v))
 print(analyzer.classify_severity(cell_v))
 ```
 
-**Thermal runaway (recommended API):**
+**Thermal runaway:**
 ```python
 from ev_qa_framework.thermal_runaway import ThermalRunawayPredictor
 import pandas as pd
@@ -248,8 +249,7 @@ uv run pytest --cov=ev_qa_framework --cov-report=term-missing
 - Thermal runaway deduplicated — `ThermalRunawayPredictor` is the single API
 - Fixed risk score calculation: temperature contribution uses deviation from 50°C
 - CLI `analyze` now handles both `temperature` and `temp` column names
-- Migrated `setup.py` → `pyproject.toml`, added `uv.lock`
-- Applied ruff auto-fixes across the codebase
+- Migrated `setup.py` to `pyproject.toml`, added `uv.lock`
 
 ## Compatibility
 
