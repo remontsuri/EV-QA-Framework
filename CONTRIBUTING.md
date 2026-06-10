@@ -17,16 +17,16 @@ Thank you for your interest in contributing! This document provides guidelines f
    cd EV-QA-Framework
    ```
 
-2. **Create a virtual environment**
+2. **Install dependencies with uv**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   uv sync --all-extras
    ```
 
-3. **Install dependencies**
+   This creates a virtual environment and installs all dependencies (including dev and ML extras) in one step.
+
+3. **Activate the virtual environment** (optional — `uv run` handles this automatically)
    ```bash
-   pip install -r requirements.txt
-   pip install -e .
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 ## Development Workflow
@@ -40,18 +40,31 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 2. Make your changes
 
-3. Run tests:
+3. Run linting:
    ```bash
-   pytest -v
-   pytest --cov=ev_qa_framework
+   uv run ruff check .
+   uv run ruff format --check .
    ```
 
-4. Commit with descriptive message:
+4. Run type checking:
    ```bash
-   git commit -m "feat: Add new anomaly detection algorithm"
+   uv run mypy ev_qa_framework/
    ```
 
-5. Push and create Pull Request:
+5. Run tests:
+   ```bash
+   uv run pytest -v
+   uv run pytest --cov=ev_qa_framework --cov-report=term-missing
+   ```
+
+6. Commit with descriptive message (conventional commits):
+   ```bash
+   git commit -m "feat: add new anomaly detection algorithm"
+   git commit -m "fix: correct SOH scaler serialization round-trip"
+   git commit -m "docs: update fleet analytics examples"
+   ```
+
+7. Push and create Pull Request:
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -60,22 +73,35 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 - Follow PEP 8
 - Use type hints where possible
-- Write docstrings for all functions
+- Write docstrings for all public functions and classes (Google style)
 - Use meaningful variable names
+- Maximum line length: 100 characters (enforced by ruff)
 
 ## Testing Requirements
 
 - All new features must include tests
-- Maintain or improve code coverage
+- Maintain or improve code coverage (currently 86%)
 - Tests must pass before merging
+- Use `pytest` with `pytest-cov` for coverage
+- Place tests in the `tests/` directory, mirroring the source structure:
+  ```
+  tests/
+    test_framework.py
+    test_models.py
+    test_analysis.py
+    test_battery_scoring.py
+    test_fleet_analytics.py
+    ...
+  ```
 
 ## Pull Request Process
 
-1. Update documentation
-2. Ensure tests pass
-3. Request review from maintainers
-4. Address feedback
-5. Merge after approval
+1. Update documentation (README.md, docstrings, examples)
+2. Ensure all tests pass: `uv run pytest -v`
+3. Ensure linting passes: `uv run ruff check .`
+4. Request review from maintainers
+5. Address feedback
+6. Merge after approval
 
 ## Areas for Contribution
 
@@ -85,6 +111,22 @@ Thank you for your interest in contributing! This document provides guidelines f
 - Performance optimizations
 - Bug fixes
 - CI/CD improvements
+- New battery chemistry definitions
+- Additional V2G scenarios
+- Hardware-in-the-Loop driver support
+- Compliance testing for additional standards
+
+## Project Structure
+
+```
+ev_qa_framework/          # 22 modules — see README.md for full list
+tests/                    # 592 tests
+dashboard/                # FastAPI + Grafana
+examples/                 # Example CSV telemetry and DBC files
+docs/                     # Additional documentation
+pyproject.toml            # Project config, dependencies, build system
+uv.lock                   # Reproducible dependency lockfile
+```
 
 ## Questions?
 
@@ -92,4 +134,4 @@ Open an issue or discussion for questions!
 
 ---
 
-**Thank you for contributing!** 🉋
+**Thank you for contributing!** 🔋

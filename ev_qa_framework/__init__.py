@@ -1,4 +1,5 @@
-"""EV-QA-Framework package"""
+"""EV-QA-Framework — ML-powered QA Framework for Electric Vehicle & IoT Battery Testing."""
+
 from .analysis import AnomalyDetector, EVBatteryAnalyzer
 from .can_bus import (
     CANBatterySimulator,
@@ -45,15 +46,30 @@ from .models import BatteryCellDataModel, BatteryTelemetryModel
 from .soh_predictor import SOHPredictor
 from .thermal_runaway import ThermalRunawayPredictor
 
-__version__ = "1.1.0"
+# v2.0 new modules
+from . import battery_scoring
+from . import physics_features
+from . import fleet_analytics
+from . import digital_twin
+from . import v2g_scenarios
+from . import automl
+from . import soh_transformer
+from . import hil
+
+__version__ = "2.0.0"
+
 __all__ = [
+    # Core framework
     "EVQAFramework",
+    # Models
     "BatteryTelemetryModel",
     "BatteryCellDataModel",
+    # Analysis
     "EVBatteryAnalyzer",
     "AnomalyDetector",
     "SOHPredictor",
     "ThermalRunawayPredictor",
+    # CAN bus
     "CANBatterySimulator",
     "CANHardwareInterface",
     "CANTelemetryReceiver",
@@ -69,8 +85,10 @@ __all__ = [
     "detect_can_interfaces",
     "find_hardware_can_interfaces",
     "find_available_can_channel",
+    # DBC
     "DBCParser",
     "builtin_dbc",
+    # Cell balance
     "CellBalanceAnalyzer",
     # Chemistry profiles
     "BatteryChemistryProfile",
@@ -88,4 +106,13 @@ __all__ = [
     "MLConfig",
     "DEFAULT_CONFIG",
     "TESLA_CONFIG",
+    # v2.0 modules
+    "battery_scoring",
+    "physics_features",
+    "fleet_analytics",
+    "digital_twin",
+    "v2g_scenarios",
+    "automl",
+    "soh_transformer",
+    "hil",
 ]

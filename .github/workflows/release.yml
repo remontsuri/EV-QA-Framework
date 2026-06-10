@@ -1,40 +1,118 @@
-name: Release to PyPI
+name: Release — Test · Build · Publish
 
 on:
   push:
     tags:
       - 'v*'
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
+  # ---- Gate: run full test suite before any release ----
+  test:
+    name: Pre-release tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --no-dev --frozen
+
+      - name: Run full test suite
+        run: >
+          uv run pytest tests/ -v
+          --cov=ev_qa_framework
+          --cov-report=term-missing
+          --tb=short
+
+  # ---- Build & Publish ----
+  release:
+    name: Build & Publish
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write    # Required for trusted publishing
+      contents: write    # Required for GitHub Release
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/ev-qa-framework
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
-      - name: Install build deps
+      - name: Install build dependencies
+        run: uv sync --no-dev --frozen
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify version matches tag
         run: |
-          python -m pip install --upgrade pip
-          pip install build
-
-      - name: Install package (no optional extras)
-        run: pip install .
-
-      - name: Install test tools
-        run: pip install pytest
-
-      - name: Run tests
-        run: pytest tests/ --tb=short -x -k "not soh" --ignore=tests/test_soh_predictor.py
+          PKG_VERSION=$(uv run python -c "import ev_qa_framework; print(ev_qa_framework.__version__)")
+          if [ "$PKG_VERSION" != "${{ steps.version.outputs.VERSION }}" ]; then
+            echo "::error::Version mismatch: tag ${{ steps.version.outputs.VERSION }} != package $PKG_VERSION"
+            exit 1
+          fi
+          echo "✓ Version verified: $PKG_VERSION"
 
       - name: Build distribution
-        run: python -m build
+        run: uv build
 
-      - name: Publish to PyPI
+      - name: Publish to PyPI (trusted publishing)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          trusted-publishing: always
+          packages-dir: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "EV-QA-Framework ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## EV-QA-Framework ${{ steps.version.outputs.Version }}
+
+            ### Installation
+            ```bash
+            pip install ev-qa-framework==${{ steps.version.outputs.VERSION }}
+            ```
+
+            ### What's New
+            See [CHANGELOG.md](https://github.com/remontsuri/EV-QA-Framework/blob/main/CHANGELOG.md)
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

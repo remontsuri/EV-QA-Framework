@@ -1,36 +1,107 @@
-name: CI
+name: CI — Lint · Test · Coverage
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --no-dev --frozen
+
+      - name: Run ruff linter
+        run: uv run ruff check ev_qa_framework/ tests/
+
+      - name: Run ruff formatter check
+        run: uv run ruff format --check ev_qa_framework/ tests/
+
   test:
-    runs-on: self-hosted
+    name: Test (Python ${{ matrix.python-version }})
+    needs: lint
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
-        run: |
-          pip install uv
+      - name: Install dependencies
+        run: uv sync --no-dev --frozen
 
-      - name: Install deps
-        run: |
-          ~/.local/bin/uv sync --no-extra ml --no-extra dev
+      - name: Run tests
+        run: >
+          uv run pytest tests/ -v
+          --cov=ev_qa_framework
+          --cov-report=xml:coverage.xml
+          --cov-report=term-missing
+          --junitxml=junit.xml
+          --tb=short
 
-      - name: Lint
-        run: ~/.local/bin/uv run ruff check ev_qa_framework/
+      - name: Upload coverage report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            junit.xml
+          retention-days: 14
 
-      - name: Test
-        run: ~/.local/bin/uv run pytest tests/ --cov=ev_qa_framework --tb=short -x -k "not soh" --ignore=tests/test_soh_predictor.py
+  coverage:
+    name: Coverage Report
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

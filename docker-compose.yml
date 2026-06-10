@@ -1,32 +1,115 @@
 version: '3.9'
 
+# ============================================================
+# EV-QA-Framework v2.0.0 — Docker Compose
+# Services: tests, dashboard, api
+# ============================================================
+
+x-common-env: &common-env
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+x-common-labels: &common-labels
+  com.ev-qa.framework: "2.0.0"
+  com.ev-qa.managed-by: "docker-compose"
+
 services:
-  ev-qa-tests:
+  # ---- Test Runner ----
+  tests:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ev_qa_framework
+      target: runtime
+    container_name: ev-qa-tests
     environment:
-      - PYTHONUNBUFFERED=1
+      <<: *common-env
+      EV_QA_MODE: testing
     volumes:
-      - ./tests:/app/tests
-      - ./results:/app/results
-    command: python -m pytest tests/ -v --cov=ev_qa_framework --cov-report=html --tb=short
-    ports:
-      - "8080:8080"
+      - ./tests:/app/tests:ro
+      - test-results:/app/results
+    networks:
+      - ev-qa-net
+    labels:
+      <<: *common-labels
+      com.ev-qa.service: tests
+    restart: "no"
+    command: >
+      python -m pytest tests/ -v
+      --cov=ev_qa_framework
+      --cov-report=html:/app/results/coverage
+      --cov-report=xml:/app/results/coverage.xml
+      --junitxml=/app/results/junit.xml
+      --tb=short
 
-  ev-qa-dashboard:
-    image: python:3.11-slim
-    container_name: ev_qa_dashboard
-    working_dir: /app
+  # ---- Dashboard (serves coverage / test reports) ----
+  dashboard:
+    image: python:3.12-slim
+    container_name: ev-qa-dashboard
+    working_dir: /app/results
     volumes:
-      - ./results:/app/results:ro
-    command: python -m http.server 8080 --directory /app/results
+      - test-results:/app/results:ro
+    networks:
+      - ev-qa-net
+    labels:
+      <<: *common-labels
+      com.ev-qa.service: dashboard
     ports:
       - "8081:8080"
+    command: python -m http.server 8080 --directory /app/results
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"]
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+    restart: unless-stopped
+    depends_on:
+      tests:
+        condition: service_completed_successfully
+
+  # ---- API Server (FastAPI / Uvicorn) ----
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: ev-qa-api
+    environment:
+      <<: *common-env
+      EV_QA_MODE: production
+      EV_QA_API_HOST: "0.0.0.0"
+      EV_QA_API_PORT: "8000"
+    volumes:
+      - api-data:/app/data
+    networks:
+      - ev-qa-net
+    labels:
+      <<: *common-labels
+      com.ev-qa.service: api
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+# ---- Named Volumes ----
+volumes:
+  test-results:
+    labels:
+      com.ev-qa.description: "Test results, coverage reports, JUnit XML"
+  api-data:
+    labels:
+      com.ev-qa.description: "Persistent API data (configs, caches)"
+
+# ---- Networks ----
+networks:
+  ev-qa-net:
+    driver: bridge
+    labels:
+      com.ev-qa.description: "Internal network for EV-QA services"

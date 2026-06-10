@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ev-qa-framework"
-version = "1.1.0"
+version = "2.0.0"
 description = "ML-powered QA Framework for Electric Vehicle & IoT Battery Testing"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -16,6 +16,7 @@ keywords = [
     "ev", "electric-vehicle", "battery", "bms", "battery-management-system",
     "anomaly-detection", "quality-assurance", "soh-prediction",
     "battery-degradation", "can-bus", "telemetry", "iot", "automotive",
+    "digital-twin", "v2g", "fleet-analytics", "automl",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -25,10 +26,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Software Development :: Testing",
@@ -62,14 +63,15 @@ Issues = "https://github.com/remontsuri/EV-QA-Framework/issues"
 Documentation = "https://github.com/remontsuri/EV-QA-Framework#readme"
 Repository = "https://github.com/remontsuri/EV-QA-Framework"
 Changelog = "https://github.com/remontsuri/EV-QA-Framework/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/remontsuri/EV-QA-Framework/issues"
+"Source Code" = "https://github.com/remontsuri/EV-QA-Framework"
 
 [project.optional-dependencies]
 ml = ["tensorflow>=2.15"]
 hardware = ["python-can>=4.3", "pyserial>=3.5"]
 dev = [
-    "black>=22.0",
-    "flake8>=4.0",
-    "mypy>=0.990",
+    "ruff>=0.4",
+    "mypy>=1.0",
     "pylint>=2.14",
     "pyserial>=3.5",
 ]
@@ -86,11 +88,16 @@ include = ["ev_qa_framework*"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 ignore = ["E402", "E501", "F401", "N806"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"tests/**" = ["E501", "N802", "N803"]
+"ev_qa_framework/cli.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

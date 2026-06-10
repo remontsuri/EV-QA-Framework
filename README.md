@@ -1,11 +1,13 @@
 # EV-QA-Framework
 
-![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![CI](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/test.yml/badge.svg)
+![Tests](https://img.shields.io/badge/tests-592%20passed-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/coverage-86%25-brightgreen.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
-ML-powered QA framework for electric vehicle battery systems. Validates BMS telemetry, detects anomalies, predicts SOH degradation, emulates CAN bus traffic, and evaluates thermal runaway risk — MIT licensed.
+ML-powered QA framework for electric vehicle battery systems. Validates BMS telemetry, detects anomalies, predicts SOH degradation, emulates CAN bus traffic, evaluates thermal runaway risk, scores battery health, runs fleet analytics, simulates V2G scenarios, and provides digital twin capabilities — MIT licensed.
 
 ## What it does
 
@@ -13,7 +15,7 @@ ML-powered QA framework for electric vehicle battery systems. Validates BMS tele
 
 **ML anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, and number of estimators.
 
-**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry (TensorFlow optional).
+**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry (TensorFlow optional). Transformer-based SOH prediction via `soh_transformer` module.
 
 **Cell imbalance analysis.** Statistical analysis of cell group voltages with configurable thresholds, outlier detection, linear regression trend, and plot export.
 
@@ -24,15 +26,29 @@ ML-powered QA framework for electric vehicle battery systems. Validates BMS tele
 
 **CAN bus.** CAN 2.0B (11-bit ID) and J1939 (29-bit extended) simulation and reception. DBC parser supports Vector CANdb format, SavvyCAN exports, Intel/Motorola byte order, signed/unsigned signals.
 
+**Battery scoring.** Composite health scoring algorithm combining SOH, internal resistance, cell balance, and thermal history into a single 0–100 score with letter grades.
+
+**Physics-based features.** Electrochemical and thermal feature extraction from telemetry — diffusion rates, heat generation estimates, and equivalent circuit model parameters.
+
+**Fleet analytics.** Aggregate analysis across vehicle fleets — degradation curves, anomaly distribution, comparative benchmarking, and fleet-wide SOH histograms.
+
+**Digital twin.** Real-time battery simulation mirroring physical pack behavior. Supports what-if scenarios for charge/discharge profiles and aging projections.
+
+**V2G scenarios.** Vehicle-to-Grid simulation module. Models bidirectional energy flow, grid demand response, cycling impact on battery health, and revenue estimation.
+
+**AutoML.** Automated model selection and hyperparameter optimization for SOH prediction and anomaly detection. Supports scikit-learn and TensorFlow backends.
+
+**HIL integration.** Hardware-in-the-Loop interface for connecting the framework to physical BMS hardware and test stands. Supports real-time data exchange and closed-loop testing.
+
 **Dashboard.** FastAPI + WebSocket + Chart.js. Real-time telemetry and Prometheus `/metrics` endpoint with ready-to-import Grafana dashboard.
 
-**CLI.** Analyze CSV telemetry, run CAN emulation, train SOH models, start dashboard.
+**CLI.** Analyze CSV telemetry, run CAN emulation, train SOH models, start dashboard, run fleet reports, and more.
 
 ## Quick start
 
 ```bash
 # Install from GitHub
-pip install git+https://github.com/remontsuri/EV-QA-Framework.git
+uv pip install git+https://github.com/remontsuri/EV-QA-Framework.git
 
 # Launch dashboard
 python -m ev_qa_framework.cli dashboard
@@ -46,7 +62,7 @@ python -m ev_qa_framework.cli analyze -i examples/tesla_model_s_defective.csv -o
 python -m ev_qa_framework.cli emulate --dbc my_battery.dbc --duration 60
 
 # Run tests
-python -m pytest -v
+uv run pytest -v
 ```
 
 ## Examples
@@ -108,26 +124,97 @@ vals = dbc.decode(0x101, bytes([0x7D, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 # {'Voltage': 396.5}
 ```
 
+**Battery scoring:**
+```python
+from ev_qa_framework.battery_scoring import BatteryScorer
+
+scorer = BatteryScorer()
+result = scorer.compute_score(soh=92.5, resistance=0.15, balance_cv=0.02, max_temp=42.0)
+# {'score': 87.3, 'grade': 'B+', 'components': {...}}
+```
+
+**Fleet analytics:**
+```python
+from ev_qa_framework.fleet_analytics import FleetAnalyzer
+
+analyzer = FleetAnalyzer()
+report = analyzer.generate_report(fleet_df)
+print(report.degradation_curves)
+print(report.anomaly_distribution)
+```
+
+**Digital twin:**
+```python
+from ev_qa_framework.digital_twin import BatteryTwin
+
+twin = BatteryTwin(initial_soh=100.0, capacity_ah=220.0)
+twin.simulate_drive_cycle(profile="urban", duration_s=3600)
+print(twin.current_soh, twin.simulated_voltage)
+```
+
+**V2G scenarios:**
+```python
+from ev_qa_framework.v2g_scenarios import V2GSimulator
+
+sim = V2GSimulator(battery_capacity_kwh=75.0)
+result = sim.run_scenario(demand_profile="peak_shaving", days=30)
+print(result.energy_kwh, result.revenue_usd, result.cycling_impact)
+```
+
 ## Project structure
 
 ```
 ev_qa_framework/
-  framework.py         # core QA engine
-  models.py            # Pydantic models
-  config.py            # thresholds and ML config
-  analysis.py          # Isolation Forest, EVBatteryAnalyzer
-  soh_predictor.py     # LSTM for SOH (TensorFlow optional)
-  can_bus.py           # CAN 2.0B + J1939 simulation
-  dbc_parser.py        # .dbc file parser (Vector CANdb + SavvyCAN)
-  cell_balance.py      # cell voltage imbalance analysis
-  thermal_runaway.py   # thermal runaway prediction (rule + ML)
-  metrics.py           # Prometheus metrics
-  cli.py               # CLI entry point
+  framework.py          # core QA engine
+  models.py             # Pydantic models
+  config.py             # thresholds and ML config
+  analysis.py           # Isolation Forest, EVBatteryAnalyzer
+  soh_predictor.py      # LSTM for SOH (TensorFlow optional)
+  can_bus.py            # CAN 2.0B + J1939 simulation
+  dbc_parser.py         # .dbc file parser (Vector CANdb + SavvyCAN)
+  cell_balance.py       # cell voltage imbalance analysis
+  thermal_runaway.py    # thermal runaway prediction (rule + ML)
+  metrics.py            # Prometheus metrics
+  cli.py                # CLI entry point
+  chemistries.py        # battery chemistry definitions (LFP, NMC, NCA, etc.)
+  battery_scoring.py    # composite battery health scoring
+  physics_features.py   # electrochemical/thermal feature extraction
+  fleet_analytics.py    # fleet-wide analytics and benchmarking
+  digital_twin.py       # real-time battery digital twin
+  v2g_scenarios.py      # Vehicle-to-Grid simulation
+  automl.py             # automated model selection and HPO
+  soh_transformer.py    # Transformer-based SOH prediction
+  hil.py                # Hardware-in-the-Loop interface
 dashboard/
-  app.py               # FastAPI
-  grafana/             # Grafana dashboard JSON
-tests/                 # 160+ tests
+  app.py                # FastAPI
+  grafana/              # Grafana dashboard JSON
+tests/                  # 592 tests
 ```
+
+## Module reference
+
+| Module | Description |
+|---|---|
+| `framework.py` | Core QA engine — orchestrates validation, analysis, and reporting |
+| `models.py` | Pydantic data models for telemetry, BMS messages, and VIN validation |
+| `config.py` | Centralized configuration — thresholds, ML params, CAN settings |
+| `analysis.py` | Anomaly detection (Isolation Forest), statistical analysis |
+| `soh_predictor.py` | LSTM-based SOH forecasting from historical telemetry |
+| `can_bus.py` | CAN 2.0B / J1939 simulation, transmission, and reception |
+| `dbc_parser.py` | DBC file parser — Vector CANdb, SavvyCAN, Intel/Motorola byte order |
+| `cell_balance.py` | Cell voltage imbalance detection and trend analysis |
+| `thermal_runaway.py` | Thermal runaway prediction — rule-based and ML modes |
+| `metrics.py` | Prometheus metrics for dashboard and monitoring |
+| `cli.py` | CLI entry point — analyze, emulate, train, dashboard, fleet |
+| `chemistries.py` | Battery chemistry definitions — LFP, NMC, NCA, LMO parameters |
+| `battery_scoring.py` | Composite health scoring (0–100) with letter grades |
+| `physics_features.py` | Electrochemical/thermal feature extraction from telemetry |
+| `fleet_analytics.py` | Fleet-wide degradation, anomaly distribution, benchmarking |
+| `digital_twin.py` | Real-time battery simulation with what-if scenarios |
+| `v2g_scenarios.py` | V2G simulation — energy flow, revenue, cycling impact |
+| `automl.py` | AutoML — model selection, hyperparameter optimization |
+| `soh_transformer.py` | Transformer architecture for SOH prediction |
+| `hil.py` | Hardware-in-the-Loop interface for physical BMS integration |
 
 ## Development
 
@@ -135,27 +222,34 @@ tests/                 # 160+ tests
 # Clone and install dev dependencies
 git clone https://github.com/remontsuri/EV-QA-Framework.git
 cd EV-QA-Framework
-pip install -e .[dev,ml]
+uv sync --all-extras
 
 # Run linting
-ruff check .
+uv run ruff check .
 
 # Run tests
-pytest -v
+uv run pytest -v
+
+# Run tests with coverage
+uv run pytest --cov=ev_qa_framework --cov-report=term-missing
 ```
 
 ## Changelog
 
+### v2.0.0
+- Added 10 new modules: `battery_scoring`, `physics_features`, `fleet_analytics`, `digital_twin`, `v2g_scenarios`, `automl`, `soh_transformer`, `hil`, `test_standards`, `test_standards_gb`
+- Expanded test suite from 235 to 592 tests (86% coverage)
+- Fixed SOH scaler serialization/deserialization
+- Fixed Dockerfile multi-stage build
+- Fixed config merge logic for nested dictionaries
+- Migrated all tooling from pip to uv
+
 ### v1.1.0
-- Thermal runaway deduplicated — `ThermalRunawayPredictor` is the single API (removed duplicate from `EVBatteryAnalyzer`)
-- Fixed risk score calculation: temperature contribution uses deviation from 50°C, not absolute value
+- Thermal runaway deduplicated — `ThermalRunawayPredictor` is the single API
+- Fixed risk score calculation: temperature contribution uses deviation from 50°C
 - CLI `analyze` now handles both `temperature` and `temp` column names
 - Migrated `setup.py` → `pyproject.toml`, added `uv.lock`
 - Applied ruff auto-fixes across the codebase
-- Fixed `BatteryCellDataModel` import in package `__init__.py`
-- Fixed SOHPredictor type hint (`Sequential` → `Any`)
-- Fixed example in `framework.py` (`__main__`) — uses pack voltage (396V) instead of cell voltage (3.9V)
-- Removed stale `build/` artifacts
 
 ## Compatibility
 
@@ -164,6 +258,7 @@ pytest -v
 - Prometheus + Grafana
 - TensorFlow — optional (SOH prediction only)
 - python-can — only needed for physical CAN hardware; simulation works without it
+- Python 3.9+
 
 ## License
 
