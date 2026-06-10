@@ -130,36 +130,43 @@ vals = dbc.decode(0x101, bytes([0x7D, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 from ev_qa_framework.battery_scoring import BatteryScorer
 
 scorer = BatteryScorer()
-result = scorer.compute_score(soh=92.5, resistance=0.15, balance_cv=0.02, max_temp=42.0)
-# {'score': 87.3, 'grade': 'B+', 'components': {...}}
+telemetry = pd.DataFrame({
+    "voltage": [396.5], "current": [125.3], "temperature": [42.0],
+    "soh": [92.5], "internal_resistance": [0.15]
+})
+result = scorer.compute_score(telemetry_df=telemetry, cell_voltages=[3.30, 3.31, 3.305, 3.312, 3.29])
+# {"score": 91.0, "grade": "A", ...}
 ```
 
 **Fleet analytics:**
 ```python
-from ev_qa_framework.fleet_analytics import FleetAnalyzer
+from ev_qa_framework.fleet_analytics import FleetAnalytics
 
-analyzer = FleetAnalyzer()
-report = analyzer.generate_report(fleet_df)
-print(report.degradation_curves)
-print(report.anomaly_distribution)
+fa = FleetAnalytics()
+fa.add_battery("V1", telemetry_df_v1)
+fa.add_battery("V2", telemetry_df_v2)
+summary = fa.get_fleet_summary()
+# {"fleet_size": 2, "avg_soh": 91.2, ...}
 ```
 
 **Digital twin:**
 ```python
-from ev_qa_framework.digital_twin import BatteryTwin
+from ev_qa_framework.digital_twin import BatteryDigitalTwin
 
-twin = BatteryTwin(initial_soh=100.0, capacity_ah=220.0)
-twin.simulate_drive_cycle(profile="urban", duration_s=3600)
-print(twin.current_soh, twin.simulated_voltage)
+twin = BatteryDigitalTwin()
+cycle = pd.DataFrame({"current": np.random.normal(50, 20, 3600)})
+result = twin.simulate_drive_cycle(cycle_profile=cycle, dt=1.0)
+state = twin.get_state()
+# {"soh": 92.8, "voltage": 395.7, ...}
 ```
 
 **V2G scenarios:**
 ```python
-from ev_qa_framework.v2g_scenarios import V2GSimulator
+from ev_qa_framework.v2g_scenarios import V2GScenarioGenerator
 
-sim = V2GSimulator(battery_capacity_kwh=75.0)
-result = sim.run_scenario(demand_profile="peak_shaving", days=30)
-print(result.energy_kwh, result.revenue_usd, result.cycling_impact)
+gen = V2GScenarioGenerator(battery_capacity_ah=220, nominal_voltage=400)
+cycle = gen.generate_v2g_cycle(duration_hours=24, grid_demand_profile="typical")
+# DataFrame with columns: grid_demand, battery_power
 ```
 
 ## Project structure

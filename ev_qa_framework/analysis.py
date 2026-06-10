@@ -489,7 +489,10 @@ class AnomalyDetector(EVBatteryAnalyzer):
             >>> detector.train(normal_data)
         """
         features = ["voltage", "current", "temp"]
-        X = data[features]
+        df = data.copy()
+        if "temperature" in df.columns and "temp" not in df.columns:
+            df = df.rename(columns={"temperature": "temp"})
+        X = df[features]
 
         # Обучаем scaler на нормальных данных
         X_scaled = self.scaler.fit_transform(X)
@@ -528,7 +531,10 @@ class AnomalyDetector(EVBatteryAnalyzer):
             raise ValueError("Модель не обучена! Сначала вызовите метод train()")
 
         features = ["voltage", "current", "temp"]
-        X = data[features]
+        df = data.copy()
+        if "temperature" in df.columns and "temp" not in df.columns:
+            df = df.rename(columns={"temperature": "temp"})
+        X = df[features]
 
         # Применяем уже обученный scaler
         X_scaled = self.scaler.transform(X)

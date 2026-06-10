@@ -12,6 +12,10 @@ from . import (
     v2g_scenarios,
 )
 from .analysis import AnomalyDetector, EVBatteryAnalyzer
+from .automl import AutoMLAnomaly, AutoMLSOH
+
+# v2.0 module classes
+from .battery_scoring import BatteryScorer
 from .can_bus import (
     CANBatterySimulator,
     CANBusOffError,
@@ -43,7 +47,10 @@ from .chemistries import (
 )
 from .config import DEFAULT_CONFIG, TESLA_CONFIG, FrameworkConfig, MLConfig, SafetyThresholds
 from .dbc_parser import DBCParser, builtin_dbc
+from .digital_twin import BatteryDigitalTwin, BatteryState
+from .fleet_analytics import FleetAlert, FleetAnalytics
 from .framework import EVQAFramework
+from .hil import BMSHardwareEmulator, CANMessage, HILInterface, HILTestResult, HILTestRunner
 from .metrics import (
     battery_anomaly_total,
     battery_cell_imbalance_max,
@@ -54,8 +61,11 @@ from .metrics import (
     battery_voltage_volts,
 )
 from .models import BatteryCellDataModel, BatteryTelemetryModel
+from .physics_features import PhysicsFeatureExtractor
 from .soh_predictor import SOHPredictor
+from .soh_transformer import SOHTransformer
 from .thermal_runaway import ThermalRunawayPredictor
+from .v2g_scenarios import V2GHealthAnalyzer, V2GScenarioGenerator
 
 __version__ = "2.0.0"
 
@@ -116,4 +126,21 @@ __all__ = [
     "automl",
     "soh_transformer",
     "hil",
+    # v2.0 classes
+    "BatteryScorer",
+    "PhysicsFeatureExtractor",
+    "FleetAnalytics",
+    "FleetAlert",
+    "BatteryDigitalTwin",
+    "BatteryState",
+    "V2GScenarioGenerator",
+    "V2GHealthAnalyzer",
+    "AutoMLSOH",
+    "AutoMLAnomaly",
+    "SOHTransformer",
+    "HILInterface",
+    "HILTestRunner",
+    "HILTestResult",
+    "CANMessage",
+    "BMSHardwareEmulator",
 ]
