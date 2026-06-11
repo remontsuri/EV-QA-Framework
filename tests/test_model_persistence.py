@@ -67,7 +67,7 @@ class TestModelPersistence:
             filepath = f.name
 
         try:
-            with pytest.raises(ValueError, match="Модель не обучена"):
+            with pytest.raises(ValueError, match="Model not trained"):
                 analyzer.save_model(filepath)
         finally:
             if os.path.exists(filepath):

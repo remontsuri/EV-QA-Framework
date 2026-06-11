@@ -1,10 +1,5 @@
 version: '3.9'
 
-# ============================================================
-# EV-QA-Framework v2.0.0 — Docker Compose
-# Services: tests, dashboard, api
-# ============================================================
-
 x-common-env: &common-env
   PYTHONUNBUFFERED: "1"
   PYTHONDONTWRITEBYTECODE: "1"
@@ -19,7 +14,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime
     container_name: ev-qa-tests
     environment:
       <<: *common-env
@@ -73,13 +67,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime
     container_name: ev-qa-api
     environment:
       <<: *common-env
       EV_QA_MODE: production
-      EV_QA_API_HOST: "0.0.0.0"
-      EV_QA_API_PORT: "8000"
     volumes:
       - api-data:/app/data
     networks:
@@ -97,19 +88,16 @@ services:
       retries: 5
       start_period: 20s
     restart: unless-stopped
+    command: ev-qa dashboard
 
-# ---- Named Volumes ----
 volumes:
   test-results:
     labels:
       com.ev-qa.description: "Test results, coverage reports, JUnit XML"
   api-data:
     labels:
-      com.ev-qa.description: "Persistent API data (configs, caches)"
+      com.ev-qa.description: "Persistent API data"
 
-# ---- Networks ----
 networks:
   ev-qa-net:
     driver: bridge
-    labels:
-      com.ev-qa.description: "Internal network for EV-QA services"
