@@ -78,6 +78,7 @@ dev = [
 ]
 docs = [
     "sphinx>=5.0",
+    "sphinx-autodoc-typehints>=2.3.0",
     "sphinx-rtd-theme>=1.0",
 ]
 
@@ -104,3 +105,8 @@ ignore = ["E402", "E501", "F401", "N806"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.141.1",
+]

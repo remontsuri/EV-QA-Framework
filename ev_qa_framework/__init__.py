@@ -4,9 +4,11 @@
 from . import (
     automl,
     battery_scoring,
+    bms_protocol,
     digital_twin,
     fleet_analytics,
     hil,
+    modbus,
     physics_features,
     soh_transformer,
     v2g_scenarios,
@@ -16,6 +18,16 @@ from .automl import AutoMLAnomaly, AutoMLSOH
 
 # v2.0 module classes
 from .battery_scoring import BatteryScorer
+
+# BMS protocol abstraction layer
+from .bms_protocol import (
+    BMSCANInterface,
+    BMSModbusRTUInterface,
+    BMSModbusTCPInterface,
+    BMSProtocolManager,
+    BMSTelemetry,
+    ProtocolType,
+)
 from .can_bus import (
     CANBatterySimulator,
     CANBusOffError,
@@ -35,11 +47,24 @@ from .can_bus import (
 )
 from .cell_balance import CellBalanceAnalyzer
 from .chemistries import (
+    AGING_LFP,
+    AGING_NCA,
+    AGING_NMC,
     ALL_CHEMISTRIES,
+    OCV_LFP,
+    OCV_NCA,
+    OCV_NMC,
+    THERMAL_LFP,
+    THERMAL_NCA,
+    THERMAL_NMC,
+    AgingModel,
     BatteryChemistryProfile,
     CellImbalanceThresholds,
     ChemistryKey,
+    OCVCurve,
     SOHDegradationParams,
+    ThermalModel,
+    ThermalParams,
     get_profile,
     list_profiles,
     load_custom_profile_from_file,
@@ -59,6 +84,13 @@ from .metrics import (
     battery_soh_percent,
     battery_temperature_celsius,
     battery_voltage_volts,
+)
+
+# Modbus protocol
+from .modbus import (
+    BMS_REGISTER_MAP,
+    ModbusRTUClient,
+    ModbusTCPClient,
 )
 from .models import BatteryCellDataModel, BatteryTelemetryModel
 from .physics_features import PhysicsFeatureExtractor
@@ -107,6 +139,20 @@ __all__ = [
     "CellImbalanceThresholds",
     "ChemistryKey",
     "ALL_CHEMISTRIES",
+    # New chemistry models (v2.1)
+    "OCVCurve",
+    "OCV_LFP",
+    "OCV_NMC",
+    "OCV_NCA",
+    "AgingModel",
+    "AGING_LFP",
+    "AGING_NMC",
+    "AGING_NCA",
+    "ThermalParams",
+    "ThermalModel",
+    "THERMAL_LFP",
+    "THERMAL_NMC",
+    "THERMAL_NCA",
     "get_profile",
     "list_profiles",
     "register_custom_profile",
@@ -126,6 +172,8 @@ __all__ = [
     "automl",
     "soh_transformer",
     "hil",
+    "bms_protocol",
+    "modbus",
     # v2.0 classes
     "BatteryScorer",
     "PhysicsFeatureExtractor",
@@ -143,4 +191,15 @@ __all__ = [
     "HILTestResult",
     "CANMessage",
     "BMSHardwareEmulator",
+    # BMS protocol
+    "BMSProtocolManager",
+    "BMSTelemetry",
+    "BMSCANInterface",
+    "BMSModbusTCPInterface",
+    "BMSModbusRTUInterface",
+    "ProtocolType",
+    # Modbus
+    "ModbusTCPClient",
+    "ModbusRTUClient",
+    "BMS_REGISTER_MAP",
 ]

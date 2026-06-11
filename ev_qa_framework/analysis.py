@@ -338,9 +338,7 @@ class EVBatteryAnalyzer:
             return {"status": "error", "message": "No data"}
 
         avg_v = np.mean(cell_voltages)
-        max_v = np.max(cell_voltages)
-        min_v = np.min(cell_voltages)
-        imbalance = max_v - min_v
+        imbalance = np.max(cell_voltages) - np.min(cell_voltages)
         std_v = np.std(cell_voltages)
 
         # Tesla thresholds are typically around 0.05V - 0.1V
@@ -362,8 +360,7 @@ class EVBatteryAnalyzer:
         """Extract all physics-informed features from a telemetry DataFrame.
 
         Expects columns: 'voltage', 'current', 'temp', 'soc'.
-        Optional columns: 'capacity', 'time', 'charge_capacity',
-                          'discharge_capacity', 'cycle_number'.
+        Optional columns: 'capacity', 'time', 'charge_capacity', 'discharge_capacity', 'cycle_number'.
 
         Args:
             df: DataFrame with battery telemetry data.
