@@ -1,54 +1,55 @@
 EV-QA-Framework Documentation
 ==============================
 
-ML-powered QA Framework for Electric Vehicle & IoT Battery Testing.
+ML-powered QA framework for EV battery systems. Already includes 948 passing tests, ~93% coverage, Docker Compose, Prometheus metrics, and compliance tests for UN 38.3, IEC 62660, SAE J2464, ISO 12405, GB/T 31484, GB/T 31486, GB 38031.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    getting_started
    modules
    api/index
+   examples/index
+
+Quick start
+-----------
+
+Clone and inspect locally:
+
+.. code-block:: bash
+
+   git clone https://github.com/remontsuri/EV-QA-Framework.git
+   cd EV-QA-Framework
+   docker compose up -d
+   open http://localhost:8081/coverage/
+
+Or run the CLI directly:
+
+.. code-block:: bash
+
+   uv run pytest -v
+   uv run python run_factory_inspection.py
 
 Overview
 --------
 
-EV-QA-Framework provides a comprehensive toolkit for battery quality assurance
-in electric vehicle applications. It covers:
+This framework validates BMS telemetry and predicts fault conditions before they become failures. It covers:
 
-- **State of Health (SOH) prediction** — ML models for battery degradation analysis
-- **Battery scoring** — Automated quality scoring and grading
-- **Physics-based features** — Domain-specific feature engineering
-- **Fleet analytics** — Fleet-wide battery health monitoring
-- **Digital twin** — Battery simulation and emulation
-- **V2G scenarios** — Vehicle-to-grid testing scenarios
-- **HIL testing** — Hardware-in-the-loop test automation
-- **Test standards** — GB/T and international standard compliance
+- telementry validation
+- anomaly detection
+- thermal runaway prediction
+- SOH prediction
+- cell imbalance analysis
+- CAN/J1939 emulation and DBC parsing
+- fleet analytics
+- digital twin
+- V2G scenarios
+- HIL integration
+- compliance testing against international standards
+- observability via Prometheus metrics and Grafana-ready output
 
-Installation
-------------
-
-.. code-block:: bash
-
-   uv pip install -e .
-
-For development with docs support:
-
-.. code-block:: bash
-
-   uv pip install -e ".[dev,docs]"
-
-Quick Start
------------
-
-.. code-block:: python
-
-   from ev_qa_framework.soh_predictor import SOHPredictor
-   from ev_qa_framework.battery_scoring import BatteryScorer
-
-   predictor = SOHPredictor()
-   scorer = BatteryScorer()
+For architecture and use cases, start with :doc:`getting_started`.
 
 Indices and tables
 ==================
