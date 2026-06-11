@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-common-env: &common-env
   PYTHONUNBUFFERED: "1"
   PYTHONDONTWRITEBYTECODE: "1"
@@ -18,22 +16,22 @@ services:
     environment:
       <<: *common-env
       EV_QA_MODE: testing
-    volumes:
-      - ./tests:/app/tests:ro
-      - test-results:/app/results
     networks:
       - ev-qa-net
     labels:
       <<: *common-labels
       com.ev-qa.service: tests
     restart: "no"
+    entrypoint: ["python"]
     command: >
-      python -m pytest tests/ -v
+      -m pytest tests/ -v
       --cov=ev_qa_framework
       --cov-report=html:/app/results/coverage
       --cov-report=xml:/app/results/coverage.xml
       --junitxml=/app/results/junit.xml
       --tb=short
+    volumes:
+      - test-results:/app/results
 
   # ---- Dashboard (serves coverage / test reports) ----
   dashboard:
@@ -62,41 +60,10 @@ services:
       tests:
         condition: service_completed_successfully
 
-  # ---- API Server (FastAPI / Uvicorn) ----
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ev-qa-api
-    environment:
-      <<: *common-env
-      EV_QA_MODE: production
-    volumes:
-      - api-data:/app/data
-    networks:
-      - ev-qa-net
-    labels:
-      <<: *common-labels
-      com.ev-qa.service: api
-    ports:
-      - "8000:8000"
-    healthcheck:
-      test: ["CMD", "python", "-c",
-             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-    restart: unless-stopped
-    command: ev-qa dashboard
-
 volumes:
   test-results:
     labels:
       com.ev-qa.description: "Test results, coverage reports, JUnit XML"
-  api-data:
-    labels:
-      com.ev-qa.description: "Persistent API data"
 
 networks:
   ev-qa-net:
