@@ -1,9 +1,9 @@
 """
 Thermal Runaway Prediction Module.
 
-Два режима:
-- rule: улучшенная эвристика с настраиваемыми весами
-- ml: Isolation Forest на темповых признаках
+Two modes:
+- rule: enhanced heuristic with configurable weights
+- ml: Isolation Forest on temperature features
 """
 
 import numpy as np
@@ -20,9 +20,9 @@ class ThermalRunawayPredictor:
     mode : str, default='rule'
         'rule' for rule-based heuristic, 'ml' for Machine Learning based.
     rule_weights : dict, optional
-        Веса для rule-based scoring: rise_rate, max_temp, anomaly, dt_dt.
+        Weights for rule-based scoring: rise_rate, max_temp, anomaly, dt_dt.
     thresholds : dict, optional
-        Кастомные пороги: critical_temp, high_temp, critical_dtdt и т.д.
+        Custom thresholds: critical_temp, high_temp, critical_dtdt, etc.
     contamination : float, default=0.1
         Expected contamination for IsolationForest (only in ML mode).
     """
@@ -66,7 +66,7 @@ class ThermalRunawayPredictor:
 
     def analyze_temperature_trend(self, df_recent: pd.DataFrame) -> dict[str, float]:
         """
-        Извлечение темповых признаков из DataFrame.
+        Extract temperature features from DataFrame.
 
         Returns dict: temp_rise_rate, max_temp, volatility, dt_dt
         """
@@ -95,7 +95,7 @@ class ThermalRunawayPredictor:
 
     def predict_risk(self, df_recent: pd.DataFrame) -> dict:
         """
-        Прогноз риска thermal runaway.
+        Predict thermal runaway risk.
 
         Returns dict: risk_level (LOW/MEDIUM/HIGH/CRITICAL), risk_score, confidence
         """

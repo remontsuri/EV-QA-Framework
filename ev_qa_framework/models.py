@@ -1,6 +1,6 @@
 """
-Pydantic модели для строгой валидации телеметрии батареи
-Автор: Remontsuri
+Pydantic models for strict battery telemetry validation.
+Author: Remontsuri
 """
 
 from datetime import datetime
@@ -10,13 +10,13 @@ from pydantic import BaseModel, Field, field_validator
 
 class BatteryCellDataModel(BaseModel):
     """
-    Модель для детального анализа ячеек батареи.
-    Используется для обнаружения разбалансировки (Cell Imbalance).
+    Model for detailed battery cell analysis.
+    Used for detecting cell imbalance.
     """
 
     vin: str = Field(..., min_length=17, max_length=17)
     cell_voltages: list[float] = Field(
-        ..., description="Напряжения групп ячеек (обычно 96 для Tesla)"
+        ..., description="Cell group voltages (usually 96 for Tesla)"
     )
     timestamp: datetime | None = Field(default_factory=datetime.now)
 
@@ -24,66 +24,65 @@ class BatteryCellDataModel(BaseModel):
     @classmethod
     def check_voltages(cls, v):
         if not v:
-            raise ValueError("Список напряжений ячеек не может быть пустым")
+            raise ValueError("Cell voltage list cannot be empty")
         if any(volt < 0 or volt > 5.0 for volt in v):
-            raise ValueError("Напряжение ячейки должно быть в диапазоне 0-5.0V")
+            raise ValueError("Cell voltage must be in range 0-5.0V")
         return v
 
 
 class BatteryTelemetryModel(BaseModel):
     """
-    Строгая модель телеметрии батареи EV с автоматической валидацией.
+    Strict EV battery telemetry model with automatic validation.
 
-    Поля:
-        vin: VIN автомобиля (Vehicle Identification Number)
-        voltage: Напряжение батареи в вольтах (0-1000V)
-        current: Ток в амперах (может быть отрицательным при разряде)
-        temperature: Температура батареи в градусах Цельсия
-        soc: State of Charge - уровень заряда (0-100%)
-        soh: State of Health - состояние здоровья батареи (0-100%)
-        timestamp: Временная метка (Unix timestamp или datetime)
+    Fields:
+        vin: Vehicle Identification Number (17 characters)
+        voltage: Battery voltage in volts (0-1000V)
+        current: Current in amperes (can be negative during discharge)
+        temperature: Battery temperature in degrees Celsius
+        soc: State of Charge — charge level (0-100%)
+        soh: State of Health — battery health (0-100%)
+        timestamp: Timestamp (Unix timestamp or datetime)
     """
 
-    vin: str = Field(..., min_length=17, max_length=17, description="VIN автомобиля (17 символов)")
-    voltage: float = Field(..., ge=0.0, le=1000.0, description="Напряжение (0-1000V)")
-    current: float = Field(..., description="Ток в амперах")
-    temperature: float = Field(..., ge=-50.0, le=150.0, description="Температура (-50 до +150°C)")
-    soc: float = Field(..., ge=0.0, le=100.0, description="Уровень заряда (0-100%)")
-    soh: float = Field(..., ge=0.0, le=100.0, description="Состояние батареи (0-100%)")
-    timestamp: datetime | None = Field(default_factory=datetime.now, description="Временная метка")
+    vin: str = Field(..., min_length=17, max_length=17, description="Vehicle VIN (17 characters)")
+    voltage: float = Field(..., ge=0.0, le=1000.0, description="Voltage (0-1000V)")
+    current: float = Field(..., description="Current in amperes")
+    temperature: float = Field(..., ge=-50.0, le=150.0, description="Temperature (-50 to +150°C)")
+    soc: float = Field(..., ge=0.0, le=100.0, description="State of Charge (0-100%)")
+    soh: float = Field(..., ge=0.0, le=100.0, description="Battery health (0-100%)")
+    timestamp: datetime | None = Field(default_factory=datetime.now, description="Timestamp")
 
     @field_validator("vin")
     @classmethod
     def validate_vin_format(cls, v):
-        """Проверка формата VIN (только буквы и цифры, без I, O, Q)"""
+        """VIN format validation (letters and digits only, no I, O, Q)"""
         if not v.isalnum():
-            raise ValueError("VIN должен содержать только буквы и цифры")
+            raise ValueError("VIN must contain only letters and digits")
         forbidden = set("IOQ")
         if any(c in forbidden for c in v.upper()):
-            raise ValueError("VIN не может содержать буквы I, O, Q")
+            raise ValueError("VIN cannot contain letters I, O, Q")
         return v.upper()
 
     @field_validator("temperature")
     @classmethod
     def check_temperature_safety(cls, v):
-        """Предупреждение о критических температурах"""
+        """Warning for critical temperatures (logged, not blocking)."""
         if v > 60:
-            # Логирование предупреждения, но не блокирование
-            print(f"⚠️ ПРЕДУПРЕЖДЕНИЕ: Высокая температура {v}°C")
+            print(f"WARNING: High temperature {v}°C")
         if v < 0:
-            print(f"⚠️ ПРЕДУПРЕЖДЕНИЕ: Отрицательная температура {v}°C")
+            print(f"WARNING: Negative temperature {v}°C")
         return v
 
     @field_validator("soc", "soh")
     @classmethod
     def check_percentage_range(cls, v):
-        """Дополнительная проверка процентных значений"""
+        """Additional validation for percentage values."""
         if not (0 <= v <= 100):
-            raise ValueError("Значение должно быть в диапазоне 0-100%")
+            raise ValueError("Value must be in range 0-100%")
         return v
 
     model_config = {
-        "validate_assignment": True,  # Валидация при изменении полей
+        "validate_assignment": True,  # Validate on field change
         "json_schema_extra": {
             "example": {
                 "vin": "1HGBH41JXMN109186",
@@ -100,6 +99,6 @@ class BatteryTelemetryModel(BaseModel):
 
 def validate_telemetry(data: dict) -> BatteryTelemetryModel:
     """
-    Функция валидации телеметрии с использованием Pydantic.
+    Validate battery telemetry using Pydantic.
     """
     return BatteryTelemetryModel(**data)

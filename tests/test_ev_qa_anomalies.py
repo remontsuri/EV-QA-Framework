@@ -1,4 +1,4 @@
-"""Расширенные тесты для детекции аномалий в EV-QA-Framework"""
+"""Extended tests for anomaly detection in EV-QA-Framework"""
 
 import pytest
 from pydantic import ValidationError
@@ -8,14 +8,14 @@ from ev_qa_framework.models import BatteryTelemetryModel
 
 
 class TestAnomalyDetection:
-    """Тесты для rule-based детекции аномалий"""
+    """Tests for rule-based anomaly detection"""
 
     def setup_method(self):
         self.qa = EVQAFramework("Anomaly-Tester")
         self.vin = "TESTVEHCLE0123456"
 
     def test_no_temperature_jump_stable(self):
-        """Стабильная температура без скачков"""
+        """Stable temperature without jumps"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=35, soc=80, soh=98
@@ -31,21 +31,21 @@ class TestAnomalyDetection:
         assert len(anomalies) == 0
 
     def test_exact_5_degree_jump(self):
-        """Ровно 5°C скачок - граница детекции"""
-        # Код проверяет > 5, значит 5.0 не должно детектироваться
+        """Exactly 5°C jump - detection boundary"""
+        # Code checks > 5, so 5.0 should not be detected
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
             ),
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=35, soc=80, soh=98
-            ),  # Ровно 5°C
+            ),  # Exactly 5°C
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
-        assert len(anomalies) == 0  # > 5, а не >= 5
+        assert len(anomalies) == 0  # > 5, not >= 5
 
     def test_5_1_degree_jump(self):
-        """5.1°C скачок - должен детектироваться"""
+        """5.1°C jump - should be detected"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
@@ -56,10 +56,10 @@ class TestAnomalyDetection:
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
         assert len(anomalies) == 1
-        assert "Резкий скачок температуры" in anomalies[0]
+        assert "Sharp temperature jump" in anomalies[0]
 
     def test_multiple_temperature_jumps(self):
-        """Множественные скачки температуры"""
+        """Multiple temperature jumps"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
@@ -69,17 +69,17 @@ class TestAnomalyDetection:
             ),  # +7°C
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=32, soc=80, soh=98
-            ),  # -5°C (не детектируется, т.к. abs change = 5 not > 5)
+            ),  # -5°C (not detected, abs change = 5 not > 5)
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=40.1, soc=80, soh=98
             ),  # +8.1°C (32->40.1)
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
-        # Должно быть 2 аномалии: 30->37 (+7) и 32->40.1 (+8.1)
+        # Should be 2 anomalies: 30->37 (+7) and 32->40.1 (+8.1)
         assert len(anomalies) >= 2
 
     def test_temperature_drop(self):
-        """Резкое падение температуры"""
+        """Sharp temperature drop"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=50, soc=80, soh=98
@@ -92,7 +92,7 @@ class TestAnomalyDetection:
         assert len(anomalies) == 1
 
     def test_single_telemetry_no_anomaly(self):
-        """Одна точка данных - нет аномалий"""
+        """Single data point - no anomalies"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=35, soc=80, soh=98
@@ -102,20 +102,20 @@ class TestAnomalyDetection:
         assert len(anomalies) == 0
 
     def test_empty_telemetry_list(self):
-        """Пустой список - нет аномалий"""
+        """Empty list - no anomalies"""
         anomalies = self.qa.detect_anomalies([])
         assert len(anomalies) == 0
 
 
 class TestNegativeScenarios:
-    """Негативные тесты для обработки некорректных данных"""
+    """Negative tests for handling invalid data"""
 
     def setup_method(self):
         self.qa = EVQAFramework("Negative-Tester")
         self.vin = "TESTVEHCLE0123456"
 
     def test_extreme_negative_temperature(self):
-        """Экстремально низкая температура должна вызывать ошибку валидации модели"""
+        """Extremely low temperature should cause model validation error"""
         # Pydantic limit is -50
         with pytest.raises(ValidationError):
             BatteryTelemetryModel(
@@ -123,7 +123,7 @@ class TestNegativeScenarios:
             )
 
     def test_extreme_high_voltage(self):
-        """Экстремально высокое напряжение (в пределах Pydantic, но выше Warning)"""
+        """Extremely high voltage (within Pydantic limits, but above Warning)"""
         # Pydantic 0-1000. Test 1000.
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=1000, current=50, temperature=35, soc=80, soh=98
@@ -131,29 +131,29 @@ class TestNegativeScenarios:
         assert self.qa.validate_telemetry(t) is False
 
     def test_negative_soc(self):
-        """Отрицательный SOC должен вызывать ошибку валидации"""
+        """Negative SOC should cause validation error"""
         with pytest.raises(ValidationError):
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=35, soc=-10, soh=98
             )
 
     def test_soc_over_100(self):
-        """SOC больше 100% должен вызывать ошибку валидации"""
+        """SOC over 100% should cause validation error"""
         with pytest.raises(ValidationError):
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=35, soc=150, soh=98
             )
 
     def test_zero_voltage(self):
-        """Нулевое напряжение"""
+        """Zero voltage"""
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=0, current=50, temperature=35, soc=80, soh=98
         )
         assert self.qa.validate_telemetry(t) is False
 
     def test_negative_current(self):
-        """Отрицательный ток (разряд)"""
-        # Ток может быть отрицательным при разряде - это нормально
+        """Negative current (discharge)"""
+        # Current can be negative during discharge - this is normal
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=390.0, current=-50, temperature=35, soc=80, soh=98
         )
@@ -162,13 +162,13 @@ class TestNegativeScenarios:
 
 @pytest.mark.asyncio
 class TestAsyncTestSuite:
-    """Тесты для асинхронного запуска тестового набора"""
+    """Tests for async test suite execution"""
 
     def setup_method(self):
         self.qa = EVQAFramework("Async-Tester")
 
     async def test_all_valid_telemetry(self):
-        """Все данные валидны"""
+        """All data is valid"""
         test_data = [
             {"voltage": 370.0, "current": 50, "temperature": 30, "soc": 75, "soh": 98},
             {"voltage": 380.0, "current": 45, "temperature": 31, "soc": 78, "soh": 98},
@@ -176,12 +176,12 @@ class TestAsyncTestSuite:
         ]
         results = await self.qa.run_test_suite(test_data)
         assert results["total_tests"] == 3
-        # Если данные валидны и VIN добавился автоматически
+        # If data is valid and VIN was added automatically
         assert results["passed"] == 3
         assert results["failed"] == 0
 
     async def test_mixed_valid_invalid(self):
-        """Смешанные валидные и невалидные данные"""
+        """Mixed valid and invalid data"""
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 35, "soc": 80, "soh": 98},  # OK
             {
@@ -212,7 +212,7 @@ class TestAsyncTestSuite:
         assert results["failed"] == 3
 
     async def test_with_anomalies(self):
-        """Данные с детектируемыми аномалиями"""
+        """Data with detectable anomalies"""
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 30, "soc": 80, "soh": 98},
             {
@@ -224,11 +224,11 @@ class TestAsyncTestSuite:
             },  # +10°C jump
         ]
         results = await self.qa.run_test_suite(test_data)
-        assert results["passed"] == 2  # Оба валидны по отдельности
-        assert len(results["anomalies"]) > 0  # Но есть аномалия
+        assert results["passed"] == 2  # Both are valid individually
+        assert len(results["anomalies"]) > 0  # But there is an anomaly
 
     async def test_anomaly_flag_causes_failure(self):
-        """При включенном fail_on_anomaly телеметрия с аномалией считается проваленной"""
+        """With fail_on_anomaly enabled, telemetry with anomaly is considered failed"""
         self.qa.config.fail_on_anomaly = True
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 30, "soc": 80, "soh": 98},
@@ -241,7 +241,7 @@ class TestAsyncTestSuite:
             },  # +10°C jump
         ]
         results = await self.qa.run_test_suite(test_data)
-        # первый элемент остался успешным, второй провален из-за скачка
+        # first element succeeded, second failed due to jump
         assert results["passed"] == 1
         assert results["failed"] == 1
         assert len(results["anomalies"]) > 0

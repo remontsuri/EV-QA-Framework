@@ -17,7 +17,7 @@ class TestBatteryTelemetry:
         """Test creation of battery telemetry object"""
         telemetry = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456",
-            voltage=390.0,  # Используем реальные значения (300V-400V) так как модель валидирует 0-1000
+            voltage=390.0,  # TODO_TRANSLATE TODO_TRANSLATE TODO_TRANSLATE (300V-400V) TODO_TRANSLATE TODO_TRANSLATE model TODO_TRANSLATE 0-1000
             current=50,
             temperature=35,
             soc=80,
@@ -58,8 +58,8 @@ class TestEVQAFramework:
         """Test validation of valid telemetry"""
         telemetry = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456",
-            voltage=400.0,  # Внимание: Pydantic позволяет 0-1000, но Framework warning < 3.0
-            # Здесь ставим 4.0 чтобы пройти warning check
+            voltage=400.0,  # TODO_TRANSLATE: Pydantic TODO_TRANSLATE 0-1000, TODO_TRANSLATE Framework warning < 3.0
+            # TODO_TRANSLATE TODO_TRANSLATE 4.0 TODO_TRANSLATE TODO_TRANSLATE warning check
             current=50,
             temperature=35,
             soc=80,
@@ -116,7 +116,7 @@ class TestEVQAFramework:
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
         assert len(anomalies) > 0
-        assert "Резкий скачок температуры" in anomalies[0]
+        assert "Sharp temperature jump" in anomalies[0]
 
     @pytest.mark.asyncio
     async def test_run_test_suite_async(self):

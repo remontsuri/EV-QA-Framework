@@ -1,5 +1,5 @@
 """
-Тесты для модуля конфигурации EV-QA-Framework
+Tests  module configuration EV-QA-Framework
 """
 
 import os
@@ -13,10 +13,10 @@ from ev_qa_framework.models import BatteryTelemetryModel
 
 
 class TestSafetyThresholds:
-    """Тесты для класса SafetyThresholds"""
+    """Tests for class SafetyThresholds"""
 
     def test_default_initialization(self):
-        """Тест инициализации с дефолтными значениями"""
+        """Test initialization  default values"""
         thresholds = SafetyThresholds()
         assert thresholds.max_temperature == 60.0
         assert thresholds.min_voltage == 200.0
@@ -24,14 +24,14 @@ class TestSafetyThresholds:
         assert thresholds.max_temperature_jump == 5.0
 
     def test_custom_initialization(self):
-        """Тест инициализации с кастомными значениями"""
+        """Test initialization  custom values"""
         thresholds = SafetyThresholds(max_temperature=55.0, min_voltage=250.0, max_voltage=450.0)
         assert thresholds.max_temperature == 55.0
         assert thresholds.min_voltage == 250.0
         assert thresholds.max_voltage == 450.0
 
     def test_to_dict(self):
-        """Тест конвертации в словарь"""
+        """Test conversion  dict"""
         thresholds = SafetyThresholds()
         data = thresholds.to_dict()
         assert isinstance(data, dict)
@@ -40,7 +40,7 @@ class TestSafetyThresholds:
         assert data["max_temperature"] == 60.0
 
     def test_from_dict(self):
-        """Тест создания из словаря"""
+        """Test creation  dictionary"""
         data = {
             "max_temperature": 70.0,
             "min_voltage": 100.0,
@@ -56,7 +56,7 @@ class TestSafetyThresholds:
         assert thresholds.min_voltage == 100.0
 
     def test_save_and_load_from_file(self):
-        """Тест сохранения и загрузки из файла"""
+        """Test saving  loading  file"""
         thresholds = SafetyThresholds(max_temperature=55.0)
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
@@ -71,10 +71,10 @@ class TestSafetyThresholds:
 
 
 class TestMLConfig:
-    """Тесты для класса MLConfig"""
+    """Tests for class MLConfig"""
 
     def test_default_initialization(self):
-        """Тест дефолтной инициализации"""
+        """Test default initialization"""
         config = MLConfig()
         assert config.contamination == 0.1
         assert config.n_estimators == 200
@@ -83,14 +83,14 @@ class TestMLConfig:
         assert config.warning_score_threshold == -0.5
 
     def test_custom_initialization(self):
-        """Тест кастомной инициализации"""
+        """Test custom initialization"""
         config = MLConfig(contamination=0.05, n_estimators=300, critical_score_threshold=-0.9)
         assert config.contamination == 0.05
         assert config.n_estimators == 300
         assert config.critical_score_threshold == -0.9
 
     def test_to_dict(self):
-        """Тест конвертации в словарь"""
+        """Test conversion  dict"""
         config = MLConfig()
         data = config.to_dict()
         assert "contamination" in data
@@ -99,17 +99,17 @@ class TestMLConfig:
 
 
 class TestFrameworkConfig:
-    """Тесты для класса FrameworkConfig"""
+    """Tests for class FrameworkConfig"""
 
     def test_default_initialization(self):
-        """Тест дефолтной инициализации"""
+        """Test default initialization"""
         config = FrameworkConfig()
         assert isinstance(config.safety_thresholds, SafetyThresholds)
         assert isinstance(config.ml_config, MLConfig)
         assert config.default_vin == "TESTVEHCLE0123456"
 
     def test_custom_initialization(self):
-        """Тест кастомной инициализации"""
+        """Test custom initialization"""
         thresholds = SafetyThresholds(max_temperature=55.0)
         ml_config = MLConfig(contamination=0.05)
 
@@ -122,7 +122,7 @@ class TestFrameworkConfig:
         assert config.default_vin == "CUSTOM123VIN45678"
 
     def test_to_dict(self):
-        """Тест конвертации в словарь"""
+        """Test conversion  dict"""
         config = FrameworkConfig()
         data = config.to_dict()
         assert "safety_thresholds" in data
@@ -130,7 +130,7 @@ class TestFrameworkConfig:
         assert "default_vin" in data
 
     def test_save_and_load_from_file(self):
-        """Тест сохранения и загрузки из файла"""
+        """Test saving  loading  file"""
         config = FrameworkConfig()
         config.safety_thresholds.max_temperature = 55.0
 
@@ -145,23 +145,23 @@ class TestFrameworkConfig:
             os.unlink(filepath)
 
     def test_load_from_nonexistent_file(self):
-        """Тест загрузки из несуществующего файла (должен вернуть дефолт)"""
+        """Test loading  nonexistent file (should return default)"""
         config = FrameworkConfig.load_from_file("nonexistent_file.json")
         assert isinstance(config, FrameworkConfig)
         assert config.safety_thresholds.max_temperature == 60.0
 
 
 class TestFrameworkIntegration:
-    """Интеграционные тесты для EVQAFramework с конфигурацией"""
+    """Integration tests  EVQAFramework  configuration"""
 
     def test_framework_with_default_config(self):
-        """Тест фреймворка с дефолтной конфигурацией"""
+        """Test framework  default configuration"""
         qa = EVQAFramework("Test-QA")
         assert qa.config is not None
         assert qa.config.safety_thresholds.max_temperature == 60.0
 
     def test_framework_with_custom_config(self):
-        """Тест фреймворка с кастомной конфигурацией"""
+        """Test framework  custom configuration"""
         config = FrameworkConfig()
         config.safety_thresholds.max_temperature = 55.0
 
@@ -169,46 +169,46 @@ class TestFrameworkIntegration:
         assert qa.config.safety_thresholds.max_temperature == 55.0
 
     def test_validation_with_custom_thresholds(self):
-        """Тест валидации с кастомными порогами"""
+        """Test validation of custom thresholds."""
         config = FrameworkConfig()
-        config.safety_thresholds.max_temperature = 50.0  # Строгий порог
+        config.safety_thresholds.max_temperature = 50.0  #  threshold
 
         qa = EVQAFramework("Test-QA", config=config)
 
-        # Температура 55°C должна быть отклонена (> 50°C)
+        # Temperature 55°C    (> 50°C)
         telemetry = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=55.0, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry) is False
 
-        # Температура 45°C должна пройти
+        # Temperature 45°C
         telemetry2 = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=45.0, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry2) is True
 
     def test_voltage_validation_with_custom_thresholds(self):
-        """Тест валидации напряжения с кастомными порогами"""
+        """Test validation of custom thresholds."""
         config = FrameworkConfig()
         config.safety_thresholds.min_voltage = 300.0
         config.safety_thresholds.max_voltage = 500.0
 
         qa = EVQAFramework("Test-QA", config=config)
 
-        # 250V должно быть отклонено (< 300V)
+        # 250V   rejected (< 300V)
         telemetry1 = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=250.0, current=50, temperature=35, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry1) is False
 
-        # 400V должно пройти
+        # 400V
         telemetry2 = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=35, soc=80, soh=98
         )
         assert qa.validate_telemetry(telemetry2) is True
 
     def test_ml_analyzer_with_custom_config(self):
-        """Тест ML-анализатора с кастомной конфигурацией"""
+        """Test ML analyzer with custom configuration."""
         config = FrameworkConfig()
         config.ml_config.contamination = 0.05
         config.ml_config.n_estimators = 100
