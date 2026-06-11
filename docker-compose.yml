@@ -60,10 +60,38 @@ services:
       tests:
         condition: service_completed_successfully
 
+  # ---- Grafana (battery metrics) ----
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: ev-qa-grafana
+    environment:
+      <<: *common-env
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    networks:
+      - ev-qa-net
+    labels:
+      <<: *common-labels
+      com.ev-qa.service: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./dashboard/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboard/grafana/dashboard.json:/var/lib/grafana/dashboards/ev-battery-metrics.json:ro
+    restart: unless-stopped
+    depends_on:
+      tests:
+        condition: service_completed_successfully
+
 volumes:
   test-results:
     labels:
       com.ev-qa.description: "Test results, coverage reports, JUnit XML"
+  grafana-data:
+    labels:
+      com.ev-qa.description: "Grafana database and plugins"
 
 networks:
   ev-qa-net:

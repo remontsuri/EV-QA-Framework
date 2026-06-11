@@ -1,0 +1,46 @@
+name: Coverage — Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --no-dev --frozen
+
+      - name: Run pytest with coverage
+        run: >
+          uv run pytest tests/ -v
+          --cov=ev_qa_framework
+          --cov-report=xml:coverage.xml
+          --cov-report=term-missing
+          --junitxml=junit.xml
+          --tb=short
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-coverage-report
+          path: |
+            coverage.xml
+            junit.xml

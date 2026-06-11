@@ -154,9 +154,8 @@ Regression risk is tracked in `tests/`. Coverage artifacts (`coverage/`, `junit.
 ## Roadmap
 
 - [x] GitHub Actions CI badge + nightly coverage job
+- [x] Grafana dashboard import JSON + provisioning
 - [ ] public PyPI release
-- [ ] GitHub Pages documentation (workflow added, awaiting source branch)
-- [ ] Grafana dashboard import JSON
 - [ ] real BMS telemetry adapters (Tesla, BYD, Nio)
 - [ ] V2S + charging-station scenarios
 - [ ] integration with Vector CANoe / CANalyzer
