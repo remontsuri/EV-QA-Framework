@@ -3,7 +3,8 @@ name: Bug Report
 about: Report a bug to help improve EV-QA-Framework
 title: "[BUG] "
 labels: bug
-assignees: ""
+assignees: ''
+
 ---
 
 **Describe the bug**

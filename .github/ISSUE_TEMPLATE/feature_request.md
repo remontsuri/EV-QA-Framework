@@ -3,7 +3,8 @@ name: Feature Request
 about: Suggest an idea for EV-QA-Framework
 title: "[FEATURE] "
 labels: enhancement
-assignees: ""
+assignees: ''
+
 ---
 
 **Is your feature request related to a problem?**
