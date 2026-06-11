@@ -1,0 +1,105 @@
+{
+  "test_date": "2026-06-11T04:09:17.165258",
+  "pack_info": {
+    "model": "Model S 85 kWh",
+    "vin": "5YJSA1E26HF000337",
+    "nominal_voltage": 400.0,
+    "capacity_ah": 210.0,
+    "capacity_kwh": 85.0,
+    "num_cells_series": 96,
+    "num_cells_parallel": 74,
+    "cell_nominal_voltage": 3.7,
+    "max_charge_voltage": 4.2,
+    "min_discharge_voltage": 3.0,
+    "max_charge_current": 200.0,
+    "max_discharge_current": 400.0,
+    "thermal_runaway_threshold": 65.0
+  },
+  "tests": {
+    "telemetry_validation": {
+      "status": "PASS",
+      "sample": {
+        "vin": "5YJSA1E26HF000337",
+        "voltage": 396.5,
+        "current": 125.3,
+        "temperature": 35.2,
+        "soc": 78.5,
+        "soh": 95.2
+      }
+    },
+    "telemetry_generation": {
+      "status": "PASS",
+      "healthy_samples": 500,
+      "degraded_samples": 500
+    },
+    "anomaly_detection": {
+      "status": "PASS",
+      "healthy_anomalies": 15,
+      "degraded_anomalies": 423,
+      "contamination": 0.03
+    },
+    "cell_imbalance": {
+      "status": "PASS",
+      "healthy": {
+        "std": 0.007797,
+        "severity": "CRITICAL"
+      },
+      "degraded": {
+        "std": 0.032844,
+        "severity": "CRITICAL"
+      }
+    },
+    "thermal_runaway": {
+      "status": "PASS",
+      "normal": {
+        "risk_level": "HIGH",
+        "score": 8.64
+      },
+      "escalating": {
+        "risk_level": "CRITICAL",
+        "score": 80.93
+      }
+    },
+    "battery_scoring": {
+      "status": "PASS",
+      "healthy": {
+        "score": 62.6,
+        "grade": "C"
+      },
+      "degraded": {
+        "score": 40.79,
+        "grade": "D"
+      }
+    },
+    "physics_features": {
+      "status": "PASS",
+      "ic_peaks": 1,
+      "estimated_resistance_ohm": 0.08
+    },
+    "fleet_analytics": {
+      "status": "PASS",
+      "fleet_size": 2,
+      "avg_soh": 83.7,
+      "avg_score": 62.7,
+      "grade_distribution": {
+        "B": 1,
+        "D": 1
+      }
+    },
+    "digital_twin": {
+      "status": "PASS",
+      "final_soh": 85.6,
+      "final_voltage": 376.3,
+      "cycle_count": 3124.7,
+      "capacity_remaining_ah": 85.6
+    },
+    "v2g_scenarios": {
+      "status": "PASS",
+      "cycle_duration_hours": 24,
+      "recommendations": [
+        "Battery is healthy. V2G operations are safe.",
+        "Recommended: up to 2 V2G cycles per day at 50% DoD."
+      ]
+    }
+  }
+}
