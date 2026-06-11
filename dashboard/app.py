@@ -7,8 +7,8 @@ import json
 import os
 import random
 import sys
+from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -27,7 +27,15 @@ from api.routes import router  # noqa: E402
 from ev_qa_framework import SOHPredictor  # noqa: E402
 from ev_qa_framework.metrics import *  # noqa: F401,F403 — register metrics
 
-app = FastAPI(title="EV Battery Monitor", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize background tasks on startup."""
+    asyncio.create_task(telemetry_streamer())
+    yield
+
+
+app = FastAPI(title="EV Battery Monitor", version="1.0.0", lifespan=lifespan)
 
 
 @app.get("/metrics")
@@ -56,7 +64,7 @@ class ConnectionManager:
     """Manage WebSocket connections"""
 
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         """Accept connection"""
@@ -181,12 +189,6 @@ async def telemetry_streamer():
 
         await manager.broadcast(json.dumps(data))
         await asyncio.sleep(2)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize background tasks"""
-    asyncio.create_task(telemetry_streamer())
 
 
 if __name__ == "__main__":

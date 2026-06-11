@@ -5,6 +5,7 @@ from __future__ import annotations
 Machine learning module for anomaly detection in battery telemetry.
 """
 
+import logging
 import os
 import warnings
 from datetime import datetime
@@ -17,6 +18,13 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 
 from .physics_features import PhysicsFeatureExtractor
+from .utils import normalize_columns
+
+logger = logging.getLogger(__name__)
+
+# Cell imbalance thresholds (volts)
+CELL_IMBALANCE_WARNING: float = 0.05
+CELL_IMBALANCE_CRITICAL: float = 0.1
 
 warnings.filterwarnings("ignore")
 
@@ -118,11 +126,11 @@ class EVBatteryAnalyzer:
             >>> print(results['anomalies_detected'])
             1
         """
-        # Step 1: Data preparation
-        # Accept either 'temp' or the more readable 'temperature' and convert to 'temp'
-        df: pd.DataFrame = df_telemetry.copy()
-        if "temperature" in df.columns and "temp" not in df.columns:
-            df = df.rename(columns={"temperature": "temp"})
+        # Step 1: Data preparation — normalize column names
+        from .utils import normalize_columns, require_columns
+
+        df: pd.DataFrame = normalize_columns(df_telemetry)
+        require_columns(df, ["voltage", "current", "temp"])
 
         # Step 2: Select only numeric features for analysis
         # SOC is not used for detection as it is a dependent variable
@@ -245,10 +253,10 @@ class EVBatteryAnalyzer:
 
         # Save
         joblib.dump(model_data, filepath, compress=3)
-        print(f"✅ Model saved: {filepath}")
+        logger.info("Model saved: %s", filepath)
 
         if metadata:
-            print(f"   Metadata: {metadata}")
+            logger.info("Metadata: %s", metadata)
 
     @classmethod
     def load_model(cls, filepath: str) -> "EVBatteryAnalyzer":
@@ -298,10 +306,10 @@ class EVBatteryAnalyzer:
             save_time = model_data.get("save_timestamp", "Unknown")
             metadata = model_data.get("metadata", {})
 
-            print(f"✅ Model loaded: {filepath}")
-            print(f"   Saved: {save_time}")
+            logger.info("Model loaded: %s", filepath)
+            logger.info("Saved: %s", save_time)
             if metadata:
-                print(f"   Metadata: {metadata}")
+                logger.info("Metadata: %s", metadata)
 
             return analyzer
 
@@ -341,11 +349,11 @@ class EVBatteryAnalyzer:
         imbalance = np.max(cell_voltages) - np.min(cell_voltages)
         std_v = np.std(cell_voltages)
 
-        # Tesla thresholds are typically around 0.05V - 0.1V
+        # Tesla thresholds
         severity = "NORMAL"
-        if imbalance > 0.1:
+        if imbalance > CELL_IMBALANCE_CRITICAL:
             severity = "CRITICAL"
-        elif imbalance > 0.05:
+        elif imbalance > CELL_IMBALANCE_WARNING:
             severity = "WARNING"
 
         return {
@@ -486,18 +494,14 @@ class AnomalyDetector(EVBatteryAnalyzer):
             >>> detector.train(normal_data)
         """
         features = ["voltage", "current", "temp"]
-        df = data.copy()
-        if "temperature" in df.columns and "temp" not in df.columns:
-            df = df.rename(columns={"temperature": "temp"})
+        df = normalize_columns(data)
         X = df[features]
-
-        # Train scaler on normal data
         X_scaled = self.scaler.fit_transform(X)
 
         # Train IsolationForest
         self.model.fit(X_scaled)
         self._is_trained = True
-        print(f"✅ Model trained on {len(data)} data points")
+        logger.info("Model trained on %d data points", len(data))
 
     def detect(self, data: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -528,12 +532,8 @@ class AnomalyDetector(EVBatteryAnalyzer):
             raise ValueError("Model not trained! Call the train() method first")
 
         features = ["voltage", "current", "temp"]
-        df = data.copy()
-        if "temperature" in df.columns and "temp" not in df.columns:
-            df = df.rename(columns={"temperature": "temp"})
+        df = normalize_columns(data)
         X = df[features]
-
-        # Apply the already-trained scaler
         X_scaled = self.scaler.transform(X)
 
         # Predict on new data
@@ -541,9 +541,23 @@ class AnomalyDetector(EVBatteryAnalyzer):
         scores = self.model.score_samples(X_scaled)
 
         anomaly_count = np.sum(predictions == -1)
-        print(f"🔍 Anomalies detected: {anomaly_count}/{len(data)}")
+        logger.info("Anomalies detected: %d/%d", anomaly_count, len(data))
 
         return predictions, scores
+
+    def save_detector(self, path: str) -> None:
+        """Save trained model and scaler to disk."""
+        if not self._is_trained:
+            raise ValueError("Model not trained! Call train() first")
+        os.makedirs(path, exist_ok=True)
+        joblib.dump(self.model, os.path.join(path, "isolation_forest.joblib"))
+        joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
+
+    def load_detector(self, path: str) -> None:
+        """Load trained model and scaler from disk."""
+        self.model = joblib.load(os.path.join(path, "isolation_forest.joblib"))
+        self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
+        self._is_trained = True
 
 
 if __name__ == "__main__":

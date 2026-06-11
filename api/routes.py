@@ -47,6 +47,6 @@ async def analyze_telemetry(request: AnalysisRequest):
 async def validate_single_telemetry(telemetry: BatteryTelemetryModel):
     """Validate single telemetry point"""
     qa = EVQAFramework()
-    is_valid = qa.validate_telemetry(telemetry)
+    is_valid, warnings = qa.validate_telemetry(telemetry)
 
-    return {"valid": is_valid, "telemetry": telemetry.model_dump()}
+    return {"valid": is_valid, "warnings": warnings, "telemetry": telemetry.model_dump()}

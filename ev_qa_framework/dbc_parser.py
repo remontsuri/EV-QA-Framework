@@ -16,6 +16,8 @@ DBC format: https://vector.com/candb-format
 import re
 from dataclasses import dataclass, field
 
+__all__ = ["Signal", "Message", "DBCParser"]
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -446,8 +448,13 @@ def builtin_dbc() -> DBCParser:
     import tempfile
 
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".dbc", delete=False)
-    tmp.write(battery_dbc_content())
-    tmp.close()
-    parser = DBCParser(tmp.name)
-    os.unlink(tmp.name)
-    return parser
+    try:
+        tmp.write(battery_dbc_content())
+        tmp.close()
+        parser = DBCParser(tmp.name)
+        return parser
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass

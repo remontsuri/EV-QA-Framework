@@ -128,7 +128,7 @@ class TestNegativeScenarios:
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=1000, current=50, temperature=35, soc=80, soh=98
         )
-        assert self.qa.validate_telemetry(t) is False
+        assert self.qa.validate_telemetry(t)[0] is False
 
     def test_negative_soc(self):
         """Negative SOC should cause validation error"""
@@ -149,7 +149,7 @@ class TestNegativeScenarios:
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=0, current=50, temperature=35, soc=80, soh=98
         )
-        assert self.qa.validate_telemetry(t) is False
+        assert self.qa.validate_telemetry(t)[0] is False
 
     def test_negative_current(self):
         """Negative current (discharge)"""
@@ -157,7 +157,7 @@ class TestNegativeScenarios:
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=390.0, current=-50, temperature=35, soc=80, soh=98
         )
-        assert self.qa.validate_telemetry(t) is True
+        assert self.qa.validate_telemetry(t)[0] is True
 
 
 @pytest.mark.asyncio

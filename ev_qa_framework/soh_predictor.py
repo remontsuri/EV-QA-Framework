@@ -133,10 +133,9 @@ class SOHPredictor:
         joblib.dump(self._feature_scaler, os.path.join(path, "feature_scaler.joblib"))
 
     def load(self, path: str):
-        """Load the model and scaler"""
-        from tensorflow.keras.models import load_model
-
-        self.model = load_model(os.path.join(path, "soh_lstm.keras"))
+        """Load the model and scaler."""
+        tf = _import_tensorflow()
+        self.model = tf.keras.models.load_model(os.path.join(path, "soh_lstm.keras"))
         self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
         self._feature_scaler = joblib.load(os.path.join(path, "feature_scaler.joblib"))
         self.is_trained = True

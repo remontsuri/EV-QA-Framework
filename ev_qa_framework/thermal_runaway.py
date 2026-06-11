@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 
+from .utils import normalize_columns
+
 
 class ThermalRunawayPredictor:
     """
@@ -70,8 +72,10 @@ class ThermalRunawayPredictor:
 
         Returns dict: temp_rise_rate, max_temp, volatility, dt_dt
         """
-        temp_col = "temp" if "temp" in df_recent.columns else "temperature"
-        temps = df_recent[temp_col].values
+        df_recent = normalize_columns(df_recent)
+        if df_recent.empty or "temp" not in df_recent.columns:
+            return {"temp_rise_rate": 0.0, "max_temp": 0.0, "volatility": 0.0, "dt_dt": 0.0}
+        temps = df_recent["temp"].values
         n = len(temps)
 
         if n < 2:
@@ -93,12 +97,15 @@ class ThermalRunawayPredictor:
             "dt_dt": max_dt,
         }
 
-    def predict_risk(self, df_recent: pd.DataFrame) -> dict:
+    def predict_risk(self, df_recent: pd.DataFrame) -> dict[str, object]:
         """
         Predict thermal runaway risk.
 
         Returns dict: risk_level (LOW/MEDIUM/HIGH/CRITICAL), risk_score, confidence
         """
+        df_recent = normalize_columns(df_recent)
+        if df_recent.empty or "temp" not in df_recent.columns:
+            return {"risk_level": "LOW", "risk_score": 0.0, "confidence": 0.0}
         if len(df_recent) < 2:
             return {"risk_level": "LOW", "risk_score": 0.0, "confidence": 1.0}
 
@@ -107,8 +114,7 @@ class ThermalRunawayPredictor:
 
         if self.mode == "ml" and self._isolation_forest is not None:
             # ML mode, need to fit first
-            temp_col = "temp" if "temp" in df_recent.columns else "temperature"
-            X = df_recent[[temp_col]].values
+            X = df_recent[["temp"]].values
             if not self._is_fitted:
                 self._isolation_forest.fit(X)
                 self._is_fitted = True
@@ -116,8 +122,7 @@ class ThermalRunawayPredictor:
             scores = self._isolation_forest.score_samples(X)
             anomaly_score = float(np.mean(scores < -0.5))
         else:
-            temp_col = "temp" if "temp" in df_recent.columns else "temperature"
-            temps = df_recent[temp_col].values
+            temps = df_recent["temp"].values
             mean, std = float(np.mean(temps)), float(np.std(temps))
             anomaly_score = float(np.sum(np.abs(temps - mean) > 2 * std)) / len(temps)
 

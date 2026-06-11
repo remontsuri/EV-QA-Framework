@@ -65,7 +65,7 @@ class TestEVQAFramework:
             soc=80,
             soh=98,
         )
-        assert self.qa.validate_telemetry(telemetry) is True
+        assert self.qa.validate_telemetry(telemetry)[0] is True
 
     def test_validate_high_temperature(self):
         """Test rejection of high temperature"""
@@ -77,7 +77,7 @@ class TestEVQAFramework:
             soc=80,
             soh=98,
         )
-        assert self.qa.validate_telemetry(telemetry) is False
+        assert self.qa.validate_telemetry(telemetry)[0] is False
 
     def test_validate_invalid_voltage_low(self):
         """Test rejection of low voltage"""
@@ -89,7 +89,7 @@ class TestEVQAFramework:
             soc=80,
             soh=98,
         )
-        assert self.qa.validate_telemetry(telemetry) is False
+        assert self.qa.validate_telemetry(telemetry)[0] is False
 
     def test_detect_anomalies_empty(self):
         """Test anomaly detection with empty list"""

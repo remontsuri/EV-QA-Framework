@@ -129,7 +129,7 @@ class TestUN383ThermalRunaway:
         """Temperature above max_temperature must fail validation."""
         qa = EVQAFramework("UN38.3-Thermal")
         telemetry = _make_telemetry(temperature=65.0)  # > 60°C default max
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_thermal_runaway_predictor_critical(self):
         """ThermalRunawayPredictor should flag CRITICAL for rapid temp rise."""
@@ -160,19 +160,19 @@ class TestUN383OverchargeProtection:
         """Voltage above max_voltage must be rejected by validation."""
         qa = EVQAFramework("UN38.3-Overcharge")
         telemetry = _make_telemetry(voltage=950.0)  # > 900V default max
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_overcharge_voltage_at_boundary(self):
         """Voltage exactly at max_voltage boundary should pass."""
         qa = EVQAFramework("UN38.3-Overcharge-Boundary")
         telemetry = _make_telemetry(voltage=900.0)  # == max_voltage
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
 
     def test_overcharge_voltage_just_above_boundary(self):
         """Voltage slightly above max_voltage must fail."""
         qa = EVQAFramework("UN38.3-Overcharge-Above")
         telemetry = _make_telemetry(voltage=900.1)
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
 
 class TestUN383ShortCircuitDetection:
@@ -202,7 +202,7 @@ class TestUN383ShortCircuitDetection:
         """Normal current should pass validation."""
         qa = EVQAFramework("UN38.3-NormalCurrent")
         telemetry = _make_telemetry(current=50.0, voltage=390.0)
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
 
 
 # ===========================================================================
@@ -217,7 +217,7 @@ class TestIEC62660Capacity:
         """Battery with SOH near 100% should have capacity within range."""
         qa = EVQAFramework("IEC62660-Capacity")
         telemetry = _make_telemetry(soh=98.0, voltage=390.0, soc=80.0)
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
 
     def test_capacity_degraded_below_critical(self):
         """SOH below critical_soh should trigger a warning (but not fail validation)."""
@@ -231,7 +231,7 @@ class TestIEC62660Capacity:
         """Voltage should remain within safe range for valid capacity measurement."""
         qa = EVQAFramework("IEC62660-Capacity-Voltage")
         telemetry = _make_telemetry(voltage=390.0)
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
         assert 200.0 <= telemetry.voltage <= 900.0
 
 
@@ -300,8 +300,8 @@ class TestIEC62660InternalResistance:
         voltage_drop = no_load.voltage - under_load.voltage
         # Voltage drop should be reasonable (< 20V for 100A)
         assert voltage_drop < 20.0
-        assert qa.validate_telemetry(no_load) is True
-        assert qa.validate_telemetry(under_load) is True
+        assert qa.validate_telemetry(no_load)[0] is True
+        assert qa.validate_telemetry(under_load)[0] is True
 
     def test_internal_resistance_high_detected(self):
         """Excessive voltage drop indicates high internal resistance (degraded cell)."""
@@ -324,13 +324,13 @@ class TestSAEJ2464OverchargeAbuse:
         """Voltage exceeding max_voltage must be rejected."""
         qa = EVQAFramework("SAEJ2464-Overcharge")
         telemetry = _make_telemetry(voltage=950.0)  # > 900V max
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_overcharge_abuse_temperature_rise(self):
         """Overcharge abuse often causes temperature rise."""
         qa = EVQAFramework("SAEJ2464-Overcharge-Temp")
         telemetry = _make_telemetry(voltage=950.0, temperature=70.0)
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_overcharge_abuse_with_chemistry_profile(self):
         """Overcharge abuse with NMC chemistry profile."""
@@ -338,7 +338,7 @@ class TestSAEJ2464OverchargeAbuse:
         qa = EVQAFramework("SAEJ2464-Overcharge-NMC", config=config)
         # NMC max voltage = 4.2 * 96 = 403.2V
         telemetry = _make_telemetry(voltage=450.0)  # exceeds NMC pack max
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
 
 class TestSAEJ2464OverDischargeAbuse:
@@ -348,19 +348,19 @@ class TestSAEJ2464OverDischargeAbuse:
         """Voltage below min_voltage must be rejected."""
         qa = EVQAFramework("SAEJ2464-OverDischarge")
         telemetry = _make_telemetry(voltage=150.0)  # < 200V min
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_overdischarge_abuse_soc_zero(self):
         """SOC at 0% with low voltage indicates over-discharge."""
         qa = EVQAFramework("SAEJ2464-OverDischarge-SOC")
         telemetry = _make_telemetry(voltage=180.0, soc=5.0)
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_overdischarge_boundary(self):
         """Voltage exactly at min_voltage should pass."""
         qa = EVQAFramework("SAEJ2464-OverDischarge-Boundary")
         telemetry = _make_telemetry(voltage=200.0)  # == min_voltage
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
 
 
 class TestSAEJ2464ThermalAbuse:
@@ -370,19 +370,19 @@ class TestSAEJ2464ThermalAbuse:
         """Temperature above max_temperature must be rejected."""
         qa = EVQAFramework("SAEJ2464-Thermal")
         telemetry = _make_telemetry(temperature=65.0)  # > 60°C
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_thermal_abuse_extreme(self):
         """Extreme temperature (fire/explosion risk) must be rejected."""
         qa = EVQAFramework("SAEJ2464-Thermal-Extreme")
         telemetry = _make_telemetry(temperature=120.0)
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
     def test_thermal_abuse_low_temperature(self):
         """Temperature below min_temperature must be rejected."""
         qa = EVQAFramework("SAEJ2464-Thermal-Low")
         telemetry = _make_telemetry(temperature=-50.0)  # < -40°C min
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
 
 # ===========================================================================
@@ -428,13 +428,13 @@ class TestISO12405SafetyThreshold:
         """Telemetry within ISO 12405 thresholds must pass validation."""
         qa = EVQAFramework("ISO12405-Valid")
         telemetry = _make_telemetry(voltage=400.0, temperature=35.0, soc=50.0, soh=90.0)
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
 
     def test_validate_telemetry_outside_iso_thresholds(self):
         """Telemetry outside ISO 12405 thresholds must fail validation."""
         qa = EVQAFramework("ISO12405-Invalid")
         telemetry = _make_telemetry(voltage=400.0, temperature=70.0)
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
 
 class TestISO12405EnergyMeasurement:
@@ -444,7 +444,7 @@ class TestISO12405EnergyMeasurement:
         """Pack voltage should be within measurable range."""
         qa = EVQAFramework("ISO12405-Energy")
         telemetry = _make_telemetry(voltage=390.0)
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
         assert telemetry.voltage > 0
 
     def test_energy_measurement_current_range(self):
@@ -465,7 +465,7 @@ class TestISO12405EnergyMeasurement:
         qa = EVQAFramework("ISO12405-Energy-SOC")
         telemetry = _make_telemetry(soc=50.0)
         assert 0.0 <= telemetry.soc <= 100.0
-        assert qa.validate_telemetry(telemetry) is True
+        assert qa.validate_telemetry(telemetry)[0] is True
 
 
 # ===========================================================================

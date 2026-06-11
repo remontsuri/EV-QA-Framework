@@ -1049,6 +1049,15 @@ class CANTelemetryReceiver:
                 pass
             self.bus = None
 
+    @staticmethod
+    def _to_signed(value: int, bits: int) -> int:
+        """Convert unsigned raw value to signed using two's complement."""
+        max_unsigned = (1 << bits) - 1
+        sign_bit = 1 << (bits - 1)
+        if value > sign_bit - 1:
+            value -= max_unsigned + 1
+        return value
+
     def _run(self):
         """Internal receiver loop."""
         while self.running:
@@ -1078,14 +1087,11 @@ class CANTelemetryReceiver:
                 v_scaled = (msg.data[0] << 8) | msg.data[1]
                 c_scaled = (msg.data[2] << 8) | msg.data[3]
                 # Handle signed current (2's complement)
-                if c_scaled > 0x7FFF:
-                    c_scaled -= 0x10000
+                c_scaled = self._to_signed(c_scaled, 16)
                 self.latest_data["voltage"] = v_scaled / 10.0
                 self.latest_data["current"] = c_scaled / 10.0
             elif msg.arbitration_id == 0x102:
-                temp = msg.data[0]
-                if temp > 0x7F:
-                    temp -= 0x100
+                temp = self._to_signed(msg.data[0], 8)
                 self.latest_data["temperature"] = float(temp)
                 self.latest_data["soc"] = float(msg.data[1])
 

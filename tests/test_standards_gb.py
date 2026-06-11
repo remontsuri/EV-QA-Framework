@@ -88,7 +88,7 @@ class TestGB38031Safety:
             soh=95.0,
         )
         # Framework should reject overcharge
-        assert fw.validate_telemetry(telemetry) is False
+        assert fw.validate_telemetry(telemetry)[0] is False
 
     def test_overdischarge_protection(self):
         """GB 38031: Overdischarge protection."""
@@ -105,7 +105,7 @@ class TestGB38031Safety:
             soh=95.0,
         )
         # Framework should reject overdischarge
-        assert fw.validate_telemetry(telemetry) is False
+        assert fw.validate_telemetry(telemetry)[0] is False
 
     def test_short_circuit_protection(self):
         """GB 38031: Short circuit protection."""

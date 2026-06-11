@@ -179,13 +179,13 @@ class TestFrameworkIntegration:
         telemetry = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=55.0, soc=80, soh=98
         )
-        assert qa.validate_telemetry(telemetry) is False
+        assert qa.validate_telemetry(telemetry)[0] is False
 
         # Temperature 45°C
         telemetry2 = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=45.0, soc=80, soh=98
         )
-        assert qa.validate_telemetry(telemetry2) is True
+        assert qa.validate_telemetry(telemetry2)[0] is True
 
     def test_voltage_validation_with_custom_thresholds(self):
         """Test validation of custom thresholds."""
@@ -199,13 +199,13 @@ class TestFrameworkIntegration:
         telemetry1 = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=250.0, current=50, temperature=35, soc=80, soh=98
         )
-        assert qa.validate_telemetry(telemetry1) is False
+        assert qa.validate_telemetry(telemetry1)[0] is False
 
         # 400V
         telemetry2 = BatteryTelemetryModel(
             vin="TESTVEHCLE0123456", voltage=400.0, current=50, temperature=35, soc=80, soh=98
         )
-        assert qa.validate_telemetry(telemetry2) is True
+        assert qa.validate_telemetry(telemetry2)[0] is True
 
     def test_ml_analyzer_with_custom_config(self):
         """Test ML analyzer with custom configuration."""

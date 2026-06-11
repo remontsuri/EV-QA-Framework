@@ -77,45 +77,58 @@ class EVQAFramework:
             f"Initialized {self.name} with ML analyzer (contamination={self.config.ml_config.contamination})"
         )
 
-    def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> bool:
+    def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> tuple[bool, list[str]]:
         """
         Validate battery telemetry against safety thresholds.
 
-        Uses thresholds from self.config.safety_thresholds.
+        Returns:
+            Tuple of (is_valid, warnings) where warnings is a list of
+            human-readable warning messages.
         """
         thresholds = self.config.safety_thresholds
+        warnings: list[str] = []
 
         # Temperature check
         if telemetry.temperature > thresholds.max_temperature:
-            logger.warning(
+            msg = (
                 f"Temperature warning: {telemetry.temperature}°C "
                 f"(threshold: {thresholds.max_temperature}°C)"
             )
-            return False
+            logger.warning(msg)
+            warnings.append(msg)
+            return False, warnings
 
         if telemetry.temperature < thresholds.min_temperature:
-            logger.warning(
+            msg = (
                 f"Temperature warning: {telemetry.temperature}°C "
                 f"(minimum: {thresholds.min_temperature}°C)"
             )
-            return False
+            logger.warning(msg)
+            warnings.append(msg)
+            return False, warnings
 
         # Voltage check
         if telemetry.voltage < thresholds.min_voltage or telemetry.voltage > thresholds.max_voltage:
-            logger.warning(
+            msg = (
                 f"Voltage warning: {telemetry.voltage}V "
                 f"(range: {thresholds.min_voltage}-{thresholds.max_voltage}V)"
             )
-            return False
+            logger.warning(msg)
+            warnings.append(msg)
+            return False, warnings
 
-        # Additional checks
+        # Additional checks (non-critical warnings)
         if telemetry.soc < thresholds.min_soc:
-            logger.warning(f"Low charge level: {telemetry.soc}%")
+            msg = f"Low charge level: {telemetry.soc}%"
+            logger.warning(msg)
+            warnings.append(msg)
 
         if telemetry.soh < thresholds.critical_soh:
-            logger.warning(f"Critical battery health: {telemetry.soh}%")
+            msg = f"Critical battery health: {telemetry.soh}%"
+            logger.warning(msg)
+            warnings.append(msg)
 
-        return True
+        return True, warnings
 
     def detect_anomalies(self, telemetry_list: list[BatteryTelemetryModel]) -> list[str]:
         """
@@ -174,13 +187,12 @@ class EVQAFramework:
                 telemetries.append(telemetry)
 
                 # initial validation
-                if self.validate_telemetry(telemetry):
+                is_valid, warnings = self.validate_telemetry(telemetry)
+                if is_valid:
                     status.append(True)
                 else:
                     status.append(False)
-                    results["critical_issues"].append(
-                        f"Failed validation for telemetry {telemetry.model_dump()}"
-                    )
+                    results["critical_issues"].extend(warnings)
             except Exception as e:
                 msg = f"Validation failed - {e}"
                 logger.error(msg)
@@ -189,7 +201,8 @@ class EVQAFramework:
                 # also append telemetry so anomalies logic can inspect
                 try:
                     telemetries.append(BatteryTelemetryModel(**data))
-                except Exception:
+                except Exception as e:
+                    logger.warning("Failed to parse telemetry for anomaly inspection: %s", e)
                     pass
                 continue
 

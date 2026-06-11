@@ -16,9 +16,9 @@ def analyze_csv(file_path: str, output: str = None):
     """Analyze telemetry from CSV file"""
     df = pd.read_csv(file_path)
 
-    # Rename 'temperature' to 'temp' if needed
-    if "temperature" in df.columns and "temp" not in df.columns:
-        df = df.rename(columns={"temperature": "temp"})
+    from .utils import normalize_columns
+
+    df = normalize_columns(df)
 
     # Initialize framework with ML
     analyzer = EVBatteryAnalyzer()

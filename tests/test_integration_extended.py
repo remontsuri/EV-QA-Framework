@@ -44,8 +44,8 @@ class TestConfigFrameworkIntegration:
         )
         # Both should produce a result (the validation logic is the same,
         # but thresholds differ)
-        assert qa_strict.validate_telemetry(telemetry) in (True, False)
-        assert qa_lenient.validate_telemetry(telemetry) in (True, False)
+        assert qa_strict.validate_telemetry(telemetry)[0] in (True, False)
+        assert qa_lenient.validate_telemetry(telemetry)[0] in (True, False)
 
     def test_fail_on_anomaly_affects_test_results(self):
         """fail_on_anomaly should cause rule-based anomalies to fail tests."""

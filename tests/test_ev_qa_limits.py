@@ -20,7 +20,7 @@ class TestEVQAFrameworkLimts:
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=390.0, current=10, temperature=temp, soc=50, soh=100
         )
-        assert self.qa.validate_telemetry(t) == expected
+        assert self.qa.validate_telemetry(t)[0] == expected
 
     @pytest.mark.parametrize(
         "voltage, expected",
@@ -40,7 +40,7 @@ class TestEVQAFrameworkLimts:
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=voltage, current=10, temperature=25, soc=50, soh=100
         )
-        assert self.qa.validate_telemetry(t) == expected
+        assert self.qa.validate_telemetry(t)[0] == expected
 
     @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
     def test_soc_valid(self, soc):
@@ -48,7 +48,7 @@ class TestEVQAFrameworkLimts:
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=390.0, current=10, temperature=25, soc=soc, soh=100
         )
-        assert self.qa.validate_telemetry(t) is True
+        assert self.qa.validate_telemetry(t)[0] is True
 
     @pytest.mark.parametrize("soc", [-0.1, -1, 100.1, 101])
     def test_soc_invalid(self, soc):

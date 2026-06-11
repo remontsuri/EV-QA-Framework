@@ -59,7 +59,7 @@ async def run_advanced_demo():
             # Pydantic Validation
             try:
                 telemetry = BatteryTelemetryModel(**raw_data)
-                is_safe = qa.validate_telemetry(telemetry)
+                is_safe, warnings = qa.validate_telemetry(telemetry)
             except (ValueError, TypeError, KeyError) as e:
                 print(f"❌ Validation Error: {e}")
                 continue

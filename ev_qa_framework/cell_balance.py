@@ -100,8 +100,7 @@ class CellBalanceAnalyzer:
             if v < lower or v > upper:
                 outliers.append(idx)
             elif abs(v - mean) > self.outlier_abs_deviation:
-                if idx not in outliers:
-                    outliers.append(idx)
+                outliers.append(idx)
         return sorted(outliers)
 
     def classify_severity(self, voltages: list[float]) -> str:
