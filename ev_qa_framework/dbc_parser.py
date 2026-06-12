@@ -75,7 +75,15 @@ class DBCParser:
     """
 
     def __init__(self, filepath: str):
-        self.filepath = filepath
+        # FIX: validate path to prevent path traversal
+        import os as _os
+        self.filepath = _os.path.realpath(filepath)
+        _allowed = ('.dbc', '.txt', '.csv')
+        if not self.filepath.lower().endswith(_allowed):
+            raise ValueError(f"DBC file must have extension {_allowed}, got: {filepath}")
+        if not _os.path.isfile(self.filepath):
+            raise FileNotFoundError(f"DBC file not found: {filepath}")
+
         self.messages: dict[int, Message] = {}  # keyed by CAN ID
         self._by_name: dict[str, Message] = {}  # keyed by message name
         self.version: str = ""

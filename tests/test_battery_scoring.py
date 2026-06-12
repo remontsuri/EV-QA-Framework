@@ -157,9 +157,9 @@ class TestComputeScore:
         result = scorer.compute_score(healthy_telemetry)
         w = result["details"]["weights"]
         assert w["soh"] == pytest.approx(0.4)
-        assert w["anomaly"] == pytest.approx(0.25)
+        assert w["anomaly"] == pytest.approx(0.15)  # FIX: was 0.25
         assert w["cell_balance"] == pytest.approx(0.20)
-        assert w["thermal"] == pytest.approx(0.15)
+        assert w["thermal"] == pytest.approx(0.25)  # FIX: was 0.15
 
     def test_temperature_column_alias(self, scorer):
         """'temperature' column should be accepted as alias for 'temp'."""

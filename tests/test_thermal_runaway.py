@@ -46,7 +46,7 @@ class TestThermalRunawayPredictorInit:
         p = ThermalRunawayPredictor(thresholds={"critical_temp": 70.0})
         assert p.thresholds["critical_temp"] == 70.0
         # Other thresholds should remain default
-        assert p.thresholds["high_temp"] == 55.0
+        assert p.thresholds["high_temp"] == 65.0  # FIX: was 55.0
 
 
 class TestAnalyzeTemperatureTrend:
@@ -114,21 +114,21 @@ class TestPredictRisk:
         assert result["risk_level"] in ("LOW", "MEDIUM")
 
     def test_high_temperature_high_risk(self):
-        """Temperature above high_temp threshold (55) should be HIGH."""
-        df = pd.DataFrame({"temp": [50.0, 52.0, 54.0, 56.0, 57.0]})
+        """Temperature above high_temp threshold (65) should be HIGH."""
+        df = pd.DataFrame({"temp": [55.0, 58.0, 61.0, 64.0, 67.0]})  # FIX: max 67 > 65
         result = ThermalRunawayPredictor().predict_risk(df)
         assert result["risk_level"] in ("HIGH", "CRITICAL")
 
     def test_critical_temperature(self):
-        """Temperature above critical_temp (65) should be CRITICAL."""
-        df = pd.DataFrame({"temp": [60.0, 62.0, 64.0, 66.0, 68.0]})
+        """Temperature above critical_temp (85) should be CRITICAL."""
+        df = pd.DataFrame({"temp": [75.0, 78.0, 81.0, 84.0, 87.0]})  # FIX: max 87 > 85
         result = ThermalRunawayPredictor().predict_risk(df)
         assert result["risk_level"] == "CRITICAL"
 
     def test_rapid_rise_critical(self):
         """Very rapid temperature rise should trigger CRITICAL via dt_dt."""
-        df = pd.DataFrame({"temp": [30.0, 36.0, 42.0, 48.0, 54.0]})
-        # dt_dt = 6.0 > critical_dtdt (5.0)
+        df = pd.DataFrame({"temp": [30.0, 41.0, 52.0, 63.0, 74.0]})  # FIX: dt_dt=11 > 10
+        # dt_dt = 11.0 > critical_dtdt (10.0) (FIX: was 6.0>5.0)
         result = ThermalRunawayPredictor().predict_risk(df)
         assert result["risk_level"] == "CRITICAL"
 

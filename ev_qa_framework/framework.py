@@ -178,12 +178,13 @@ class EVQAFramework:
         telemetries: list[BatteryTelemetryModel] = []
         status: list[bool] = []  # True=passed, False=failed
         for data in telemetry_data:
-            # Compatibility layer: Inject VIN if missing
-            if "vin" not in data:
-                data["vin"] = self.config.default_vin  # Use VIN from config
+            # Compatibility layer: Inject VIN if missing (copy to avoid mutating input)
+            _data = dict(data)  # shallow copy to avoid mutating caller's data
+            if "vin" not in _data:
+                _data["vin"] = self.config.default_vin
 
             try:
-                telemetry = BatteryTelemetryModel(**data)
+                telemetry = BatteryTelemetryModel(**_data)
                 telemetries.append(telemetry)
 
                 # initial validation

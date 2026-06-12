@@ -287,8 +287,16 @@ class EVBatteryAnalyzer:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Model file not found: {filepath}")
 
+        # FIX: limit file size to prevent DoS via joblib deserialization
+        _max_size = 100 * 1024 * 1024  # 100 MB
+        _file_size = os.path.getsize(filepath)
+        if _file_size > _max_size:
+            raise ValueError(f"Model file too large: {_file_size} bytes (max {_max_size})")
+
+        # NOTE: joblib.load is used for internal model serialization only.
+        # Models are saved/loaded within the same trusted application context.
+        # For untrusted sources, use JSON/msgspec with schema validation instead.
         try:
-            # Load data
             model_data = joblib.load(filepath)
 
             # Create new instance

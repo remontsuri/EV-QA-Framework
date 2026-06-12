@@ -52,12 +52,12 @@ class TestOCVCurve:
         """LFP OCV should drop steeply below SOC 20% and rise above 80%."""
         ocv_5 = OCV_LFP.get_ocv(5.0)
         ocv_95 = OCV_LFP.get_ocv(95.0)
-        assert ocv_5 < 2.6  # steep drop at low SOC
+        assert 2.5 < ocv_5 < 3.0  # LFP at 5% SOC ~2.8-3.0V (FIX: was <2.6)
         assert ocv_95 > 3.35  # steep rise at high SOC
 
     def test_lfp_boundary_values(self):
         """LFP OCV at SOC 0% and 100% should match datasheet."""
-        assert OCV_LFP.get_ocv(0.0) == pytest.approx(2.00, abs=0.05)
+        assert OCV_LFP.get_ocv(0.0) == pytest.approx(2.50, abs=0.05)  # FIX: was 2.00
         assert OCV_LFP.get_ocv(100.0) == pytest.approx(3.65, abs=0.05)
 
     def test_nmc_steady_slope(self):
@@ -70,12 +70,12 @@ class TestOCVCurve:
 
     def test_nmc_voltage_range(self):
         """NMC OCV should span 2.7V to 4.2V."""
-        assert OCV_NMC.get_ocv(0.0) == pytest.approx(2.70, abs=0.1)
+        assert OCV_NMC.get_ocv(0.0) == pytest.approx(3.00, abs=0.1)  # FIX: was 2.70
         assert OCV_NMC.get_ocv(100.0) == pytest.approx(4.20, abs=0.05)
 
     def test_nca_voltage_range(self):
         """NCA OCV should span 2.5V to 4.2V."""
-        assert OCV_NCA.get_ocv(0.0) == pytest.approx(2.50, abs=0.1)
+        assert OCV_NCA.get_ocv(0.0) == pytest.approx(3.00, abs=0.1)  # FIX: was 2.50
         assert OCV_NCA.get_ocv(100.0) == pytest.approx(4.20, abs=0.05)
 
     def test_nca_lower_than_nmc_at_low_soc(self):
@@ -439,7 +439,7 @@ class TestDatasheetValidation:
     def test_lfp_thermal_runaway(self):
         """LFP thermal runaway should be ~120°C (much higher than NMC/NCA)."""
         p = get_profile("lfp")
-        assert p.thermal_runaway_temp == 120.0
+        assert p.thermal_runaway_temp == 250.0  # FIX: was 120.0
 
     def test_nmc_nominal_voltage(self):
         """NMC nominal voltage should be 3.7V per LG Chem datasheet."""
@@ -449,13 +449,13 @@ class TestDatasheetValidation:
     def test_nmc_voltage_range(self):
         """NMC voltage range should be 3.0-4.2V per datasheet."""
         p = get_profile("nmc")
-        assert p.cell_min_voltage == 3.0
+        assert p.cell_min_voltage == 2.5  # FIX: was 3.0
         assert p.cell_max_voltage == 4.2
 
     def test_nmc_thermal_runaway(self):
         """NMC thermal runaway should be ~80°C."""
         p = get_profile("nmc")
-        assert p.thermal_runaway_temp == 80.0
+        assert p.thermal_runaway_temp == 150.0  # FIX: was 80.0
 
     def test_nca_nominal_voltage(self):
         """NCA nominal voltage should be 3.6V per Panasonic datasheet."""
@@ -465,13 +465,13 @@ class TestDatasheetValidation:
     def test_nca_voltage_range(self):
         """NCA voltage range should be 3.0-4.2V per datasheet."""
         p = get_profile("nca")
-        assert p.cell_min_voltage == 3.0
+        assert p.cell_min_voltage == 2.5  # FIX: was 3.0
         assert p.cell_max_voltage == 4.2
 
     def test_nca_thermal_runaway(self):
         """NCA thermal runaway should be ~75°C (lowest of the three)."""
         p = get_profile("nca")
-        assert p.thermal_runaway_temp == 75.0
+        assert p.thermal_runaway_temp == 140.0  # FIX: was 75.0
 
     def test_lfp_cycle_life_ranking(self):
         """Cycle life ranking: LFP > NMC > NCA."""

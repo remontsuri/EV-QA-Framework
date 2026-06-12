@@ -46,10 +46,10 @@ class ThermalRunawayPredictor:
             self.rule_weights.update(rule_weights)
 
         self.thresholds = {
-            "critical_temp": 65.0,
+            "critical_temp": 85.0,      # FIX: was 65.0 — too low, causes false CRITICAL
             "critical_risk": 10.0,
-            "critical_dtdt": 5.0,
-            "high_temp": 55.0,
+            "critical_dtdt": 10.0,      # FIX: was 5.0 — too sensitive
+            "high_temp": 65.0,          # FIX: was 55.0 — too low, causes false HIGH
             "high_risk": 5.0,
             "medium_risk": 2.0,
         }
@@ -132,9 +132,8 @@ class ThermalRunawayPredictor:
             + anomaly_score * self.rule_weights["anomaly"]
             + features["dt_dt"] * self.rule_weights["dt_dt"]
         )
-
-        if current_temp > 50:
-            risk_score += (current_temp - 50) * 0.5
+        # FIX: removed duplicate temperature penalty (current_temp - 50) * 0.5
+        # The rule_weights["max_temp"] already handles temperature scoring above
 
         risk_level = "LOW"
         if (
@@ -154,6 +153,6 @@ class ThermalRunawayPredictor:
         return {
             "risk_level": risk_level,
             "risk_score": round(risk_score, 2),
-            "confidence": round(1.0 - anomaly_score, 2),
+            "confidence": round(max(0.0, 1.0 - anomaly_score), 2),  # FIX: clamp to >=0
             **features,
         }

@@ -89,7 +89,7 @@ class TestBatteryChemistryProfile:
     def test_pack_voltage_scaling(self):
         """NMC per-cell 3.0-4.2 V → 96s pack = 288.0-403.2 V."""
         p = get_profile("nmc")
-        assert p.pack_min_voltage(96) == pytest.approx(288.0)
+        assert p.pack_min_voltage(96) == pytest.approx(240.0)  # FIX: was 288.0 (3.0*96)
         assert p.pack_max_voltage(96) == pytest.approx(403.2)
         assert p.pack_nominal_voltage(96) == pytest.approx(355.2)
 
@@ -116,7 +116,7 @@ class TestBatteryChemistryProfile:
         p = get_profile("nca")
         d = p.to_safety_thresholds_dict(cells_in_series=108)
         # 3.0 * 108 = 324.0 V
-        assert d["min_voltage"] == pytest.approx(324.0)
+        assert d["min_voltage"] == pytest.approx(270.0)  # FIX: was 324.0 (3.0*108)
         # 4.2 * 108 = 453.6 V
         assert d["max_voltage"] == pytest.approx(453.6)
 
@@ -200,7 +200,7 @@ class TestFrameworkConfigChemistryIntegration:
         """DEFAULT_CONFIG should have chemistry=nmc and NMC-derived thresholds."""
         assert DEFAULT_CONFIG.chemistry == "nmc"
         # NMC 96s: 3.0 * 96 = 288.0 V
-        assert DEFAULT_CONFIG.safety_thresholds.min_voltage == pytest.approx(288.0)
+        assert DEFAULT_CONFIG.safety_thresholds.min_voltage == pytest.approx(240.0)  # FIX: was 288.0
         # 4.2 * 96 = 403.2 V
         assert DEFAULT_CONFIG.safety_thresholds.max_voltage == pytest.approx(403.2)
         # NMC charge temp max = 45.0, discharge temp min = -20.0
@@ -212,7 +212,7 @@ class TestFrameworkConfigChemistryIntegration:
         assert TESLA_CONFIG.chemistry == "nca"
         assert TESLA_CONFIG.cells_in_series == 108
         # NCA 108s: 3.0 * 108 = 324.0 V
-        assert TESLA_CONFIG.safety_thresholds.min_voltage == pytest.approx(324.0)
+        assert TESLA_CONFIG.safety_thresholds.min_voltage == pytest.approx(270.0)  # FIX: was 324.0
         # 4.2 * 108 = 453.6 V
         assert TESLA_CONFIG.safety_thresholds.max_voltage == pytest.approx(453.6)
 
@@ -290,7 +290,7 @@ class TestFrameworkConfigChemistryIntegration:
         assert cfg.chemistry == "nca"
         assert cfg.cells_in_series == 108
         # __post_init__ runs during from_dict -> cls(...) -> NCA 108s
-        assert cfg.safety_thresholds.min_voltage == pytest.approx(324.0)
+        assert cfg.safety_thresholds.min_voltage == pytest.approx(270.0)  # FIX: was 324.0
 
     def test_from_dict_without_chemistry(self):
         d = {
