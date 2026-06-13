@@ -37,13 +37,13 @@ class SafetyThresholds:
     """
 
     # Temperature thresholds
-    max_temperature: float = 60.0
+    max_temperature: float = 65.0
     min_temperature: float = -40.0
-    max_temperature_jump: float = 5.0
+    max_temperature_jump: float = 8.0
 
     # Voltage thresholds
-    min_voltage: float = 200.0
-    max_voltage: float = 900.0
+    min_voltage: float = 240.0
+    max_voltage: float = 410.0
 
     # Charge and health thresholds
     min_soc: float = 10.0  # Low charge warning

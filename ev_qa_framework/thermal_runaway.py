@@ -46,10 +46,10 @@ class ThermalRunawayPredictor:
             self.rule_weights.update(rule_weights)
 
         self.thresholds = {
-            "critical_temp": 85.0,      # FIX: was 65.0 — too low, causes false CRITICAL
+            "critical_temp": 130.0,      # FIX: was 85.0 — actual thermal runaway onset ~130°C+
             "critical_risk": 10.0,
-            "critical_dtdt": 10.0,      # FIX: was 5.0 — too sensitive
-            "high_temp": 65.0,          # FIX: was 55.0 — too low, causes false HIGH
+            "critical_dtdt": 10.0,       # °C per sample — document time unit
+            "high_temp": 80.0,           # FIX: was 65.0 — raise to avoid false HIGH during fast charge
             "high_risk": 5.0,
             "medium_risk": 2.0,
         }

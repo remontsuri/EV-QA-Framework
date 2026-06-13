@@ -30,28 +30,28 @@ class TestAnomalyDetection:
         anomalies = self.qa.detect_anomalies(telemetries)
         assert len(anomalies) == 0
 
-    def test_exact_5_degree_jump(self):
-        """Exactly 5°C jump - detection boundary"""
-        # Code checks > 5, so 5.0 should not be detected
+    def test_exact_8_degree_jump(self):
+        """Exactly 8°C jump - detection boundary"""
+        # Code checks > 8, so 8.0 should not be detected
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
             ),
             BatteryTelemetryModel(
-                vin=self.vin, voltage=390.0, current=50, temperature=35, soc=80, soh=98
-            ),  # Exactly 5°C
+                vin=self.vin, voltage=390.0, current=50, temperature=38, soc=80, soh=98
+            ),  # Exactly 8°C
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
-        assert len(anomalies) == 0  # > 5, not >= 5
+        assert len(anomalies) == 0  # > 8, not >= 8
 
-    def test_5_1_degree_jump(self):
-        """5.1°C jump - should be detected"""
+    def test_8_1_degree_jump(self):
+        """8.1°C jump - should be detected"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
             ),
             BatteryTelemetryModel(
-                vin=self.vin, voltage=390.0, current=50, temperature=35.1, soc=80, soh=98
+                vin=self.vin, voltage=390.0, current=50, temperature=38.1, soc=80, soh=98
             ),
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
@@ -59,23 +59,22 @@ class TestAnomalyDetection:
         assert "Sharp temperature jump" in anomalies[0]
 
     def test_multiple_temperature_jumps(self):
-        """Multiple temperature jumps"""
+        """Multiple temperature jumps exceeding 8°C threshold"""
         telemetries = [
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
             ),
             BatteryTelemetryModel(
-                vin=self.vin, voltage=390.0, current=50, temperature=37, soc=80, soh=98
-            ),  # +7°C
+                vin=self.vin, voltage=390.0, current=50, temperature=39, soc=80, soh=98
+            ),  # +9°C — detected
             BatteryTelemetryModel(
-                vin=self.vin, voltage=390.0, current=50, temperature=32, soc=80, soh=98
-            ),  # -5°C (not detected, abs change = 5 not > 5)
+                vin=self.vin, voltage=390.0, current=50, temperature=30, soc=80, soh=98
+            ),  # -9°C — detected (|−9| > 8)
             BatteryTelemetryModel(
-                vin=self.vin, voltage=390.0, current=50, temperature=40.1, soc=80, soh=98
-            ),  # +8.1°C (32->40.1)
+                vin=self.vin, voltage=390.0, current=50, temperature=40, soc=80, soh=98
+            ),  # +10°C — detected
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
-        # Should be 2 anomalies: 30->37 (+7) and 32->40.1 (+8.1)
         assert len(anomalies) >= 2
 
     def test_temperature_drop(self):
@@ -85,8 +84,8 @@ class TestAnomalyDetection:
                 vin=self.vin, voltage=390.0, current=50, temperature=50, soc=80, soh=98
             ),
             BatteryTelemetryModel(
-                vin=self.vin, voltage=390.0, current=50, temperature=43, soc=80, soh=98
-            ),  # -7°C
+                vin=self.vin, voltage=390.0, current=50, temperature=41, soc=80, soh=98
+            ),  # -9°C
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
         assert len(anomalies) == 1

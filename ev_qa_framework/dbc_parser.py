@@ -379,16 +379,16 @@ class DBCParser:
     def _extract_motorola(data: bytes, start_bit: int, length: int) -> int:
         """
         Motorola (big-endian): start_bit is the MSB of the signal.
-        Bits count downward in the byte, then jump to the previous byte.
+        Bits count downward within a byte (MSB first), then jump to the next higher byte.
         """
         value = 0
         for i in range(length):
-            bit_pos = start_bit - i
+            bit_pos = start_bit + i
             byte_idx = bit_pos // 8
-            bit_in_byte = bit_pos % 8
+            bit_in_byte = 7 - (bit_pos % 8)
             if byte_idx < len(data):
                 if (data[byte_idx] >> bit_in_byte) & 1:
-                    value |= 1 << i
+                    value |= 1 << (length - 1 - i)
         return value
 
 

@@ -73,7 +73,7 @@ class TestEVQAFramework:
             vin="TESTVEHCLE0123456",
             voltage=400.0,
             current=50,
-            temperature=65,  # > 60 warning
+            temperature=66,  # > 65 warning
             soc=80,
             soh=98,
         )

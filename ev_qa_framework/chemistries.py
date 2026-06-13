@@ -652,8 +652,8 @@ class BatteryChemistryProfile:
     description: str = ""
 
     # --- Per-cell electrical ---
-    cell_nominal_voltage: float = 3.7
-    cell_min_voltage: float = 3.0
+    cell_nominal_voltage: float = 3.2
+    cell_min_voltage: float = 2.5
     cell_max_voltage: float = 4.2
     cell_max_charge_current: float = 1.0
     cell_max_discharge_current: float = 3.0
@@ -668,10 +668,10 @@ class BatteryChemistryProfile:
     temp_optimal_max: float = 35.0
 
     # --- Safety limits (per-cell) ---
-    overcharge_voltage: float = 4.25
-    overdischarge_voltage: float = 2.7
-    thermal_runaway_temp: float = 80.0
-    gas_venting_temp: float = 70.0
+    overcharge_voltage: float = 3.8
+    overdischarge_voltage: float = 2.5
+    thermal_runaway_temp: float = 150.0
+    gas_venting_temp: float = 120.0
 
     # --- SOH / degradation ---
     soh_params: SOHDegradationParams = field(default_factory=SOHDegradationParams)

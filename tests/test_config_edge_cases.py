@@ -49,14 +49,14 @@ class TestSafetyThresholdsEdgeCases:
         data = {"max_temperature": 70.0}
         t = SafetyThresholds.from_dict(data)
         assert t.max_temperature == 70.0
-        assert t.min_voltage == 200.0  # default
-        assert t.max_voltage == 900.0  # default
+        assert t.min_voltage == 240.0  # default
+        assert t.max_voltage == 410.0  # default
 
     def test_from_dict_empty(self):
         """from_dict with empty dict should produce all defaults."""
         t = SafetyThresholds.from_dict({})
-        assert t.max_temperature == 60.0
-        assert t.min_voltage == 200.0
+        assert t.max_temperature == 65.0
+        assert t.min_voltage == 240.0
 
     def test_roundtrip_serialization(self):
         original = SafetyThresholds(
@@ -157,7 +157,7 @@ class TestFrameworkConfigChemistry:
     def test_no_chemistry_keeps_defaults(self):
         cfg = FrameworkConfig(chemistry=None)
         assert cfg.chemistry is None
-        assert cfg.safety_thresholds.max_temperature == 60.0
+        assert cfg.safety_thresholds.max_temperature == 65.0
 
     def test_configure_from_chemistry_explicit(self):
         """configure_from_chemistry should re-apply chemistry thresholds."""
@@ -228,14 +228,14 @@ class TestFrameworkConfigSerialization:
     def test_load_nonexistent_returns_default(self):
         cfg = FrameworkConfig.load_from_file("/nonexistent/path/config.json")
         assert isinstance(cfg, FrameworkConfig)
-        assert cfg.safety_thresholds.max_temperature == 60.0
+        assert cfg.safety_thresholds.max_temperature == 65.0
 
     def test_from_dict_partial(self):
         """from_dict with minimal data should fill in defaults."""
         data = {"default_vin": "CUSTOMVIN12345678"}
         cfg = FrameworkConfig.from_dict(data)
         assert cfg.default_vin == "CUSTOMVIN12345678"
-        assert cfg.safety_thresholds.max_temperature == 60.0  # default
+        assert cfg.safety_thresholds.max_temperature == 65.0  # default
 
     def test_from_dict_empty(self):
         cfg = FrameworkConfig.from_dict({})

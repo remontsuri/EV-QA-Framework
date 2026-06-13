@@ -12,7 +12,7 @@ class TestEVQAFrameworkLimts:
 
     @pytest.mark.parametrize(
         "temp, expected",
-        [(59.9, True), (60.0, True), (60.1, False), (100.0, False), (-20.0, True), (25.0, True)],
+        [(64.9, True), (65.0, True), (65.1, False), (100.0, False), (-20.0, True), (25.0, True)],
     )
     def test_temperature_limits(self, temp: float, expected: bool):
         """Boundary tests for Temperature"""
@@ -25,14 +25,14 @@ class TestEVQAFrameworkLimts:
     @pytest.mark.parametrize(
         "voltage, expected",
         [
-            (200.0, True),
-            (199.9, False),
+            (240.0, True),
+            (239.9, False),
             (100.0, False),
             (390.0, True),
-            (900.0, True),
-            (900.1, False),
-            (950.0, False),
-            (800.0, True),
+            (410.0, True),
+            (410.1, False),
+            (420.0, False),
+            (350.0, True),
         ],
     )
     def test_voltage_limits(self, voltage: float, expected: bool):

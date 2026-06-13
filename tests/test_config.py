@@ -18,10 +18,10 @@ class TestSafetyThresholds:
     def test_default_initialization(self):
         """Test initialization  default values"""
         thresholds = SafetyThresholds()
-        assert thresholds.max_temperature == 60.0
-        assert thresholds.min_voltage == 200.0
-        assert thresholds.max_voltage == 900.0
-        assert thresholds.max_temperature_jump == 5.0
+        assert thresholds.max_temperature == 65.0
+        assert thresholds.min_voltage == 240.0
+        assert thresholds.max_voltage == 410.0
+        assert thresholds.max_temperature_jump == 8.0
 
     def test_custom_initialization(self):
         """Test initialization  custom values"""
@@ -37,7 +37,7 @@ class TestSafetyThresholds:
         assert isinstance(data, dict)
         assert "max_temperature" in data
         assert "min_voltage" in data
-        assert data["max_temperature"] == 60.0
+        assert data["max_temperature"] == 65.0
 
     def test_from_dict(self):
         """Test creation  dictionary"""
@@ -148,7 +148,7 @@ class TestFrameworkConfig:
         """Test loading  nonexistent file (should return default)"""
         config = FrameworkConfig.load_from_file("nonexistent_file.json")
         assert isinstance(config, FrameworkConfig)
-        assert config.safety_thresholds.max_temperature == 60.0
+        assert config.safety_thresholds.max_temperature == 65.0
 
 
 class TestFrameworkIntegration:
@@ -158,7 +158,7 @@ class TestFrameworkIntegration:
         """Test framework  default configuration"""
         qa = EVQAFramework("Test-QA")
         assert qa.config is not None
-        assert qa.config.safety_thresholds.max_temperature == 60.0
+        assert qa.config.safety_thresholds.max_temperature == 65.0
 
     def test_framework_with_custom_config(self):
         """Test framework  custom configuration"""

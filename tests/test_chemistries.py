@@ -232,9 +232,9 @@ class TestFrameworkConfigChemistryIntegration:
         cfg = FrameworkConfig(chemistry=None)
         assert cfg.chemistry is None
         # SafetyThresholds factory defaults (not scaled from any profile)
-        assert cfg.safety_thresholds.min_voltage == 200.0
-        assert cfg.safety_thresholds.max_voltage == 900.0
-        assert cfg.safety_thresholds.max_temperature == 60.0
+        assert cfg.safety_thresholds.min_voltage == 240.0
+        assert cfg.safety_thresholds.max_voltage == 410.0
+        assert cfg.safety_thresholds.max_temperature == 65.0
 
     def test_get_chemistry_profile(self):
         cfg = FrameworkConfig(chemistry="lfp")
