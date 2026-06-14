@@ -3,4 +3,6 @@
 __version__ = "1.0.0"
 __author__ = "remontsuri"
 
-from .test_ev_qa import *  # noqa
+# Legacy import removed: test_ev_qa.py was deleted.
+# Keep this package lightweight; explicit per-module imports below.
+__all__: list[str] = []

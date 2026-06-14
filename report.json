@@ -1,0 +1,6 @@
+{
+  "total_samples": 50,
+  "anomalies_detected": 5,
+  "anomaly_percentage": 10.0,
+  "severity": "CRITICAL"
+}
