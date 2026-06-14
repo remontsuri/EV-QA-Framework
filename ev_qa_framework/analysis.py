@@ -145,9 +145,10 @@ class EVBatteryAnalyzer:
 
         # Step 3: Train model and predict anomalies
         if hasattr(self.model, "estimators_"):
-            predictions = self.model.predict(X_scaled)  # type: ignore
+            predictions = self.model.predict(X_scaled)  # type: ignore[arg-type]
         else:
-            predictions = self.model.predict(X_scaled)
+            self.model.fit(X_scaled)
+            predictions = self.model.predict(X_scaled)  # type: ignore[arg-type]
 
         # Step 4: Compute anomaly scores (lower = more anomalous point)
         # score_samples works for an already-fitted model
