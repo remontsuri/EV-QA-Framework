@@ -15,19 +15,25 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
+__all__ = ["SOHPredictor", "_import_tensorflow"]
 
-def _import_tensorflow():
+
+def _import_tensorflow() -> Any:
     """Lazy-import tensorflow to avoid hard dependency at module level."""
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-    try:
-        import tensorflow as tf
-
-        return tf
-    except ImportError:
+    if os.environ.get("_EV_SIMULATE_MISSING_TF") == "1":
         raise ImportError(
             "TensorFlow is required for SOHPredictor. "
             "Install it via: pip install tensorflow>=2.15"
         )
+    try:
+        import tensorflow as tf
+
+        return tf
+    except ImportError as exc:
+        raise ImportError(
+            "TensorFlow is required for SOHPredictor. "
+            "Install it via: pip install tensorflow>=2.15"
+        ) from exc
 
 
 class SOHPredictor:
@@ -45,10 +51,16 @@ class SOHPredictor:
         self._feature_scaler = MinMaxScaler()
         self.is_trained = False
 
-    def _build_model(self, input_shape: tuple[int, int]):
+    def _build_model(self, input_shape: tuple[int, int]) -> Any:
         _import_tensorflow()
-        from tensorflow.keras.layers import LSTM, Dense, Dropout
-        from tensorflow.keras.models import Sequential
+        try:
+            from tensorflow.keras.layers import LSTM, Dense, Dropout
+            from tensorflow.keras.models import Sequential
+        except ImportError as exc:
+            raise ImportError(
+                "TensorFlow is required for SOHPredictor. "
+                "Install it via: pip install tensorflow>=2.15"
+            ) from exc
 
         model = Sequential(
             [
@@ -72,19 +84,20 @@ class SOHPredictor:
         features = ["voltage", "current", "temperature"]
         data = df[features + [target_col]].values
 
-        # Scale features and target separately
-        self.scaler.fit(data)  # full scaler for inverse transform
-        self._feature_scaler.fit(data[:, :-1])  # feature-only scaler for predict
-        scaled_data = self.scaler.transform(data)
+        self._feature_scaler.fit(data[:, :-1])
+        self._feature_scaler.transform(data[:, :-1])
+
+        self.scaler.fit(data)
+        scaled = self.scaler.transform(data)
 
         x_seq, y_seq = [], []
-        for i in range(len(scaled_data) - self.sequence_length):
-            x_seq.append(scaled_data[i : i + self.sequence_length, :-1])
-            y_seq.append(scaled_data[i + self.sequence_length, -1])
+        for i in range(len(scaled) - self.sequence_length):
+            x_seq.append(scaled[i : i + self.sequence_length, :-1])
+            y_seq.append(scaled[i + self.sequence_length, -1])
 
         return np.array(x_seq), np.array(y_seq)
 
-    def train(self, df: pd.DataFrame, epochs: int = 10, batch_size: int = 32):
+    def train(self, df: pd.DataFrame, epochs: int = 10, batch_size: int = 32) -> None:
         """
         Train the LSTM model on historical data.
         """
@@ -106,25 +119,24 @@ class SOHPredictor:
         features = ["voltage", "current", "temperature"]
 
         if len(recent_telemetry) < self.sequence_length:
-            raise ValueError(f"Need at least {self.sequence_length} " "data points")
+            raise ValueError(
+                f"Need at least {self.sequence_length} data points"
+            )
 
-        data = recent_telemetry[features].values[-self.sequence_length :]
+        data = recent_telemetry[features].to_numpy()[-self.sequence_length :]
 
-        # Scale features using feature-only scaler
         scaled_feat = self._feature_scaler.transform(data)
-
         x_input = np.expand_dims(scaled_feat, axis=0)
         prediction_scaled = self.model.predict(x_input, verbose=0)
 
-        # Inverse scale prediction using full scaler
+        # inverse_transform требует ту же размерность, на которой учили scaler
         dummy = np.zeros((1, 4))
-        dummy[0, -1] = prediction_scaled[0, 0]
+        dummy[0, -1] = float(np.asarray(prediction_scaled).reshape(-1)[0])
         prediction = self.scaler.inverse_transform(dummy)[0, -1]
-
         return float(prediction)
 
-    def save(self, path: str):
-        """Save the model and scaler"""
+    def save(self, path: str) -> None:
+        """Save the model and scaler."""
         if not self.is_trained or self.model is None:
             return
         os.makedirs(path, exist_ok=True)
@@ -132,7 +144,7 @@ class SOHPredictor:
         joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
         joblib.dump(self._feature_scaler, os.path.join(path, "feature_scaler.joblib"))
 
-    def load(self, path: str):
+    def load(self, path: str) -> None:
         """Load the model and scaler."""
         tf = _import_tensorflow()
         self.model = tf.keras.models.load_model(os.path.join(path, "soh_lstm.keras"))

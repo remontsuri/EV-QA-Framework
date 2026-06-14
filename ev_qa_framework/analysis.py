@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 CELL_IMBALANCE_WARNING: float = 0.05
 CELL_IMBALANCE_CRITICAL: float = 0.1
 
-warnings.filterwarnings("ignore")
 
 
 class EVBatteryAnalyzer:
@@ -132,7 +131,7 @@ class EVBatteryAnalyzer:
         df: pd.DataFrame = normalize_columns(df_telemetry)
         require_columns(df, ["voltage", "current", "temp"])
 
-        # Step 2: Select only numeric features for analysis
+        # Step 1: Select only numeric features for analysis
         # SOC is not used for detection as it is a dependent variable
         features: list[str] = ["voltage", "current", "temp"]
         X: pd.DataFrame = df[features]

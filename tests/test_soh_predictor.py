@@ -581,7 +581,7 @@ class TestTensorFlowImport:
         saved_layers = sys.modules.pop("tensorflow.keras.layers", None)
         saved_models = sys.modules.pop("tensorflow.keras.models", None)
         try:
-            with pytest.raises(ImportError, match="TensorFlow is required"):
+            with pytest.raises(ImportError, match="TensorFlow is required for SOHPredictor"):
                 predictor._build_model((5, 3))
         finally:
             if saved is not None:
@@ -604,7 +604,6 @@ class TestTensorFlowImport:
 # ---------------------------------------------------------------------------
 
 
-class TestImportTensorFlow:
     def test_returns_module_when_available(self):
         """When TF is available, _import_tensorflow returns the module."""
         mock_tf = MagicMock()
@@ -622,9 +621,25 @@ class TestImportTensorFlow:
     def test_raises_when_not_available(self):
         """When TF is not available, _import_tensorflow raises ImportError."""
         saved = sys.modules.pop("tensorflow", None)
+        saved_keras = sys.modules.pop("tensorflow.keras", None)
+        saved_layers = sys.modules.pop("tensorflow.keras.layers", None)
+        saved_models = sys.modules.pop("tensorflow.keras.models", None)
+        old_env = os.environ.pop("_EV_SIMULATE_MISSING_TF", None)
+        os.environ["_EV_SIMULATE_MISSING_TF"] = "1"
         try:
-            with pytest.raises(ImportError, match="TensorFlow is required"):
+            with pytest.raises(ImportError, match="TensorFlow is required for SOHPredictor"):
                 _import_tensorflow()
         finally:
+            if old_env is not None:
+                os.environ["_EV_SIMULATE_MISSING_TF"] = old_env
+            elif "_EV_SIMULATE_MISSING_TF" in os.environ:
+                del os.environ["_EV_SIMULATE_MISSING_TF"]
             if saved is not None:
                 sys.modules["tensorflow"] = saved
+            if saved_keras is not None:
+                sys.modules["tensorflow.keras"] = saved_keras
+            if saved_layers is not None:
+                sys.modules["tensorflow.keras.layers"] = saved_layers
+            if saved_models is not None:
+                sys.modules["tensorflow.keras.models"] = saved_models
+

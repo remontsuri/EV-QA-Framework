@@ -800,9 +800,10 @@ class BatteryChemistryProfile:
     def to_safety_thresholds_dict(
         self,
         cells_in_series: int = 96,
+        cells_parallel: int = 1,
     ) -> dict:
         """Convert this chemistry profile into a dict compatible with
-        ``SafetyThresholds``, scaled to *cells_in_series*.
+        ``SafetyThresholds``, scaled to *cells_in_series* and *cells_parallel*.
 
         Returns a flat dict with keys expected by SafetyThresholds:
             max_temperature, min_temperature, max_temperature_jump,
@@ -816,7 +817,7 @@ class BatteryChemistryProfile:
             "max_voltage": self.pack_max_voltage(cells_in_series),
             "min_soc": self.min_soc_pct,
             "critical_soh": self.critical_soh_pct,
-            "max_current": self.cell_max_discharge_current * cells_in_series * 2.5,
+            "max_current": self.cell_max_discharge_current * cells_parallel,
         }
 
     # ------------------------------------------------------------------
