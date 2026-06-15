@@ -112,6 +112,21 @@ reportUnknownMemberType = false
 extraRules = ["reportUnnecessaryIsInstance", "reportUnnecessaryCast", "reportUnknownArgumentType", "reportUnknownParameterType"]
 pythonVersion = "3.13"
 
+[tool.pyright.ban]
+reportAnyUsage = true
+reportCastUsage = true
+typeCommentLike = "# type: ignore"
+
+[tool.pyright.typed_checks]
+include = ["ev_qa_framework"]
+exclude = ["**/__pycache__", "**/.venv", ".venv/**", "tests", "examples"]
+reportMissingImports = true
+reportMissingTypeStubs = true
+reportUnknownVariableType = true
+reportUnknownMemberType = true
+reportUnknownArgumentType = true
+reportUnknownParameterType = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

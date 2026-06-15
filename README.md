@@ -1,6 +1,6 @@
 # EV-QA-Framework
 
-![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)
+![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Tests](https://img.shields.io/badge/tests-948%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
@@ -42,7 +42,7 @@ No cloud account required. No external dependencies. Just a CSV and a terminal.
 
 **Anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, estimator count.
 
-**Thermal runaway prediction.** Rule-based heuristics (dT/dt, temperature, anomaly score) and ML mode. CRITICAL trigger at \>85 °C or heating rate \>10 °C/min. Catches overheating before cascade. Confidence score clamped to [0, 1].
+**Thermal runaway prediction.** Rule-based heuristics (temperature, delta-temp, anomaly score, chemistry runaway point). CRITICAL trigger defaults at ≥85 °C, rapid-rise trigger at >10 °C/min. Catches overheating before cascade onset. Confidence score clamped to [0, 1].
 
 **SOH prediction.** LSTM-based State of Health forecasting from historical telemetry. Transformer-based prediction via `soh_transformer` for longer sequences.
 
@@ -141,11 +141,11 @@ run_factory_inspection.py  # end-to-end factory QA demo
 
 | Artifact | Value |
 |---|---|
-| Tests | 948 passed |
-| Coverage | ~93% |
-| CI | Docker Compose |
+| Tests | locally verified (run `pytest -q`) |
+| Coverage | configured in CI (target ~93%) |
+| CI | Lint + Test + Coverage |
 | License | MIT |
-| Python | 3.9+ |
+| Python | 3.10+ |
 
 Regression risk is tracked in `tests/`. Coverage artifacts (`coverage/`, `junit.xml`) are present in the release pipeline.
 

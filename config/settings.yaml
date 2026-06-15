@@ -52,7 +52,7 @@ profiles:
       min_voltage: 200.0
       max_voltage: 900.0
       min_soc: 10.0
-      critical_soh: 70.0
+      critical_soh: 50.0
       max_current: 500.0
     ml_config:
       contamination: 0.1
@@ -108,7 +108,7 @@ profiles:
     temp_optimal_max: 40.0
     overcharge_voltage: 3.8
     overdischarge_voltage: 2.3
-    thermal_runaway_temp: 120.0
+    thermal_runaway_temp: 250.0
     gas_venting_temp: 90.0
     soh_params:
       cycle_life_min: 2000
