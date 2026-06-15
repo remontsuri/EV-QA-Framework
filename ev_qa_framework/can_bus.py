@@ -314,13 +314,18 @@ class CANHardwareInterface:
         Returns True on success, False on transient failure.
         Raises CANBusOffError if the controller enters bus-off.
         """
-        if not self._ensure_connected():
-            return False
+        # TOCTOU fix: take bus reference under lock
+        with self._lock:
+            if not self._ensure_connected():
+                return False
+            bus = self.bus
 
         t = timeout if timeout is not None else self.timeout
         try:
-            self.bus.send(msg, timeout=t)
+            bus.send(msg, timeout=t)
             return True
+        except CANBusOffError:
+            raise
         except can.CanError as e:
             error_str = str(e).lower()
             if "bus off" in error_str or "bus-off" in error_str:
@@ -339,12 +344,17 @@ class CANHardwareInterface:
         Returns the message on success, None on timeout or transient failure.
         Raises CANBusOffError if the controller enters bus-off.
         """
-        if not self._ensure_connected():
-            return None
+        # TOCTOU fix: take bus reference under lock
+        with self._lock:
+            if not self._ensure_connected():
+                return None
+            bus = self.bus
 
         t = timeout if timeout is not None else self.timeout
         try:
-            return self.bus.recv(timeout=t)
+            return bus.recv(timeout=t)
+        except CANBusOffError:
+            raise
         except can.CanError as e:
             error_str = str(e).lower()
             if "bus off" in error_str or "bus-off" in error_str:
@@ -743,56 +753,41 @@ class OBD2Adapter:
         self._serial.reset_output_buffer()
         time.sleep(0.5)
 
-        # Test communication
+        # Test communication and read version
         for attempt in range(3):
-            self._serial.write(b"AT Z\r")
+            response = self.send_command("AT I")
+            if response:
+                version_str = response.strip()
+                if "ELM327" in version_str or "OBD" in version_str:
+                    self._version = version_str
+                    logger.info("Detected ELM327 version: %s", self._version)
+                    break
             time.sleep(0.3)
             self._serial.reset_input_buffer()
             time.sleep(0.2)
-
-        # Read ELM327 version
-        self._serial.write(b"AT I\r")
-        version_response = b""
-        timeout_time = time.time() + self.timeout
-        while time.time() < timeout_time:
-            byte = self._serial.read(1)
-            if not byte:
-                break
-            version_response += byte
-            if b">" in version_response:
-                break
-
-        version_str = version_response.decode("ascii", errors="replace").strip()
-        if "ELM327" in version_str or "OBD" in version_str:
-            self._version = version_str
         else:
-            logger.warning("Unexpected ELM327 version response: %s", version_str)
+            logger.warning("ELM327 version not detected after 3 attempts")
 
-        # Set defaults
+        # Set defaults and confirm
         for cmd in [b"AT E0\r", b"AT L0\r", b"AT S0\r", b"AT H0\r", b"AT SP 0\r"]:
-            try:
-                self._serial.write(cmd)
-                time.sleep(0.1)
-                self._serial.reset_input_buffer()
-            except OSError:
-                pass
+            response = self.send_command(cmd.decode("ascii").strip())
+            if response:
+                logger.debug("AT %s -> %s", cmd.decode("ascii").strip(), response)
+            time.sleep(0.1)
+            self._serial.reset_input_buffer()
 
         time.sleep(0.3)
 
-        # Detect protocol
-        self._serial.write(b"AT DP\r")
-        proto_response = b""
-        timeout_time = time.time() + self.timeout
-        while time.time() < timeout_time:
-            byte = self._serial.read(1)
-            if not byte:
-                break
-            proto_response += byte
-            if b">" in proto_response:
-                break
-
-        proto_str = proto_response.decode("ascii", errors="replace").strip()
-        self._protocol = proto_str.replace("AT DP", "").replace(">", "").strip()
+        # Detect protocol and confirm
+        for attempt in range(3):
+            response = self.send_command("AT DP")
+            if response:
+                proto_str = response.strip()
+                self._protocol = proto_str.replace("AT DP", "").replace(">", "").strip()
+                if self._protocol:
+                    logger.info("Detected protocol: %s", self._protocol)
+                    break
+            time.sleep(0.2)
 
         if not self._protocol:
             self._protocol = "auto"

@@ -18,11 +18,11 @@ from .analysis import EVBatteryAnalyzer
 from .battery_scoring import BatteryScorer
 from .physics_features import PhysicsFeatureExtractor
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=UserWarning, module="ev_qa_framework\\.fleet_analytics")
 
 
 # ---------------------------------------------------------------------------
-# Alert dataclass
+# FleetAlert
 # ---------------------------------------------------------------------------
 @dataclass
 class FleetAlert:

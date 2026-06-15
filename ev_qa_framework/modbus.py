@@ -830,20 +830,29 @@ class ModbusRTUClient(ModbusClient):
         if not self._serial:
             raise ModbusConnectionError("Not connected")
         try:
-            # Read slave ID + function code + byte count (at least 4 bytes for error)
+            # Read slave ID + function code + third byte (byte count OR exception code)
             header = self._serial.read(3)
             if len(header) < 3:
                 raise ModbusTimeoutError(f"RTU response too short: {len(header)} bytes")
 
-            byte_count = header[2]
-            # If exception response, byte count is the exception code (1 byte) + CRC (2)
-            if byte_count > 0x80:
-                # This is actually an exception code in FC field
-                # Re-read: we got addr, fc|0x80, exc_code — need CRC
-                rest = self._serial.read(2)  # CRC
-                return header + rest
+            # Check if exception response: high bit set in function code (header[1])
+            fc = header[1]
+            is_exception = (fc & 0x80) != 0
 
-            # Normal response: read byte_count data + 2 CRC
+            if is_exception:
+                # Exception response format: [addr][fc|0x80][exception_code][CRC]
+                # third byte is exception code, then 2 bytes CRC
+                rest = self._serial.read(2)  # CRC
+                frame = header + rest
+
+                # Validate CRC for exception responses too
+                if not _validate_crc(frame):
+                    raise ModbusCRCError("CRC mismatch in RTU exception response")
+
+                return frame
+
+            # Normal response: third byte is byte count, then data + 2 CRC
+            byte_count = header[2]
             remaining = byte_count + 2
             body = self._serial.read(remaining)
             if len(body) < remaining:

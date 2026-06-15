@@ -3,7 +3,7 @@
 import json
 import pathlib
 
-from .test_tesla_battery import analyze_tesla_battery
+from examples.test_tesla_battery import analyze_tesla_battery
 
 
 def test_analyze_tesla_battery_returns_expected_report(tmp_path, monkeypatch):

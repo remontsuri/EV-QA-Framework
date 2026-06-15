@@ -198,12 +198,28 @@ class BMSHardwareEmulator:
     def generate_telemetry_message(
         self,
         msg_id: int = 0x100,
+        voltage_range: tuple[float, float] | None = None,
+        current_profile: str | None = None,
+        temperature_range: tuple[float, float] | None = None,
     ) -> CANMessage:
         """Generate a single telemetry CAN message."""
         # Generate realistic telemetry values
-        voltage = np.random.normal(400, 5)
-        current = np.random.normal(50, 10)
-        temperature = np.random.normal(30, 3)
+        if voltage_range:
+            voltage = np.random.uniform(*voltage_range)
+        else:
+            voltage = np.random.normal(400, 5)
+        if current_profile == "charge":
+            current = abs(np.random.normal(50, 10))
+        elif current_profile == "discharge":
+            current = -abs(np.random.normal(50, 10))
+        elif current_profile == "cycle":
+            current = np.random.uniform(-50, 50)
+        else:
+            current = np.random.normal(50, 10)
+        if temperature_range:
+            temperature = np.random.uniform(*temperature_range)
+        else:
+            temperature = np.random.normal(30, 3)
         soc = np.random.uniform(20, 95)
 
         v_raw = int(voltage * 10)
@@ -228,11 +244,19 @@ class BMSHardwareEmulator:
         self,
         n_messages: int = 100,
         msg_id: int = 0x100,
+        voltage_range: tuple[float, float] | None = None,
+        current_profile: str | None = None,
+        temperature_range: tuple[float, float] | None = None,
     ) -> list[CANMessage]:
         """Generate a cycle of telemetry messages."""
         messages = []
         for _ in range(n_messages):
-            msg = self.generate_telemetry_message(msg_id)
+            msg = self.generate_telemetry_message(
+                msg_id=msg_id,
+                voltage_range=voltage_range,
+                current_profile=current_profile,
+                temperature_range=temperature_range,
+            )
             messages.append(msg)
         return messages
 
@@ -261,13 +285,20 @@ class HILTestRunner:
         Run a HIL test.
 
         Args:
-            test_profile: dict with test parameters
+            test_profile: dict with test parameters:
+                - name: test name (str)
+                - voltage_range: (min_v, max_v) tuple
+                - current_profile: 'charge' | 'discharge' | 'cycle'
+                - temperature_range: (min_c, max_c) tuple
             duration: test duration in seconds
 
         Returns:
             HILTestResult
         """
         test_name = test_profile.get("name", "unnamed_test")
+        voltage_range = test_profile.get("voltage_range")
+        current_profile = test_profile.get("current_profile")
+        temperature_range = test_profile.get("temperature_range")
         start_time = time.time()
         messages_sent = 0
         messages_received = 0

@@ -283,12 +283,9 @@ if __name__ == "__main__":
 
     # Save
     config.save_to_file("tesla_config.json")
-    print("Configuration saved to tesla_config.json")
 
     # Load
     loaded_config = FrameworkConfig.load_from_file("tesla_config.json")
-    print(f"Loaded: max_temp = {loaded_config.safety_thresholds.max_temperature}°C")
 
-    # Print default configuration
-    print("\nDefault configuration:")
-    print(json.dumps(DEFAULT_CONFIG.to_dict(), indent=2))
+    # Default configuration
+    default_config = FrameworkConfig(chemistry="nmc")

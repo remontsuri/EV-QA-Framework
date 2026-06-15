@@ -101,9 +101,22 @@ ignore = ["E402", "E501", "F401", "N806"]
 "tests/**" = ["E501", "N802", "N803"]
 "ev_qa_framework/cli.py" = ["E501"]
 
+[tool.pyright]
+include = ["ev_qa_framework", "tests", "examples"]
+exclude = ["**/__pycache__", "**/.venv", ".venv/**"]
+strict = ["ev_qa_framework"]
+reportMissingImports = true
+reportMissingTypeStubs = true
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+extraRules = ["reportUnnecessaryIsInstance", "reportUnnecessaryCast", "reportUnknownArgumentType", "reportUnknownParameterType"]
+pythonVersion = "3.13"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 asyncio_mode = "auto"
 
 [dependency-groups]

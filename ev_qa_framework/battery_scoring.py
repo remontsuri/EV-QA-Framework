@@ -46,11 +46,11 @@ class BatteryScorer:
     soh_weight : float
         Weight for SOH component (default 0.40).
     anomaly_weight : float
-        Weight for anomaly score component (default 0.25).
+        Weight for anomaly score component (default 0.15).
     cell_balance_weight : float
         Weight for cell balance component (default 0.20).
     thermal_weight : float
-        Weight for thermal risk component (default 0.15).
+        Weight for thermal risk component (default 0.25).
     soh_baseline : float
         Baseline SOH value (%). If None, derived from telemetry or
         defaults to 100.

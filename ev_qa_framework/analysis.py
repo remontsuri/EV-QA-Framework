@@ -160,7 +160,9 @@ class EVBatteryAnalyzer:
         # missing rare outliers on small samples (e.g. when the model was trained
         # on identical points).
         mask: np.ndarray = (predictions == -1) | (anomaly_scores < self.warning_threshold)
-        self.anomalies = df_telemetry[mask].copy()  # type: ignore
+
+        # Apply mask to the same DataFrame used to build X to ensure index alignment
+        self.anomalies = df_telemetry.iloc[mask].copy()  # type: ignore
 
         # Add anomaly scores to results for further analysis
         if not self.anomalies.empty:
