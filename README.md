@@ -6,7 +6,7 @@
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
 ![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
-[![CI](https://github.com/remontsuri/EV-QA-Framework/workflows/CI%20%E2%80%94%20Lint%20%C2%B7%20Test%20%C2%B7%20Coverage/badge.svg)](https://github.com/remontsuri/EV-QA-Framework/actions/workflows/test.yml)
+
 
 **EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 948 passing tests and a Docker-ready pipeline.**
 
