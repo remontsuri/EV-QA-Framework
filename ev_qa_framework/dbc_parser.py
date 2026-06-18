@@ -75,7 +75,7 @@ class DBCParser:
     """
 
     def __init__(self, filepath: str):
-        # FIX: validate path to prevent path traversal
+        # Path traversal prevention
         import os as _os
         self.filepath = _os.path.realpath(filepath)
         _allowed = ('.dbc', '.txt', '.csv')

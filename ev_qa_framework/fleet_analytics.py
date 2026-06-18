@@ -18,7 +18,7 @@ from .analysis import EVBatteryAnalyzer
 from .battery_scoring import BatteryScorer
 from .physics_features import PhysicsFeatureExtractor
 
-# warnings.filterwarnings removed - use targeted suppression if needed
+# Warning suppression handled by individual functions, not module-level
 
 
 # ---------------------------------------------------------------------------

@@ -17,9 +17,9 @@ from .thermal_runaway import ThermalRunawayPredictor
 # Default weights (must sum to 1.0)
 # ---------------------------------------------------------------------------
 WEIGHT_SOH = 0.40
-WEIGHT_ANOMALY = 0.15  # FIX: was 0.25 — rebalanced for thermal weight increase
+WEIGHT_ANOMALY = 0.15  # Anomaly contribution to composite battery score
 WEIGHT_CELL_BALANCE = 0.20
-WEIGHT_THERMAL = 0.25  # FIX: was 0.15 — thermal is critical for EV safety
+WEIGHT_THERMAL = 0.25  # Thermal contribution — weighted higher for EV safety
 
 
 

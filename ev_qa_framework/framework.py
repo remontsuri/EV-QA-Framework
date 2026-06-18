@@ -61,7 +61,7 @@ from .models import BatteryTelemetryModel
 class EVQAFramework:
     """Main QA Framework for EV & IoT testing"""
 
-    # Default VIN for testing legacy data without VINs (deprecated, use config.default_vin)
+    # Default VIN for legacy data without VINs
     DEFAULT_TEST_VIN = "TESTVEHCLE0123456"
 
     def __init__(self, name: str = "EV-QA-Tester", config: FrameworkConfig | None = None):

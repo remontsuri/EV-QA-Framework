@@ -1,6 +1,6 @@
 """EV-QA-Framework — ML-powered QA Framework for Electric Vehicle & IoT Battery Testing."""
 
-# v2.0 new modules
+# Module exports
 from . import (
     automl,
     battery_scoring,

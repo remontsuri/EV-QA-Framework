@@ -32,7 +32,7 @@ docker compose up -d
 open http://localhost:8081
 ```
 
-Done. You now have a running battery QA workstation:
+Done. You have a running battery QA workstation:
 - telemetry validation
 - ML anomaly detection
 - thermal runaway early warning

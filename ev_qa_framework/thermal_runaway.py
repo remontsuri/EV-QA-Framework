@@ -46,10 +46,10 @@ class ThermalRunawayPredictor:
             self.rule_weights.update(rule_weights)
 
         self.thresholds = {
-            "critical_temp": 130.0,      # FIX: was 85.0 — actual thermal runaway onset ~130°C+
+            "critical_temp": 130.0,      # Thermal runaway onset (~130°C)
             "critical_risk": 10.0,
             "critical_dtdt": 10.0,       # °C per sample (1 Hz sampling = °C/s)
-            "high_temp": 80.0,           # FIX: was 65.0 — raise to avoid false HIGH during fast charge
+            "high_temp": 80.0,           # Elevated temperature threshold for fast-charge scenarios
             "high_risk": 5.0,
             "medium_risk": 2.0,
         }
@@ -146,7 +146,7 @@ class ThermalRunawayPredictor:
             + anomaly_score * self.rule_weights["anomaly"]
             + features["dt_dt"] * self.rule_weights["dt_dt"]
         )
-        # FIX: removed duplicate temperature penalty (current_temp - 50) * 0.5
+        # Temperature penalty already applied in _rule_score()
         # The rule_weights["max_temp"] already handles temperature scoring above
 
         risk_level = "LOW"
