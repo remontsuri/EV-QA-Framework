@@ -13,6 +13,8 @@ CAN protocol support, telemetry monitoring, and ML-based anomaly detection.
 import asyncio
 import json
 import logging
+import signal
+import atexit
 from typing import Any
 
 import pandas as pd

@@ -66,6 +66,10 @@ Changelog = "https://github.com/remontsuri/EV-QA-Framework/blob/main/CHANGELOG.m
 [project.optional-dependencies]
 ml = ["tensorflow>=2.15"]
 hardware = ["python-can>=4.3", "pyserial>=3.5"]
+web = ["fastapi>=0.100", "uvicorn>=0.23", "websockets>=11.0", "jinja2>=3.1"]
+can = ["python-can>=4.3", "pyserial>=3.5"]
+monitoring = ["prometheus-client>=0.17", "matplotlib>=3.5"]
+all = ["ev-qa-framework[ml,hardware,web,can,monitoring]"]
 dev = [
     "ruff>=0.4",
     "pytest>=7.0",

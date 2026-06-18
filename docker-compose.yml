@@ -22,6 +22,11 @@ services:
       <<: *common-labels
       com.ev-qa.service: tests
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2"
     entrypoint: ["python"]
     command: >
       -m pytest tests/ -v
@@ -63,6 +68,11 @@ services:
   # ---- Grafana (battery metrics) ----
   grafana:
     image: grafana/grafana:11.3.0
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1"
     container_name: ev-qa-grafana
     environment:
       <<: *common-env
