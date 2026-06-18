@@ -17,8 +17,8 @@ import tempfile
 import pytest
 
 from ev_qa_framework.config import (
-    DEFAULT_CONFIG,
-    TESLA_CONFIG,
+    get_default_config,
+    get_tesla_config,
     FrameworkConfig,
     MLConfig,
     SafetyThresholds,
@@ -245,15 +245,15 @@ class TestFrameworkConfigSerialization:
 
 class TestDefaultConfigs:
     def test_default_config_is_nmc(self):
-        assert DEFAULT_CONFIG.chemistry == "nmc"
+        assert get_default_config().chemistry == "nmc"
 
     def test_tesla_config_is_nca(self):
-        assert TESLA_CONFIG.chemistry == "nca"
-        assert TESLA_CONFIG.cells_in_series == 108
-        assert TESLA_CONFIG.fail_on_anomaly is True
+        assert get_tesla_config().chemistry == "nca"
+        assert get_tesla_config().cells_in_series == 108
+        assert get_tesla_config().fail_on_anomaly is True
 
     def test_tesla_config_has_valid_vin(self):
-        assert len(TESLA_CONFIG.default_vin) == 17
+        assert len(get_tesla_config().default_vin) == 17
 
 
 class TestFrameworkConfigYAML:

@@ -502,19 +502,19 @@ class TestDatasheetValidation:
 
     def test_tesla_config_uses_nca(self):
         """Tesla config should use NCA chemistry with correct parameters."""
-        from ev_qa_framework.config import TESLA_CONFIG
+        from ev_qa_framework.config import get_tesla_config
 
-        assert TESLA_CONFIG.chemistry == "nca"
-        p = TESLA_CONFIG.get_chemistry_profile()
+        assert get_tesla_config().chemistry == "nca"
+        p = get_tesla_config().get_chemistry_profile()
         assert p is not None
         assert p.short_name == "nca"
         assert p.cell_nominal_voltage == 3.6
 
     def test_default_config_uses_nmc(self):
         """Default config should use NMC chemistry."""
-        from ev_qa_framework.config import DEFAULT_CONFIG
+        from ev_qa_framework.config import get_default_config
 
-        assert DEFAULT_CONFIG.chemistry == "nmc"
-        p = DEFAULT_CONFIG.get_chemistry_profile()
+        assert get_default_config().chemistry == "nmc"
+        p = get_default_config().get_chemistry_profile()
         assert p is not None
         assert p.short_name == "nmc"

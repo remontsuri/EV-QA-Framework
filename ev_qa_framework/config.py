@@ -264,17 +264,20 @@ class FrameworkConfig:
         return cfg
 
 
-# Global default configuration (NMC, 96s)
-DEFAULT_CONFIG = FrameworkConfig(chemistry="nmc")
+# Factory functions (immutable configs)
+def get_default_config() -> FrameworkConfig:
+    """Return a new default NMC configuration."""
+    return FrameworkConfig(chemistry="nmc")
 
-# Special profile for Tesla Potesti
-# Thresholds tuned to real Tesla battery parameters
-TESLA_CONFIG = FrameworkConfig(
-    chemistry="nca",
-    cells_in_series=108,  # Model S 108s (~400 V nominal)
-    default_vin="5YJSA1E26HF000337",  # example valid 17-character VIN
-    fail_on_anomaly=True,
-)
+
+def get_tesla_config() -> FrameworkConfig:
+    """Return a new Tesla NCA configuration."""
+    return FrameworkConfig(
+        chemistry="nca",
+        cells_in_series=108,
+        default_vin="5YJSA1E26HF000337",
+        fail_on_anomaly=True,
+    )
 
 
 # Example usage

@@ -105,6 +105,20 @@ class EVQAFramework:
             f"Initialized {self.name} with ML analyzer (contamination={self.config.ml_config.contamination})"
         )
 
+
+    def health_check(self) -> dict:
+        """Return health status for HTTP /health endpoint."""
+        status = {
+            "status": "healthy",
+            "ml_model_trained": hasattr(self.ml_analyzer.model, "estimators_"),
+            "chemistry": self.config.chemistry,
+            "thresholds": {
+                "max_temperature": self.config.safety_thresholds.max_temperature,
+                "min_voltage": self.config.safety_thresholds.min_voltage,
+                "max_voltage": self.config.safety_thresholds.max_voltage,
+            },
+        }
+        return status
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> tuple[bool, list[str]]:
         """
         Validate battery telemetry against safety thresholds.

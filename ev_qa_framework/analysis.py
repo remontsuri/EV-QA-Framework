@@ -194,32 +194,37 @@ class EVBatteryAnalyzer:
 
 
     def _detect_gradient_attack(self, df: pd.DataFrame) -> dict:
-        """Detect slow monotonic drifts that evade IsolationForest."""
+        """Detect slow monotonic drifts that evade IsolationForest.
+
+        Requires multi-feature monotonicity to avoid false positives
+        on normal constant-current charge/discharge curves.
+        """
         result = {"gradient_detected": False, "details": {}}
+        mono_features = []
         for col in ["voltage", "current", "temp"]:
             if col not in df.columns:
                 continue
             values = df[col].values
             if len(values) < 10:
                 continue
-            # Compute monotonicity: how many consecutive pairs increase/decrease
             diffs = np.diff(values)
             if len(diffs) == 0:
                 continue
-            # Check for sustained monotonic trend (>80% same direction)
             pos_ratio = np.sum(diffs > 0) / len(diffs)
             neg_ratio = np.sum(diffs < 0) / len(diffs)
             monotonicity = max(pos_ratio, neg_ratio)
-            if monotonicity > 0.80:
+            if monotonicity > 0.85:
+                mono_features.append(col)
                 total_drift = values[-1] - values[0]
                 drift_per_sample = total_drift / len(values)
-                result["gradient_detected"] = True
                 result["details"][col] = {
                     "monotonicity": round(monotonicity, 3),
                     "total_drift": round(total_drift, 4),
                     "drift_per_sample": round(drift_per_sample, 6),
                     "direction": "increasing" if pos_ratio > neg_ratio else "decreasing"
                 }
+        if len(mono_features) >= 2:
+            result["gradient_detected"] = True
         return result
     def _assess_severity(self, scores: np.ndarray) -> str:
         """
@@ -252,7 +257,13 @@ class EVBatteryAnalyzer:
         return "INFO"  # Weak anomaly or normal
 
     def save_model(self, filepath: str, metadata: dict[str, Any] | None = None) -> None:
-        """Save model params and scaler to JSON + NPY files."""
+        """Save model params and scaler to JSON + NPY files.
+
+        Creates three files:
+        - {base}_params.json: model parameters, thresholds, version
+        - {base}_scaler_mean.npy: fitted scaler mean
+        - {base}_scaler_scale.npy: fitted scaler scale
+        """
         if not hasattr(self.scaler, "mean_"):
             raise ValueError("Model not trained! Call analyze_telemetry() or train() first")
 
@@ -260,6 +271,7 @@ class EVBatteryAnalyzer:
         os.makedirs(os.path.dirname(base) or ".", exist_ok=True)
 
         bundle = {
+            "version": "2.2.0",
             "model_params": self.model.get_params(),
             "contamination": self.contamination,
             "critical_threshold": self.critical_threshold,

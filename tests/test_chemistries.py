@@ -20,8 +20,8 @@ from ev_qa_framework.chemistries import (
     register_custom_profile,
 )
 from ev_qa_framework.config import (
-    DEFAULT_CONFIG,
-    TESLA_CONFIG,
+    get_default_config,
+    get_tesla_config,
     FrameworkConfig,
     SafetyThresholds,
 )
@@ -198,23 +198,23 @@ class TestFrameworkConfigChemistryIntegration:
 
     def test_default_config_is_nmc(self):
         """DEFAULT_CONFIG should have chemistry=nmc and NMC-derived thresholds."""
-        assert DEFAULT_CONFIG.chemistry == "nmc"
+        assert get_default_config().chemistry == "nmc"
         # NMC 96s: 3.0 * 96 = 288.0 V
-        assert DEFAULT_CONFIG.safety_thresholds.min_voltage == pytest.approx(240.0)  # FIX: was 288.0
+        assert get_default_config().safety_thresholds.min_voltage == pytest.approx(240.0)  # FIX: was 288.0
         # 4.2 * 96 = 403.2 V
-        assert DEFAULT_CONFIG.safety_thresholds.max_voltage == pytest.approx(403.2)
+        assert get_default_config().safety_thresholds.max_voltage == pytest.approx(403.2)
         # NMC charge temp max = 45.0, discharge temp min = -20.0
-        assert DEFAULT_CONFIG.safety_thresholds.max_temperature == 45.0
-        assert DEFAULT_CONFIG.safety_thresholds.min_temperature == -20.0
+        assert get_default_config().safety_thresholds.max_temperature == 45.0
+        assert get_default_config().safety_thresholds.min_temperature == -20.0
 
     def test_tesla_config_is_nca_108s(self):
         """TESLA_CONFIG should have chemistry=nca with 108 cells in series."""
-        assert TESLA_CONFIG.chemistry == "nca"
-        assert TESLA_CONFIG.cells_in_series == 108
+        assert get_tesla_config().chemistry == "nca"
+        assert get_tesla_config().cells_in_series == 108
         # NCA 108s: 3.0 * 108 = 324.0 V
-        assert TESLA_CONFIG.safety_thresholds.min_voltage == pytest.approx(270.0)  # FIX: was 324.0
+        assert get_tesla_config().safety_thresholds.min_voltage == pytest.approx(270.0)  # FIX: was 324.0
         # 4.2 * 108 = 453.6 V
-        assert TESLA_CONFIG.safety_thresholds.max_voltage == pytest.approx(453.6)
+        assert get_tesla_config().safety_thresholds.max_voltage == pytest.approx(453.6)
 
     def test_chemistry_lfp_96s(self):
         """FrameworkConfig(chemistry='lfp') should auto-populate LFP thresholds."""
@@ -362,5 +362,5 @@ class TestFrameworkConfigRegression:
         assert qa.config.default_vin == "TESTVEHCLE0123456"
 
     def test_tesla_config_vin(self):
-        assert TESLA_CONFIG.default_vin == "5YJSA1E26HF000337"
-        assert TESLA_CONFIG.fail_on_anomaly is True
+        assert get_tesla_config().default_vin == "5YJSA1E26HF000337"
+        assert get_tesla_config().fail_on_anomaly is True

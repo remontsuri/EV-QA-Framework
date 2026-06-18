@@ -48,7 +48,7 @@ class ThermalRunawayPredictor:
         self.thresholds = {
             "critical_temp": 130.0,      # FIX: was 85.0 — actual thermal runaway onset ~130°C+
             "critical_risk": 10.0,
-            "critical_dtdt": 10.0,       # °C per sample — document time unit
+            "critical_dtdt": 10.0,       # °C per sample (1 Hz sampling = °C/s)
             "high_temp": 80.0,           # FIX: was 65.0 — raise to avoid false HIGH during fast charge
             "high_risk": 5.0,
             "medium_risk": 2.0,
@@ -98,6 +98,20 @@ class ThermalRunawayPredictor:
         }
 
     def predict_risk(self, df_recent: pd.DataFrame) -> dict[str, object]:
+        """Predict thermal runaway risk.
+
+        Args:
+            df_recent: DataFrame with temperature column ('temp').
+
+        Returns:
+            Dict with risk_level, risk_score, confidence, confidence_interval,
+            temperature_trend, anomaly_score, max_temp, and temp_rise_rate.
+
+        Note:
+            anomaly_score semantics differ by mode:
+            - Rule mode: proportion of temps deviating >2sigma from mean
+            - ML mode: proportion of IsolationForest scores below -0.5
+        """
         """
         Predict thermal runaway risk.
 

@@ -70,7 +70,7 @@ from .chemistries import (
     load_custom_profile_from_file,
     register_custom_profile,
 )
-from .config import DEFAULT_CONFIG, TESLA_CONFIG, FrameworkConfig, MLConfig, SafetyThresholds
+from .config import get_default_config, get_tesla_config, FrameworkConfig, MLConfig, SafetyThresholds
 from .dbc_parser import DBCParser, builtin_dbc
 from .digital_twin import BatteryDigitalTwin, BatteryState
 from .fleet_analytics import FleetAlert, FleetAnalytics
@@ -161,8 +161,8 @@ __all__ = [
     "FrameworkConfig",
     "SafetyThresholds",
     "MLConfig",
-    "DEFAULT_CONFIG",
-    "TESLA_CONFIG",
+    "get_default_config",
+    "get_tesla_config",
     # v2.0 modules
     "battery_scoring",
     "physics_features",
