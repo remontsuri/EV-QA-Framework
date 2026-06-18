@@ -17,20 +17,20 @@
 
 ## Installation
 
-`ash
+```bash
 pip install ev-qa-framework
-`
+```
 
 ---
 
 ## 30-second value
 
-`ash
+```bash
 git clone https://github.com/remontsuri/EV-QA-Framework.git
 cd EV-QA-Framework
 docker compose up -d
 open http://localhost:8081
-`
+```
 
 Done. You now have a running battery QA workstation:
 - telemetry validation
@@ -79,14 +79,14 @@ No cloud account required. No external dependencies. Just a CSV and a terminal.
 
 ## Quick start
 
-`ash
+```bash
 # Python CLI (direct)
 uv run pytest -v
 uv run python run_factory_inspection.py
 
 # Docker Compose (recommended for fresh environments)
 docker compose up --build
-`
+```
 
 - Tests + HTML coverage: http://localhost:8081/coverage/
 - Prometheus metrics: http://localhost:8081/metrics
@@ -97,21 +97,21 @@ docker compose up --build
 
 Analyze a CSV:
 
-`ash
+```bash
 uv run python -m ev_qa_framework.cli analyze -i examples/tesla_model_s_defective.csv -o report.json
-`
+```
 
 Emulate CAN traffic:
 
-`ash
+```bash
 uv run python -m ev_qa_framework.cli emulate --dbc my_battery.dbc --duration 60
-`
+```
 
 Train SOH model:
 
-`ash
+```bash
 uv run python -m ev_qa_framework.cli train-soh -d examples/tesla_battery_qa_test.py
-`
+```
 
 ---
 
