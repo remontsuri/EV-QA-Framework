@@ -60,13 +60,7 @@ class BatteryTelemetryModel(BaseModel):
             LOGGER.warning("Negative temperature %s°C", v)
         return v
 
-    @field_validator("soc", "soh")
-    @classmethod
-    def check_percentage_range(cls, v: float) -> float:
-        """Additional validation for percentage values."""
-        if not (0 <= v <= 100):
-            raise ValueError("Value must be in range 0-100%")
-        return v
+
 
     @model_validator(mode="after")
     def check_soc_soh_plausibility(self) -> "BatteryTelemetryModel":
