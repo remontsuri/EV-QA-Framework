@@ -42,9 +42,9 @@ class TestEVQAFrameworkLimts:
         )
         assert self.qa.validate_telemetry(t)[0] == expected
 
-    @pytest.mark.parametrize("soc", [0, 0.1, 50, 99.9, 100])
+    @pytest.mark.parametrize("soc", [10, 50, 99.9, 100])
     def test_soc_valid(self, soc):
-        """Valid SOC values"""
+        """Valid SOC values with healthy battery."""
         t = BatteryTelemetryModel(
             vin=self.vin, voltage=390.0, current=10, temperature=25, soc=soc, soh=100
         )
@@ -56,6 +56,13 @@ class TestEVQAFrameworkLimts:
         with pytest.raises(ValidationError):
             BatteryTelemetryModel(
                 vin=self.vin, voltage=390.0, current=10, temperature=25, soc=soc, soh=100
+            )
+
+    def test_soc_zero_with_full_soh_warns(self):
+        """SOC=0 with perfect SOH should warn, not raise."""
+        with pytest.warns(UserWarning):
+            BatteryTelemetryModel(
+                vin=self.vin, voltage=390.0, current=10, temperature=25, soc=0, soh=100
             )
 
     def test_invalid_telemetry_types(self):

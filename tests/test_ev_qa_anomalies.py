@@ -159,27 +159,26 @@ class TestNegativeScenarios:
         assert self.qa.validate_telemetry(t)[0] is True
 
 
-@pytest.mark.asyncio
 class TestAsyncTestSuite:
     """Tests for async test suite execution"""
 
     def setup_method(self):
         self.qa = EVQAFramework("Async-Tester")
 
-    async def test_all_valid_telemetry(self):
+    def test_all_valid_telemetry(self):
         """All data is valid"""
         test_data = [
             {"voltage": 370.0, "current": 50, "temperature": 30, "soc": 75, "soh": 98},
             {"voltage": 380.0, "current": 45, "temperature": 31, "soc": 78, "soh": 98},
             {"voltage": 390.0, "current": 40, "temperature": 32, "soc": 80, "soh": 98},
         ]
-        results = await self.qa.run_test_suite(test_data)
+        results = self.qa.run_test_suite(test_data)
         assert results["total_tests"] == 3
         # If data is valid and VIN was added automatically
         assert results["passed"] == 3
         assert results["failed"] == 0
 
-    async def test_mixed_valid_invalid(self):
+    def test_mixed_valid_invalid(self):
         """Mixed valid and invalid data"""
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 35, "soc": 80, "soh": 98},  # OK
@@ -205,12 +204,12 @@ class TestAsyncTestSuite:
                 "soh": 98,
             },  # SOC invalid (pydantic error)
         ]
-        results = await self.qa.run_test_suite(test_data)
+        results = self.qa.run_test_suite(test_data)
         assert results["total_tests"] == 4
         assert results["passed"] == 1
         assert results["failed"] == 3
 
-    async def test_with_anomalies(self):
+    def test_with_anomalies(self):
         """Data with detectable anomalies"""
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 30, "soc": 80, "soh": 98},
@@ -222,11 +221,11 @@ class TestAsyncTestSuite:
                 "soh": 98,
             },  # +10°C jump
         ]
-        results = await self.qa.run_test_suite(test_data)
+        results = self.qa.run_test_suite(test_data)
         assert results["passed"] == 2  # Both are valid individually
         assert len(results["anomalies"]) > 0  # But there is an anomaly
 
-    async def test_anomaly_flag_causes_failure(self):
+    def test_anomaly_flag_causes_failure(self):
         """With fail_on_anomaly enabled, telemetry with anomaly is considered failed"""
         self.qa.config.fail_on_anomaly = True
         test_data = [
@@ -239,7 +238,7 @@ class TestAsyncTestSuite:
                 "soh": 98,
             },  # +10°C jump
         ]
-        results = await self.qa.run_test_suite(test_data)
+        results = self.qa.run_test_suite(test_data)
         # first element succeeded, second failed due to jump
         assert results["passed"] == 1
         assert results["failed"] == 1

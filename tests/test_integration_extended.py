@@ -56,7 +56,7 @@ class TestConfigFrameworkIntegration:
             {"voltage": 400.0, "current": 50, "temperature": 30, "soc": 80, "soh": 98},
             {"voltage": 400.0, "current": 50, "temperature": 65, "soc": 80, "soh": 98},
         ]
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["failed"] >= 1
 
     def test_fail_on_anomaly_false_allows_anomalies(self):
@@ -67,7 +67,7 @@ class TestConfigFrameworkIntegration:
         data = [
             {"voltage": 400.0, "current": 50, "temperature": 30, "soc": 80, "soh": 98},
         ]
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["failed"] == 0
 
 
@@ -243,7 +243,7 @@ class TestMLAnalysisIntegration:
         ] * 5
 
         qa = EVQAFramework("ML-Test")
-        asyncio.run(qa.run_test_suite(normal_data))
+        qa.run_test_suite(normal_data)
 
         import pandas as pd
 
@@ -258,7 +258,7 @@ class TestMLAnalysisIntegration:
         ] * 20
 
         qa1 = EVQAFramework("Trainer")
-        asyncio.run(qa1.run_test_suite(train_data))
+        qa1.run_test_suite(train_data)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as f:
             path = f.name
@@ -294,7 +294,7 @@ class TestEndToEndWorkflow:
             {"voltage": 402.0, "current": 52, "temperature": 32, "soc": 78, "soh": 98},
         ]
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["total_tests"] == 3
         assert results["passed"] == 3
         assert results["failed"] == 0
@@ -309,6 +309,6 @@ class TestEndToEndWorkflow:
             {"voltage": 400.0, "current": 50, "temperature": 70, "soc": 80, "soh": 98},
         ]
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["total_tests"] == 2
         assert results["failed"] >= 1

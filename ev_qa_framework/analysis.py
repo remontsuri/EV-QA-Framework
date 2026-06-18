@@ -171,13 +171,55 @@ class EVBatteryAnalyzer:
         # Step 6: Build analysis result
         total = len(df_telemetry)
         count = len(self.anomalies)
+        # Step 7: Detect gradient attacks
+        gradient = self._detect_gradient_attack(df)
+        if gradient["gradient_detected"]:
+            # Boost severity if gradient detected
+            current_severity = self._assess_severity(anomaly_scores)
+            if current_severity == "INFO":
+                severity = "WARNING"
+            else:
+                severity = "CRITICAL"
+        else:
+            severity = self._assess_severity(anomaly_scores)
+
         return {
             "total_samples": total,
             "anomalies_detected": count,
             "anomaly_percentage": (count / total) * 100 if total else 0.0,
-            "severity": self._assess_severity(anomaly_scores),
+            "severity": severity,
+            "gradient_attack": gradient,
         }
 
+
+    def _detect_gradient_attack(self, df: pd.DataFrame) -> dict:
+        """Detect slow monotonic drifts that evade IsolationForest."""
+        result = {"gradient_detected": False, "details": {}}
+        for col in ["voltage", "current", "temp"]:
+            if col not in df.columns:
+                continue
+            values = df[col].values
+            if len(values) < 10:
+                continue
+            # Compute monotonicity: how many consecutive pairs increase/decrease
+            diffs = np.diff(values)
+            if len(diffs) == 0:
+                continue
+            # Check for sustained monotonic trend (>80% same direction)
+            pos_ratio = np.sum(diffs > 0) / len(diffs)
+            neg_ratio = np.sum(diffs < 0) / len(diffs)
+            monotonicity = max(pos_ratio, neg_ratio)
+            if monotonicity > 0.80:
+                total_drift = values[-1] - values[0]
+                drift_per_sample = total_drift / len(values)
+                result["gradient_detected"] = True
+                result["details"][col] = {
+                    "monotonicity": round(monotonicity, 3),
+                    "total_drift": round(total_drift, 4),
+                    "drift_per_sample": round(drift_per_sample, 6),
+                    "direction": "increasing" if pos_ratio > neg_ratio else "decreasing"
+                }
+        return result
     def _assess_severity(self, scores: np.ndarray) -> str:
         """
         Assess the severity level of detected anomalies.

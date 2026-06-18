@@ -118,20 +118,20 @@ class TestEVQAFramework:
         assert len(anomalies) > 0
         assert "Sharp temperature jump" in anomalies[0]
 
-    @pytest.mark.asyncio
-    async def test_run_test_suite_async(self):
+
+    def test_run_test_suite_sync(self):
         """Test async test suite execution"""
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 35, "soc": 80, "soh": 98},
             {"voltage": 395.0, "current": 45, "temperature": 36, "soc": 85, "soh": 98},
         ]
-        results = await self.qa.run_test_suite(test_data)
+        results = self.qa.run_test_suite(test_data)
         assert results["total_tests"] == 2
         assert results["passed"] == 2
         assert results["failed"] == 0
 
-    @pytest.mark.asyncio
-    async def test_run_test_suite_with_failures(self):
+
+    def test_run_test_suite_with_failures(self):
         """Test test suite with invalid data"""
         test_data = [
             {"voltage": 390.0, "current": 50, "temperature": 35, "soc": 80, "soh": 98},
@@ -143,7 +143,7 @@ class TestEVQAFramework:
                 "soh": 98,
             },  # Invalid voltage (< 200V)
         ]
-        results = await self.qa.run_test_suite(test_data)
+        results = self.qa.run_test_suite(test_data)
         assert results["passed"] == 1
         assert results["failed"] == 1
 

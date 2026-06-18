@@ -164,7 +164,7 @@ class EVQAFramework:
                     )
         return anomalies
 
-    async def run_test_suite(self, telemetry_data: list[dict[str, Any]]) -> dict[str, Any]:
+    def run_test_suite(self, telemetry_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Run full QA test suite with ML analysis"""
         results: dict[str, Any] = {
             "total_tests": len(telemetry_data),

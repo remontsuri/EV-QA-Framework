@@ -24,7 +24,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD python -c "import ev_qa_framework; assert ev_qa_framework.__version__ == '2.0.0'" || exit 1
+    CMD python -c "import ev_qa_framework; print(ev_qa_framework.__version__)" || exit 1
 
 # Default: show CLI help
 ENTRYPOINT ["ev-qa"]

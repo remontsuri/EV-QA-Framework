@@ -1,21 +1,16 @@
-"""
-Pydantic models for strict battery telemetry validation.
-Author: Remontsuri
-"""
+"""Pydantic models for strict battery telemetry validation."""
 
 import logging
+import warnings
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 LOGGER = logging.getLogger(__name__)
 
 
 class BatteryCellDataModel(BaseModel):
-    """
-    Model for detailed battery cell analysis.
-    Used for detecting cell imbalance.
-    """
+    """Model for detailed battery cell analysis."""
 
     vin: str = Field(..., min_length=17, max_length=17)
     cell_voltages: list[float] = Field(
@@ -25,7 +20,7 @@ class BatteryCellDataModel(BaseModel):
 
     @field_validator("cell_voltages")
     @classmethod
-    def check_voltages(cls, v):
+    def check_voltages(cls, v: list[float]) -> list[float]:
         if not v:
             raise ValueError("Cell voltage list cannot be empty")
         if any(volt < 0 or volt > 5.0 for volt in v):
@@ -34,18 +29,7 @@ class BatteryCellDataModel(BaseModel):
 
 
 class BatteryTelemetryModel(BaseModel):
-    """
-    Strict EV battery telemetry model with automatic validation.
-
-    Fields:
-        vin: Vehicle Identification Number (17 characters)
-        voltage: Battery voltage in volts (0-1000V)
-        current: Current in amperes (can be negative during discharge)
-        temperature: Battery temperature in degrees Celsius
-        soc: State of Charge — charge level (0-100%)
-        soh: State of Health — battery health (0-100%)
-        timestamp: Timestamp (Unix timestamp or datetime)
-    """
+    """Strict EV battery telemetry model with automatic validation."""
 
     vin: str = Field(..., min_length=17, max_length=17, description="Vehicle VIN (17 characters)")
     voltage: float = Field(..., ge=0.0, le=1000.0, description="Voltage (0-1000V)")
@@ -57,18 +41,18 @@ class BatteryTelemetryModel(BaseModel):
 
     @field_validator("vin")
     @classmethod
-    def validate_vin_format(cls, v):
-        """VIN format validation (letters and digits only, no I, O, Q)"""
+    def validate_vin_format(cls, v: str) -> str:
+        """VIN format validation (letters and digits only, no I, O, Q)."""
         if not v.isalnum():
             raise ValueError("VIN must contain only letters and digits")
-        forbidden = set("IOQ")
-        if any(c in forbidden for c in v.upper()):
+        forbidden = {"I", "O", "Q"}
+        if any(char in forbidden for char in v.upper()):
             raise ValueError("VIN cannot contain letters I, O, Q")
         return v.upper()
 
     @field_validator("temperature")
     @classmethod
-    def check_temperature_safety(cls, v):
+    def check_temperature_safety(cls, v: float) -> float:
         """Warning for critical temperatures (logged, not blocking)."""
         if v > 60:
             LOGGER.warning("High temperature %s°C", v)
@@ -78,14 +62,29 @@ class BatteryTelemetryModel(BaseModel):
 
     @field_validator("soc", "soh")
     @classmethod
-    def check_percentage_range(cls, v):
+    def check_percentage_range(cls, v: float) -> float:
         """Additional validation for percentage values."""
         if not (0 <= v <= 100):
             raise ValueError("Value must be in range 0-100%")
         return v
 
+    @model_validator(mode="after")
+    def check_soc_soh_plausibility(self) -> "BatteryTelemetryModel":
+        """Enforce physically plausible SOC and SOH relationships."""
+        if self.soh < 30.0 and self.soc > 80.0:
+            raise ValueError(
+                "Battery SOH too low to hold high SOC: "
+                f"SOH={self.soh}% cannot support SOC={self.soc}%"
+            )
+        if self.soh > 80.0 and self.soc < 10.0:
+            warnings.warn(
+                f"Healthy battery at critically low charge: SOH={self.soh}% SOC={self.soc}%",
+                UserWarning,
+            )
+        return self
+
     model_config = {
-        "validate_assignment": True,  # Validate on field change
+        "validate_assignment": True,
         "json_schema_extra": {
             "example": {
                 "vin": "1HGBH41JXMN109186",
@@ -101,7 +100,5 @@ class BatteryTelemetryModel(BaseModel):
 
 
 def validate_telemetry(data: dict) -> BatteryTelemetryModel:
-    """
-    Validate battery telemetry using Pydantic.
-    """
+    """Validate battery telemetry using Pydantic."""
     return BatteryTelemetryModel(**data)

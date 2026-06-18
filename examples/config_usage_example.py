@@ -138,7 +138,7 @@ async def example_4_testing_with_config():
         },  # Температура > 55°C!
     ]
 
-    results = await qa.run_test_suite(test_data)
+    results = qa.run_test_suite(test_data)
 
     print("📊 Результаты тестирования:")
     print(f"   Всего тестов: {results['total_tests']}")

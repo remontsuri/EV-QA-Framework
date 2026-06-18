@@ -17,8 +17,7 @@ from ev_qa_framework.framework import EVQAFramework
 class TestIntegrationFlow:
     """Integration tests for the full cycle"""
 
-    @pytest.mark.asyncio
-    async def test_full_pipeline_with_custom_config(self):
+    def test_full_pipeline_with_custom_config(self):
         """
         Testing the full cycle:
         1. Creating a custom config
@@ -57,7 +56,7 @@ class TestIntegrationFlow:
         ]
 
         # 4. Running
-        results = await qa.run_test_suite(test_data)
+        results = qa.run_test_suite(test_data)
 
         # 5. Check
         assert results["total_tests"] == 6
@@ -72,8 +71,7 @@ class TestIntegrationFlow:
         assert any("Temperature: 50.0" in msg for msg in anomaly_list)
         assert any("Sharp temperature jump" in msg for msg in anomaly_list)
 
-    @pytest.mark.asyncio
-    async def test_ml_persistence_integration(self):
+    def test_ml_persistence_integration(self):
         """
         ML persistence integration:
         1. Training the model on normal data
@@ -88,7 +86,7 @@ class TestIntegrationFlow:
 
         # 1. Train
         qa_train = EVQAFramework("Trainer")
-        await qa_train.run_test_suite(train_data)
+        qa_train.run_test_suite(train_data)
 
         # 2. Save the model
         with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as f:
@@ -129,8 +127,7 @@ class TestIntegrationFlow:
             if os.path.exists(model_path):
                 os.unlink(model_path)
 
-    @pytest.mark.asyncio
-    async def test_config_hot_reload_simulation(self):
+    def test_config_hot_reload_simulation(self):
         """
         Simulating configuration change "on the fly"
         """
@@ -138,7 +135,7 @@ class TestIntegrationFlow:
 
         # First, default thresholds (60 degrees)
         telemetry = {"voltage": 400.0, "current": 50, "temperature": 55, "soc": 80, "soh": 98}
-        results_1 = await qa.run_test_suite([telemetry])
+        results_1 = qa.run_test_suite([telemetry])
         assert results_1["passed"] == 1
 
         # Change config to a stricter one (50 degrees)
@@ -146,7 +143,7 @@ class TestIntegrationFlow:
         new_config.safety_thresholds.max_temperature = 50.0
         qa.config = new_config
 
-        results_2 = await qa.run_test_suite([telemetry])
+        results_2 = qa.run_test_suite([telemetry])
         assert results_2["failed"] == 1
         assert "Temperature: 55.0°C (threshold: 50.0°C)" in results_2["anomalies"][0]
 
@@ -161,7 +158,7 @@ class TestIntegrationFlow:
 
         # run_test_suite returns results even if there were validation errors,
         # logging them as failed tests.
-        results = asyncio.run(qa.run_test_suite(invalid_data))
+        results = qa.run_test_suite(invalid_data)
 
         assert results["total_tests"] == 1
         assert results["failed"] == 1

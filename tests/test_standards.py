@@ -80,7 +80,7 @@ class TestUN383MechanicalShock:
         ]
         import asyncio
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["failed"] == 0
         assert results["passed"] == 10
 
@@ -100,7 +100,7 @@ class TestUN383MechanicalShock:
         ]
         import asyncio
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["failed"] >= 1
 
     def test_mechanical_shock_temperature_anomaly(self):
@@ -118,7 +118,7 @@ class TestUN383MechanicalShock:
         ]
         import asyncio
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["failed"] >= 1
 
 
@@ -194,7 +194,7 @@ class TestUN383ShortCircuitDetection:
         ]
         import asyncio
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         # The low-voltage entry should fail validation
         assert results["failed"] >= 1
 
@@ -254,7 +254,7 @@ class TestIEC62660CycleLife:
         ]
         import asyncio
 
-        results = asyncio.run(qa.run_test_suite(data))
+        results = qa.run_test_suite(data)
         assert results["total_tests"] == 5
         # All should pass since SOH is still above critical (70%)
         assert results["passed"] == 5
@@ -274,7 +274,7 @@ class TestIEC62660CycleLife:
         ]
         import asyncio
 
-        asyncio.run(qa.run_test_suite(data))
+        qa.run_test_suite(data)
         # Last entries have SOH < 70% — they should still pass validation
         # (SOH is a warning, not a hard fail) but be below critical
         soh_values = [d["soh"] for d in data]
@@ -476,8 +476,7 @@ class TestISO12405EnergyMeasurement:
 class TestCrossStandardIntegration:
     """Integration tests spanning multiple standards."""
 
-    @pytest.mark.asyncio
-    async def test_full_suite_passes_safe_battery(self):
+    def test_full_suite_passes_safe_battery(self):
         """A safe battery should pass all standard checks."""
         qa = EVQAFramework("CrossStandard-Safe")
         data = [
@@ -485,13 +484,12 @@ class TestCrossStandardIntegration:
             {"voltage": 395.0, "current": 45.0, "temperature": 36.0, "soc": 82.0, "soh": 97.5},
             {"voltage": 388.0, "current": 55.0, "temperature": 34.0, "soc": 78.0, "soh": 97.0},
         ]
-        results = await qa.run_test_suite(data)
+        results = qa.run_test_suite(data)
         assert results["total_tests"] == 3
         assert results["passed"] == 3
         assert results["failed"] == 0
 
-    @pytest.mark.asyncio
-    async def test_full_suite_catches_abuse(self):
+    def test_full_suite_catches_abuse(self):
         """Abuse conditions should be caught by the framework."""
         qa = EVQAFramework("CrossStandard-Abuse")
         data = [
@@ -505,7 +503,7 @@ class TestCrossStandardIntegration:
             },  # abuse
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
         ]
-        results = await qa.run_test_suite(data)
+        results = qa.run_test_suite(data)
         assert results["failed"] >= 1
 
     def test_battery_telemetry_model_validation(self):
