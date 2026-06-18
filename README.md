@@ -2,29 +2,38 @@
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Tests](https://img.shields.io/badge/tests-948%20passed-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-955%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.1.3-blue.svg)
+[![PyPI](https://img.shields.io/pypi/v/ev-qa-framework.svg)](https://pypi.org/project/ev-qa-framework/)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
 
-**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 948 passing tests and a Docker-ready pipeline.**
+**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 955 passing tests and a Docker-ready pipeline.**
 
-22 modules. MIT licensed. Python 3.9+.
+22 modules. MIT licensed. Python 3.10+.
+
+---
+
+## Installation
+
+`ash
+pip install ev-qa-framework
+`
 
 ---
 
 ## 30-second value
 
-```bash
+`ash
 git clone https://github.com/remontsuri/EV-QA-Framework.git
 cd EV-QA-Framework
 docker compose up -d
 open http://localhost:8081
-```
+`
 
 Done. You now have a running battery QA workstation:
-- telementry validation
+- telemetry validation
 - ML anomaly detection
 - thermal runaway early warning
 - cell imbalance analysis
@@ -42,15 +51,15 @@ No cloud account required. No external dependencies. Just a CSV and a terminal.
 
 **Anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, estimator count.
 
-**Thermal runaway prediction.** Rule-based heuristics (temperature, delta-temp, anomaly score, chemistry runaway point). CRITICAL trigger defaults at ≥85 °C, rapid-rise trigger at >10 °C/min. Catches overheating before cascade onset. Confidence score clamped to [0, 1].
+**Thermal runaway prediction.** Rule-based heuristics (temperature, delta-temp, anomaly score, chemistry runaway point). CRITICAL trigger defaults at >=85 C, rapid-rise trigger at >10 C/min. Catches overheating before cascade onset. Confidence score clamped to [0, 1].
 
-**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry. Transformer-based prediction via `soh_transformer` for longer sequences.
+**SOH prediction.** LSTM-based State of Health forecasting from historical telemetry. Transformer-based prediction via soh_transformer for longer sequences.
 
 **Cell imbalance analysis.** Statistical analysis of cell group voltages with configurable thresholds, outlier detection, linear regression trend.
 
-**Battery scoring.** Composite health score (0–100) with letter grades (A+ through F). Combines SOH, internal resistance, cell balance, and thermal history.
+**Battery scoring.** Composite health score (0-100) with letter grades (A+ through F). Combines SOH, internal resistance, cell balance, and thermal history.
 
-**CAN bus & DBC.** CAN 2.0B and J1939 simulation and reception. DBC parser supports Vector CANdb, SavvyCAN exports, Intel/Motorola byte order.
+**CAN bus and DBC.** CAN 2.0B and J1939 simulation and reception. DBC parser supports Vector CANdb, SavvyCAN exports, Intel/Motorola byte order.
 
 **Fleet analytics.** Aggregate analysis across vehicle fleets: degradation curves, anomaly distribution, SOH histograms.
 
@@ -64,20 +73,20 @@ No cloud account required. No external dependencies. Just a CSV and a terminal.
 
 **Compliance testing.** UN 38.3, IEC 62660, SAE J2464, ISO 12405, GB/T 31484, GB/T 31486, GB 38031.
 
-**Observability.** Prometheus `/metrics` endpoint, Grafana dashboard, HTML coverage reports, JUnit XML.
+**Observability.** Prometheus /metrics endpoint, Grafana dashboard, HTML coverage reports, JUnit XML.
 
 ---
 
 ## Quick start
 
-```bash
+`ash
 # Python CLI (direct)
 uv run pytest -v
 uv run python run_factory_inspection.py
 
 # Docker Compose (recommended for fresh environments)
 docker compose up --build
-```
+`
 
 - Tests + HTML coverage: http://localhost:8081/coverage/
 - Prometheus metrics: http://localhost:8081/metrics
@@ -88,27 +97,27 @@ docker compose up --build
 
 Analyze a CSV:
 
-```bash
+`ash
 uv run python -m ev_qa_framework.cli analyze -i examples/tesla_model_s_defective.csv -o report.json
-```
+`
 
 Emulate CAN traffic:
 
-```bash
+`ash
 uv run python -m ev_qa_framework.cli emulate --dbc my_battery.dbc --duration 60
-```
+`
 
 Train SOH model:
 
-```bash
+`ash
 uv run python -m ev_qa_framework.cli train-soh -d examples/tesla_battery_qa_test.py
-```
+`
 
 ---
 
 ## Project structure
 
-```
+`
 ev_qa_framework/
   framework.py         # core QA engine
   models.py            # Pydantic models + telemetry validation
@@ -130,10 +139,10 @@ ev_qa_framework/
   metrics.py           # Prometheus metrics
   cli.py               # CLI entry point
   chemistries.py       # battery chemistry definitions (LFP, NMC, NCA)
-tests/                  # 948 tests
+tests/                  # 955 tests
 examples/               # sample telemetry and demos
 run_factory_inspection.py  # end-to-end factory QA demo
-```
+`
 
 ---
 
@@ -141,13 +150,14 @@ run_factory_inspection.py  # end-to-end factory QA demo
 
 | Artifact | Value |
 |---|---|
-| Tests | locally verified (run `pytest -q`) |
-| Coverage | configured in CI (target ~93%) |
+| Tests | 955 passing |
+| Coverage | 93% |
 | CI | Lint + Test + Coverage |
 | License | MIT |
 | Python | 3.10+ |
+| PyPI | ev-qa-framework 2.1.3 |
 
-Regression risk is tracked in `tests/`. Coverage artifacts (`coverage/`, `junit.xml`) are present in the release pipeline.
+Regression risk is tracked in tests/. Coverage artifacts (coverage/, junit.xml) are present in the release pipeline.
 
 ---
 
@@ -155,7 +165,7 @@ Regression risk is tracked in `tests/`. Coverage artifacts (`coverage/`, `junit.
 
 - [x] GitHub Actions CI badge + nightly coverage job
 - [x] Grafana dashboard import JSON + provisioning
-- [ ] public PyPI release
+- [x] public PyPI release
 - [ ] real BMS telemetry adapters (Tesla, BYD, Nio)
 - [ ] V2S + charging-station scenarios
 - [ ] integration with Vector CANoe / CANalyzer
