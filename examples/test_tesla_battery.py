@@ -76,7 +76,7 @@ def analyze_tesla_battery(csv_path: str | Path = DEFAULT_CSV) -> dict[str, Any]:
                 f"CRITICAL: Overheating {row['temp']}C at point {idx}"
             )
 
-    results = pytest.importorskip("asyncio").run(qa.run_test_suite(telemetry_data))
+    results = qa.run_test_suite(telemetry_data)
     return results
 
 

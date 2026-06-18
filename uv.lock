@@ -837,7 +837,7 @@ wheels = [
 
 [[package]]
 name = "ev-qa-framework"
-version = "2.1.0"
+version = "2.1.4"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -852,9 +852,6 @@ dependencies = [
     { name = "prometheus-client" },
     { name = "pydantic" },
     { name = "pyserial" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
     { name = "python-can" },
     { name = "pyyaml" },
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -869,6 +866,9 @@ dev = [
     { name = "pre-commit" },
     { name = "pylint" },
     { name = "pyserial" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
     { name = "ruff" },
 ]
 docs = [
@@ -910,9 +910,9 @@ requires-dist = [
     { name = "pyserial", specifier = ">=3.5" },
     { name = "pyserial", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "pyserial", marker = "extra == 'hardware'", specifier = ">=3.5" },
-    { name = "pytest", specifier = ">=7.0" },
-    { name = "pytest-asyncio", specifier = ">=0.21" },
-    { name = "pytest-cov", specifier = ">=4.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "python-can", specifier = ">=4.3" },
     { name = "python-can", marker = "extra == 'hardware'", specifier = ">=4.3" },
     { name = "pyyaml", specifier = ">=6.0" },
