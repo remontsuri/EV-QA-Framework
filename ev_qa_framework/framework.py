@@ -26,6 +26,32 @@ from .config import FrameworkConfig
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class _ShutdownHandler:
+    _cleanups = []
+
+    @classmethod
+    def register(cls, fn):
+        cls._cleanups.append(fn)
+
+    @classmethod
+    def shutdown(cls, signum=None, frame=None):
+        for fn in cls._cleanups:
+            try:
+                fn()
+            except Exception:
+                pass
+        if signum is not None:
+            raise SystemExit(0)
+
+
+def _setup_signal_handlers():
+    signal.signal(signal.SIGTERM, _ShutdownHandler.shutdown)
+    signal.signal(signal.SIGINT, _ShutdownHandler.shutdown)
+
+
+_setup_signal_handlers()
+
+
 
 from .models import BatteryTelemetryModel
 
