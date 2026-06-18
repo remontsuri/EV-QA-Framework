@@ -158,12 +158,14 @@ class TestModelPersistence:
             # Save without extension
             analyzer.save_model(filepath_base)
 
-            # Check that .joblib was added
-            expected_filepath = filepath_base + ".joblib"
+            # Check that _params.json was created
+            expected_filepath = filepath_base + "_params.json"
             assert os.path.exists(expected_filepath)
         finally:
-            if os.path.exists(filepath_base + ".joblib"):
-                os.unlink(filepath_base + ".joblib")
+            for suffix in ["_params.json", "_scaler_mean.npy", "_scaler_scale.npy"]:
+                p = filepath_base + suffix
+                if os.path.exists(p):
+                    os.unlink(p)
 
     def test_save_create_directory(self):
         """Test automatic directory creation"""
@@ -175,7 +177,7 @@ class TestModelPersistence:
             filepath = os.path.join(tmpdir, "models", "subdir", "model.joblib")
 
             analyzer.save_model(filepath)
-            assert os.path.exists(filepath)
+            assert os.path.exists(os.path.join(tmpdir, "models", "subdir", "model_params.json"))
 
 
 class TestAnomalyDetectorPersistence:
@@ -263,8 +265,8 @@ class TestModelVersioning:
             analyzer_v2.save_model(filepath_v2, metadata={"version": "2.0"})
 
             # Check that both versions are saved
-            assert os.path.exists(filepath_v1)
-            assert os.path.exists(filepath_v2)
+            assert os.path.exists(filepath_v1.replace(".joblib", "_params.json"))
+            assert os.path.exists(filepath_v2.replace(".joblib", "_params.json"))
 
             # Load both versions
             loaded_v1 = EVBatteryAnalyzer.load_model(filepath_v1)

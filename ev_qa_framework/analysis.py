@@ -11,7 +11,8 @@ import warnings
 from datetime import datetime
 from typing import Any
 
-import joblib  # type: ignore  # no stub available
+import json
+
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
@@ -251,122 +252,56 @@ class EVBatteryAnalyzer:
         return "INFO"  # Weak anomaly or normal
 
     def save_model(self, filepath: str, metadata: dict[str, Any] | None = None) -> None:
-        """
-        Save the trained model and scaler to a file.
-
-        Saves:
-        - Trained IsolationForest model
-        - Trained StandardScaler
-        - Model parameters (contamination, thresholds, etc.)
-        - Metadata (training date, version, comments)
-
-        Args:
-            filepath: Path to save the model (without extension, .joblib will be appended)
-            metadata: Optional metadata (comments, version, dataset info)
-
-        Example:
-            >>> analyzer = EVBatteryAnalyzer()
-            >>> analyzer.analyze_telemetry(df)
-            >>> analyzer.save_model('models/battery_analyzer_v1',
-            ...                     metadata={'version': '1.0', 'dataset': 'Tesla_2024'})
-
-        Raises:
-            ValueError: If model is not trained (analyze_telemetry or train was not called)
-        """
-        # Check that the model is trained (scaler must be fitted)
+        """Save model params and scaler to JSON + NPY files."""
         if not hasattr(self.scaler, "mean_"):
             raise ValueError("Model not trained! Call analyze_telemetry() or train() first")
 
-        # Prepare data for saving
-        model_data = {
-            "model": self.model,
-            "scaler": self.scaler,
+        base = filepath.rsplit(".", 1)[0] if "." in filepath else filepath
+        os.makedirs(os.path.dirname(base) or ".", exist_ok=True)
+
+        bundle = {
+            "model_params": self.model.get_params(),
             "contamination": self.contamination,
             "critical_threshold": self.critical_threshold,
             "warning_threshold": self.warning_threshold,
             "save_timestamp": datetime.now().isoformat(),
             "metadata": metadata or {},
         }
-
-        # Add .joblib extension if not present
-        if not filepath.endswith(".joblib"):
-            filepath = filepath + ".joblib"
-
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(filepath), exist_ok=True) if os.path.dirname(filepath) else None
-
-        # Save
-        joblib.dump(model_data, filepath, compress=3)
-        logger.info("Model saved: %s", filepath)
-
+        with open(base + "_params.json", "w") as f:
+            json.dump(bundle, f, indent=2, default=str)
+        np.save(base + "_scaler_mean.npy", self.scaler.mean_)
+        np.save(base + "_scaler_scale.npy", self.scaler.scale_)
+        logger.info("Model saved: %s (JSON + NPY)", base)
         if metadata:
             logger.info("Metadata: %s", metadata)
 
     @classmethod
     def load_model(cls, filepath: str) -> "EVBatteryAnalyzer":
-        """
-        Load a saved model from a file.
+        """Load a saved model from JSON + NPY files."""
+        base = filepath.rsplit(".", 1)[0] if "." in filepath else filepath
+        params_path = base + "_params.json"
+        if not os.path.exists(params_path):
+            raise FileNotFoundError(f"Model file not found: {params_path}")
 
-        Loads all model components and creates a new EVBatteryAnalyzer instance
-        with restored state.
+        with open(params_path, "r") as f:
+            bundle = json.load(f)
 
-        Args:
-            filepath: Path to the saved model (.joblib)
+        analyzer = cls(
+            contamination=bundle.get("contamination", 0.1),
+            critical_threshold=bundle.get("critical_threshold", -0.8),
+            warning_threshold=bundle.get("warning_threshold", -0.5),
+        )
 
-        Returns:
-            New EVBatteryAnalyzer instance with the loaded model
+        from sklearn.ensemble import IsolationForest
 
-        Example:
-            >>> analyzer = EVBatteryAnalyzer.load_model('models/battery_analyzer_v1.joblib')
-            >>> results = analyzer.analyze_telemetry(new_data)
+        analyzer.model = IsolationForest(**bundle.get("model_params", {}))
+        analyzer.scaler.mean_ = np.load(base + "_scaler_mean.npy")
+        analyzer.scaler.scale_ = np.load(base + "_scaler_scale.npy")
+        analyzer.scaler.n_features_in_ = len(analyzer.scaler.mean_)
 
-        Raises:
-            FileNotFoundError: If the file is not found
-            ValueError: If the file is corrupted or has an invalid format
-        """
-        # Add extension if not present
-        if not filepath.endswith(".joblib"):
-            filepath = filepath + ".joblib"
-
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Model file not found: {filepath}")
-
-        # FIX: limit file size to prevent DoS via joblib deserialization
-        _max_size = 100 * 1024 * 1024  # 100 MB
-        _file_size = os.path.getsize(filepath)
-        if _file_size > _max_size:
-            raise ValueError(f"Model file too large: {_file_size} bytes (max {_max_size})")
-
-        # NOTE: joblib.load is used for internal model serialization only.
-        # Models are saved/loaded within the same trusted application context.
-        # For untrusted sources, use JSON/msgspec with schema validation instead.
-        try:
-            model_data = joblib.load(filepath)
-
-            # Create new instance
-            analyzer = cls(
-                contamination=model_data["contamination"],
-                critical_threshold=model_data.get("critical_threshold", -0.8),
-                warning_threshold=model_data.get("warning_threshold", -0.5),
-            )
-
-            # Restore model and scaler
-            analyzer.model = model_data["model"]
-            analyzer.scaler = model_data["scaler"]
-
-            # Print info about the loaded model
-            save_time = model_data.get("save_timestamp", "Unknown")
-            metadata = model_data.get("metadata", {})
-
-            logger.info("Model loaded: %s", filepath)
-            logger.info("Saved: %s", save_time)
-            if metadata:
-                logger.info("Metadata: %s", metadata)
-
-            return analyzer
-
-        except Exception as e:
-            raise ValueError(f"Error loading model: {e}")
+        save_time = bundle.get("save_timestamp", "Unknown")
+        logger.info("Model loaded: %s (saved: %s)", base, save_time)
+        return analyzer
 
     def get_model_info(self) -> dict[str, Any]:
         """
@@ -602,13 +537,22 @@ class AnomalyDetector(EVBatteryAnalyzer):
         if not self._is_trained:
             raise ValueError("Model not trained! Call train() first")
         os.makedirs(path, exist_ok=True)
-        joblib.dump(self.model, os.path.join(path, "isolation_forest.joblib"))
-        joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
+        np.save(os.path.join(path, "isolation_forest_mean.npy"), self.scaler.mean_)
+        np.save(os.path.join(path, "isolation_forest_scale.npy"), self.scaler.scale_)
+        params = self.model.get_params()
+        with open(os.path.join(path, "model_params.json"), "w") as f:
+            json.dump(params, f, indent=2, default=str)
 
     def load_detector(self, path: str) -> None:
         """Load trained model and scaler from disk."""
-        self.model = joblib.load(os.path.join(path, "isolation_forest.joblib"))
-        self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
+        from sklearn.ensemble import IsolationForest
+
+        with open(os.path.join(path, "model_params.json"), "r") as f:
+            params = json.load(f)
+        self.model = IsolationForest(**params)
+        self.scaler.mean_ = np.load(os.path.join(path, "isolation_forest_mean.npy"))
+        self.scaler.scale_ = np.load(os.path.join(path, "isolation_forest_scale.npy"))
+        self.scaler.n_features_in_ = len(self.scaler.mean_)
         self._is_trained = True
 
 
@@ -660,3 +604,46 @@ if __name__ == "__main__":
     predictions, scores = detector.detect(test_data)
     print(f"Predictions: {predictions}")
     print(f"Scores: {scores}")
+
+
+class StreamingAnomalyDetector:
+    """Online anomaly detection with sliding window for real-time telemetry."""
+
+    def __init__(self, window_size: int = 100, contamination: float = 0.1):
+        self.window_size = window_size
+        self.contamination = contamination
+        self._buffer: list[dict] = []
+        self._model: IsolationForest | None = None
+        self._scaler: StandardScaler = StandardScaler()
+
+    def update(self, sample: dict) -> dict | None:
+        """Add a sample and return anomaly result if window is full."""
+        self._buffer.append(sample)
+        if len(self._buffer) > self.window_size:
+            self._buffer.pop(0)
+        if len(self._buffer) < 10:
+            return None
+        df = pd.DataFrame(self._buffer)
+        for col in ["voltage", "current", "temp"]:
+            if col not in df.columns:
+                return None
+        X = df[["voltage", "current", "temp"]].values
+        X_scaled = self._scaler.fit_transform(X)
+        if self._model is None:
+            self._model = IsolationForest(
+                contamination=self.contamination, n_estimators=100, random_state=42
+            )
+        self._model.fit(X_scaled)
+        scores = self._model.score_samples(X_scaled)
+        last_score = scores[-1]
+        is_anomaly = self._model.predict(X_scaled[[-1]])[0] == -1
+        return {
+            "is_anomaly": bool(is_anomaly),
+            "score": float(last_score),
+            "window_size": len(self._buffer),
+        }
+
+    def reset(self) -> None:
+        """Clear buffer and retrain on next update."""
+        self._buffer.clear()
+        self._model = None

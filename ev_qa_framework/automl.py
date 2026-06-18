@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import IsolationForest, RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor, IsolationForest, RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import MinMaxScaler
@@ -51,6 +51,9 @@ class AutoMLSOH:
 
         models = {
             "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
+            "gradient_boosting": GradientBoostingRegressor(
+                n_estimators=100, random_state=42, learning_rate=0.1
+            ),
         }
 
         self.results = []

@@ -150,9 +150,42 @@ class ThermalRunawayPredictor:
         elif risk_score > self.thresholds["medium_risk"]:
             risk_level = "MEDIUM"
 
+        # Uncertainty quantification via bootstrap
+        temps = df_recent["temp"].values
+        n_bootstrap = min(50, len(temps))
+        bootstrap_scores = []
+        for _ in range(n_bootstrap):
+            sample = list(temps)
+            np.random.shuffle(sample)
+            s = np.array(sample[: max(5, len(sample) // 2)])
+            bootstrap_scores.append(self._rule_score(s))
+        score_std = float(np.std(bootstrap_scores)) if bootstrap_scores else 0.0
+        ci_lower = max(0.0, risk_score - 1.96 * score_std)
+        ci_upper = min(1.0, risk_score + 1.96 * score_std)
+
         return {
             "risk_level": risk_level,
             "risk_score": round(risk_score, 2),
-            "confidence": round(max(0.0, 1.0 - anomaly_score), 2),  # FIX: clamp to >=0
+            "confidence": round(max(0.0, 1.0 - anomaly_score), 2),
+            "confidence_interval": [round(ci_lower, 3), round(ci_upper, 3)],
+            "score_uncertainty": round(score_std, 4),
             **features,
         }
+
+    def _rule_score(self, temps: np.ndarray) -> float:
+        """Compute rule-based risk score from temperature array."""
+        n = len(temps)
+        if n < 2:
+            return 0.0
+        slope = float(np.polyfit(np.arange(n), temps, 1)[0])
+        max_temp = float(np.max(temps))
+        gradients = np.diff(temps)
+        dt_dt = float(np.max(gradients)) if len(gradients) > 0 else 0.0
+        mean, std = float(np.mean(temps)), float(np.std(temps))
+        anomaly_score = float(np.sum(np.abs(temps - mean) > 2 * std)) / len(temps)
+        return (
+            slope * self.rule_weights["rise_rate"]
+            + max(0, max_temp - 50) * self.rule_weights["max_temp"]
+            + anomaly_score * self.rule_weights["anomaly"]
+            + dt_dt * self.rule_weights["dt_dt"]
+        )

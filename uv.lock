@@ -861,6 +861,21 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "fastapi" },
+    { name = "jinja2" },
+    { name = "matplotlib" },
+    { name = "prometheus-client" },
+    { name = "pyserial" },
+    { name = "python-can" },
+    { name = "tensorflow" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+]
+can = [
+    { name = "pyserial" },
+    { name = "python-can" },
+]
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
@@ -887,6 +902,16 @@ hardware = [
 ml = [
     { name = "tensorflow" },
 ]
+monitoring = [
+    { name = "matplotlib" },
+    { name = "prometheus-client" },
+]
+web = [
+    { name = "fastapi" },
+    { name = "jinja2" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -897,23 +922,30 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=23.1" },
     { name = "aiohttp", specifier = ">=3.9" },
+    { name = "ev-qa-framework", extras = ["ml", "hardware", "web", "can", "monitoring"], marker = "extra == 'all'" },
     { name = "fastapi", specifier = ">=0.100" },
+    { name = "fastapi", marker = "extra == 'web'", specifier = ">=0.100" },
     { name = "jinja2", specifier = ">=3.1" },
+    { name = "jinja2", marker = "extra == 'web'", specifier = ">=3.1" },
     { name = "matplotlib", specifier = ">=3.5" },
+    { name = "matplotlib", marker = "extra == 'monitoring'", specifier = ">=3.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0" },
     { name = "numpy", specifier = ">=1.24" },
     { name = "pandas", specifier = ">=2.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0" },
     { name = "prometheus-client", specifier = ">=0.17" },
+    { name = "prometheus-client", marker = "extra == 'monitoring'", specifier = ">=0.17" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pylint", marker = "extra == 'dev'", specifier = ">=2.14" },
     { name = "pyserial", specifier = ">=3.5" },
+    { name = "pyserial", marker = "extra == 'can'", specifier = ">=3.5" },
     { name = "pyserial", marker = "extra == 'dev'", specifier = ">=3.5" },
     { name = "pyserial", marker = "extra == 'hardware'", specifier = ">=3.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "python-can", specifier = ">=4.3" },
+    { name = "python-can", marker = "extra == 'can'", specifier = ">=4.3" },
     { name = "python-can", marker = "extra == 'hardware'", specifier = ">=4.3" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
@@ -923,9 +955,11 @@ requires-dist = [
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=1.0" },
     { name = "tensorflow", marker = "extra == 'ml'", specifier = ">=2.15" },
     { name = "uvicorn", specifier = ">=0.23" },
+    { name = "uvicorn", marker = "extra == 'web'", specifier = ">=0.23" },
     { name = "websockets", specifier = ">=11.0" },
+    { name = "websockets", marker = "extra == 'web'", specifier = ">=11.0" },
 ]
-provides-extras = ["ml", "hardware", "dev", "docs"]
+provides-extras = ["ml", "hardware", "web", "can", "monitoring", "all", "dev", "docs"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "hypothesis", specifier = ">=6.141.1" }]

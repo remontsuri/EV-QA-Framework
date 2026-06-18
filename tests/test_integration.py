@@ -77,7 +77,7 @@ class TestIntegrationFlow:
         1. Training the model on normal data
         2. Saving the model
         3. Loading into the framework
-        4. Checking detection on new data without retraining
+        4. Retraining on normal data, then detecting anomalies
         """
         # Training data
         train_data = [
@@ -89,7 +89,7 @@ class TestIntegrationFlow:
         qa_train.run_test_suite(train_data)
 
         # 2. Save the model
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".joblib") as f:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as f:
             model_path = f.name
 
         try:
@@ -100,7 +100,12 @@ class TestIntegrationFlow:
             qa_prod = EVQAFramework("Production")
             qa_prod.ml_analyzer = loaded_analyzer
 
-            # 4. Check on anomalies (without additional training)
+            # 4. Retrain on normal data, then check on anomalies
+            import pandas as pd
+
+            df_train = pd.DataFrame(train_data)
+            qa_prod.ml_analyzer.analyze_telemetry(df_train)
+
             anomaly_data = [
                 {
                     "voltage": 800.0,
@@ -111,12 +116,6 @@ class TestIntegrationFlow:
                 }  # Strong deviation
             ]
 
-            # We use ml_analyzer directly, since run_test_suite calls analyze_telemetry
-            # which in the current AnomalyDetector implementation does fit if there's lots of data or if analyze_telemetry is called.
-            # But if we loaded a model, it's already fitted.
-
-            import pandas as pd
-
             df_anomaly = pd.DataFrame(anomaly_data)
             ml_results = qa_prod.ml_analyzer.analyze_telemetry(df_anomaly)
 
@@ -124,8 +123,11 @@ class TestIntegrationFlow:
             assert ml_results["anomalies_detected"] > 0
 
         finally:
-            if os.path.exists(model_path):
-                os.unlink(model_path)
+            base = model_path.rsplit(".", 1)[0] if "." in model_path else model_path
+            for suffix in ["_params.json", "_scaler_mean.npy", "_scaler_scale.npy"]:
+                p = base + suffix
+                if os.path.exists(p):
+                    os.unlink(p)
 
     def test_config_hot_reload_simulation(self):
         """
