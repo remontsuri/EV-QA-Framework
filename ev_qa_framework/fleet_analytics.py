@@ -18,7 +18,7 @@ from .analysis import EVBatteryAnalyzer
 from .battery_scoring import BatteryScorer
 from .physics_features import PhysicsFeatureExtractor
 
-warnings.filterwarnings("ignore", category=UserWarning, module="ev_qa_framework\\.fleet_analytics")
+# warnings.filterwarnings removed - use targeted suppression if needed
 
 
 # ---------------------------------------------------------------------------

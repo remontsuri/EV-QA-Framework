@@ -132,6 +132,10 @@ class EVBatteryAnalyzer:
         df: pd.DataFrame = normalize_columns(df_telemetry)
         require_columns(df, ["voltage", "current", "temp"])
 
+        MIN_SAMPLES = 10
+        if len(df) < MIN_SAMPLES:
+            return None
+
         # Step 1: Select only numeric features for analysis
         # SOC is not used for detection as it is a dependent variable
         features: list[str] = ["voltage", "current", "temp"]
@@ -621,12 +625,14 @@ if __name__ == "__main__":
 class StreamingAnomalyDetector:
     """Online anomaly detection with sliding window for real-time telemetry."""
 
-    def __init__(self, window_size: int = 100, contamination: float = 0.1):
+    def __init__(self, window_size: int = 100, contamination: float = 0.1, retrain_every: int = 10):
         self.window_size = window_size
         self.contamination = contamination
+        self.retrain_every = retrain_every
         self._buffer: list[dict] = []
         self._model: IsolationForest | None = None
         self._scaler: StandardScaler = StandardScaler()
+        self._update_count = 0
 
     def update(self, sample: dict) -> dict | None:
         """Add a sample and return anomaly result if window is full."""
@@ -635,17 +641,18 @@ class StreamingAnomalyDetector:
             self._buffer.pop(0)
         if len(self._buffer) < 10:
             return None
+        self._update_count += 1
         df = pd.DataFrame(self._buffer)
         for col in ["voltage", "current", "temp"]:
             if col not in df.columns:
                 return None
         X = df[["voltage", "current", "temp"]].values
         X_scaled = self._scaler.fit_transform(X)
-        if self._model is None:
+        if self._model is None or self._update_count % self.retrain_every == 0:
             self._model = IsolationForest(
                 contamination=self.contamination, n_estimators=100, random_state=42
             )
-        self._model.fit(X_scaled)
+            self._model.fit(X_scaled)
         scores = self._model.score_samples(X_scaled)
         last_score = scores[-1]
         is_anomaly = self._model.predict(X_scaled[[-1]])[0] == -1
@@ -659,3 +666,4 @@ class StreamingAnomalyDetector:
         """Clear buffer and retrain on next update."""
         self._buffer.clear()
         self._model = None
+        self._scaler = StandardScaler()

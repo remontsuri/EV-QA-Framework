@@ -108,12 +108,13 @@ class TestIntegrationFlow:
 
             anomaly_data = [
                 {
-                    "voltage": 800.0,
-                    "current": 300,
-                    "temperature": 55,
+                    "voltage": 800.0 + i * 0.1,
+                    "current": 300 + i,
+                    "temperature": 55 + i * 0.1,
                     "soc": 20,
                     "soh": 90,
                 }  # Strong deviation
+                for i in range(10)
             ]
 
             df_anomaly = pd.DataFrame(anomaly_data)

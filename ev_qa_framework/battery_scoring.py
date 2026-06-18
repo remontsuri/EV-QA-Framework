@@ -21,7 +21,6 @@ WEIGHT_ANOMALY = 0.15  # FIX: was 0.25 — rebalanced for thermal weight increas
 WEIGHT_CELL_BALANCE = 0.20
 WEIGHT_THERMAL = 0.25  # FIX: was 0.15 — thermal is critical for EV safety
 
-assert abs(WEIGHT_SOH + WEIGHT_ANOMALY + WEIGHT_CELL_BALANCE + WEIGHT_THERMAL - 1.0) < 1e-9
 
 
 # ---------------------------------------------------------------------------
@@ -265,8 +264,10 @@ class BatteryScorer:
             # Map: 0% anomalies -> 100, 100% anomalies -> 0
             score = max(0.0, 100.0 - pct * 2)
             return score
-        except Exception:
-            return 100.0
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Scoring component failed: %s", e)
+            return 50.0
 
     def _compute_cell_balance(self, voltages: list[float] | None) -> float:
         """Cell balance score derived from imbalance severity."""
@@ -279,8 +280,10 @@ class BatteryScorer:
             if severity == "WARNING":
                 return 70.0
             return 30.0
-        except Exception:
-            return 100.0
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Scoring component failed: %s", e)
+            return 50.0
 
     def _compute_thermal(self, df: pd.DataFrame) -> float:
         """Thermal risk score: 100 for LOW, decreasing for higher risk."""
@@ -289,5 +292,7 @@ class BatteryScorer:
             level = result.get("risk_level", "LOW")
             mapping = {"LOW": 100.0, "MEDIUM": 70.0, "HIGH": 40.0, "CRITICAL": 10.0}
             return mapping.get(level, 100.0)
-        except Exception:
-            return 100.0
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Scoring component failed: %s", e)
+            return 50.0

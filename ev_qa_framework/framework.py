@@ -35,11 +35,13 @@ class _ShutdownHandler:
 
     @classmethod
     def shutdown(cls, signum=None, frame=None):
+        import logging
+        _log = logging.getLogger(__name__)
         for fn in cls._cleanups:
             try:
                 fn()
-            except Exception:
-                pass
+            except Exception as e:
+                _log.warning("Cleanup handler failed: %s", e)
         if signum is not None:
             raise SystemExit(0)
 

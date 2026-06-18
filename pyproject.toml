@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ev-qa-framework"
-version = "2.1.4"
+version = "2.3.1"
 description = "ML-powered QA Framework for Electric Vehicle & IoT Battery Testing"
 readme = "README.md"
 requires-python = ">=3.10"

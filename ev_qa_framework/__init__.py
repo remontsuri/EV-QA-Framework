@@ -99,7 +99,7 @@ from .soh_transformer import SOHTransformer
 from .thermal_runaway import ThermalRunawayPredictor
 from .v2g_scenarios import V2GHealthAnalyzer, V2GScenarioGenerator
 
-__version__ = "2.1.0"
+__version__ = "2.3.1"
 
 __all__ = [
     # Core framework

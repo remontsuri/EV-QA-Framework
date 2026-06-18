@@ -23,7 +23,7 @@ def print_dashboard_start() -> None:
 
     from dashboard.app import app as dash_app  # pylint: disable=C0415
 
-    uvicorn.run(dash_app, host="0.0.0.0", port=8000)
+    uvicorn.run(dash_app, host="127.0.0.1", port=8000)
 
 
 def validate_input_file(path: str) -> str:

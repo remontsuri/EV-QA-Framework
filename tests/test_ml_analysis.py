@@ -135,15 +135,15 @@ class TestEVBatteryAnalyzer:
 
         df = pd.DataFrame(
             {
-                "voltage": [48.0, 48.1, 48.2, 47.9, 48.0],
-                "current": [100, 101, 99, 100, 102],
-                "temp": [35, 35, 36, 35, 35],
-                "soc": [85, 85, 84, 86, 85],
+                "voltage": [48.0, 48.1, 48.2, 47.9, 48.0, 48.1, 48.2, 47.9, 48.0, 48.1],
+                "current": [100, 101, 99, 100, 102, 100, 101, 99, 100, 102],
+                "temp": [35, 35, 36, 35, 35, 35, 36, 35, 35, 35],
+                "soc": [85, 85, 84, 86, 85, 85, 84, 86, 85, 85],
             }
         )
 
         results = analyzer.analyze_telemetry(df)
-        assert results["total_samples"] == 5
+        assert results["total_samples"] == 10
         assert isinstance(results["anomalies_detected"], int)
 
 

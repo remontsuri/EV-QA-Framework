@@ -240,7 +240,7 @@ class TestMLAnalysisIntegration:
         ] * 20
         anomaly_data = [
             {"voltage": 800.0, "current": 300, "temperature": 80, "soc": 5, "soh": 50}
-        ] * 5
+        ] * 10
 
         qa = EVQAFramework("ML-Test")
         qa.run_test_suite(normal_data)
@@ -272,11 +272,11 @@ class TestMLAnalysisIntegration:
 
             # Loaded model should be usable for analysis
             test_data = pd.DataFrame(
-                [{"voltage": 400.0, "current": 50, "temperature": 30, "soc": 80, "soh": 95}] * 5
+                [{"voltage": 400.0, "current": 50, "temperature": 30, "soc": 80, "soh": 95}] * 10
             )
             r = qa2.ml_analyzer.analyze_telemetry(test_data)
             assert "total_samples" in r
-            assert r["total_samples"] == 5
+            assert r["total_samples"] == 10
         finally:
             if os.path.exists(path):
                 os.unlink(path)
