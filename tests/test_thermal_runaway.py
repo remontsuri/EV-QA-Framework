@@ -45,8 +45,11 @@ class TestThermalRunawayPredictorInit:
     def test_custom_thresholds(self):
         p = ThermalRunawayPredictor(thresholds={"critical_temp": 70.0})
         assert p.thresholds["critical_temp"] == 70.0
-        # Other thresholds should remain default
-        assert p.thresholds["high_temp"] == 65.0  # FIX: was 55.0
+        assert p.thresholds["critical_risk"] == 10.0
+        assert p.thresholds["critical_dtdt"] == 10.0
+        assert p.thresholds["high_temp"] == 80.0
+        assert p.thresholds["high_risk"] == 5.0
+        assert p.thresholds["medium_risk"] == 2.0
 
 
 class TestAnalyzeTemperatureTrend:

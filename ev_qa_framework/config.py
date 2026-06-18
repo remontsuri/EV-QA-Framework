@@ -15,9 +15,10 @@ import yaml
 
 if TYPE_CHECKING:
     from .chemistries import ChemistryKey
+    from .soh_transformer import SOHTransformerConfig
 else:
-    # Runtime alias — str is accepted; ChemistryKey is only for static checkers
     ChemistryKey = str
+    SOHTransformerConfig = None
 
 
 @dataclass
@@ -131,6 +132,7 @@ class FrameworkConfig:
 
     safety_thresholds: SafetyThresholds = field(default_factory=SafetyThresholds)
     ml_config: MLConfig = field(default_factory=MLConfig)
+    transformer_config: SOHTransformerConfig | None = None
     default_vin: str = "TESTVEHCLE0123456"
     # If True, any rule-based anomalies (temperature jumps, etc.) are treated
     # as test failures and increment the failed counter; default False.
@@ -187,6 +189,8 @@ class FrameworkConfig:
         if self.chemistry is not None:
             d["chemistry"] = self.chemistry
             d["cells_in_series"] = self.cells_in_series
+        if self.transformer_config is not None:
+            d["transformer_config"] = self.transformer_config.to_dict()
         return d
 
     @classmethod
@@ -200,6 +204,11 @@ class FrameworkConfig:
             chemistry=data.get("chemistry"),
             cells_in_series=data.get("cells_in_series", 96),
         )
+        transformer_data = data.get("transformer_config") or {}
+        if transformer_data:
+            from .soh_transformer import SOHTransformerConfig
+
+            cfg.transformer_config = SOHTransformerConfig.from_dict(transformer_data)
         return cfg
 
     def save_to_file(self, filepath: str) -> None:

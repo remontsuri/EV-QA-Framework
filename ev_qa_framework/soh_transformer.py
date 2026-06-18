@@ -14,12 +14,37 @@ will raise an ImportError only when model methods are called, not at import time
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import Any
 
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+
+
+@dataclass
+class SOHTransformerConfig:
+    """
+    Transformer configuration for the SOH LSTM-Transformer hybrid.
+
+    Attributes
+    ----------
+        num_heads: Number of attention heads.
+        key_dim: Dimensionality of each attention head.
+    """
+
+    num_heads: int = 4
+    key_dim: int = 16
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for serialization."""
+        return {"num_heads": self.num_heads, "key_dim": self.key_dim}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SOHTransformerConfig":
+        """Create from dictionary."""
+        return cls(**data)
 
 
 def _import_tensorflow():
@@ -50,15 +75,23 @@ class SOHTransformer:
         Number of time steps in each input sequence.
     n_features : int
         Number of input features (default 3: voltage, current, temperature).
+    transformer_config : SOHTransformerConfig | None
+        Transformer config. If ``None``, defaults are used.
     """
 
-    def __init__(self, sequence_length: int = 10, n_features: int = 3):
+    def __init__(
+        self,
+        sequence_length: int = 10,
+        n_features: int = 3,
+        transformer_config: SOHTransformerConfig | None = None,
+    ):
         self.sequence_length = sequence_length
         self.n_features = n_features
         self.model: Any | None = None
         self.scaler = MinMaxScaler()
         self._feature_scaler = MinMaxScaler()
         self.is_trained = False
+        self.transformer_config = transformer_config or SOHTransformerConfig()
 
     def build_model(self):
         """
@@ -97,7 +130,10 @@ class SOHTransformer:
         x = LSTM(64, return_sequences=True)(inputs)
 
         # Multi-Head Self-Attention — captures long-range dependencies
-        attn_output = MultiHeadAttention(num_heads=4, key_dim=16)(x, x)
+        attn_output = MultiHeadAttention(
+            num_heads=self.transformer_config.num_heads,
+            key_dim=self.transformer_config.key_dim,
+        )(x, x)
         # Residual connection + LayerNorm
         x = LayerNormalization()(x + attn_output)
 

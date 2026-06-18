@@ -1,5 +1,5 @@
 {
-  "test_date": "2026-06-11T04:09:17.165258",
+  "test_date": "2026-06-18T16:23:32.001920",
   "pack_info": {
     "model": "Model S 85 kWh",
     "vin": "5YJSA1E26HF000337",
@@ -57,17 +57,17 @@
       },
       "escalating": {
         "risk_level": "CRITICAL",
-        "score": 80.93
+        "score": 69.93
       }
     },
     "battery_scoring": {
       "status": "PASS",
       "healthy": {
-        "score": 62.6,
+        "score": 69.6,
         "grade": "C"
       },
       "degraded": {
-        "score": 40.79,
+        "score": 44.79,
         "grade": "D"
       }
     },
@@ -80,9 +80,9 @@
       "status": "PASS",
       "fleet_size": 2,
       "avg_soh": 83.7,
-      "avg_score": 62.7,
+      "avg_score": 63.0,
       "grade_distribution": {
-        "B": 1,
+        "C": 1,
         "D": 1
       }
     },

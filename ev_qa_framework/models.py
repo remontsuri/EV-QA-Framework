@@ -3,9 +3,12 @@ Pydantic models for strict battery telemetry validation.
 Author: Remontsuri
 """
 
+import logging
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
+
+LOGGER = logging.getLogger(__name__)
 
 
 class BatteryCellDataModel(BaseModel):
@@ -68,9 +71,9 @@ class BatteryTelemetryModel(BaseModel):
     def check_temperature_safety(cls, v):
         """Warning for critical temperatures (logged, not blocking)."""
         if v > 60:
-            print(f"WARNING: High temperature {v}°C")
+            LOGGER.warning("High temperature %s°C", v)
         if v < 0:
-            print(f"WARNING: Negative temperature {v}°C")
+            LOGGER.warning("Negative temperature %s°C", v)
         return v
 
     @field_validator("soc", "soh")

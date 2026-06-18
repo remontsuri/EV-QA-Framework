@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """CLI interface for EV-QA-Framework"""
 
+from __future__ import annotations
+
 import argparse
 import json
+import os
 import time
+from typing import Optional
 
 import pandas as pd
 
@@ -12,11 +16,49 @@ from .can_bus import CANBatterySimulator, CANTelemetryReceiver, DBCFileSimulator
 from .soh_predictor import SOHPredictor
 
 
-def analyze_csv(file_path: str, output: str = None):
+def print_dashboard_start() -> None:
+    """Notify user that dashboard startup was requested."""
+    print("🌐 Starting dashboard...")
+    import uvicorn  # pylint: disable=C0415
+
+    from dashboard.app import app as dash_app  # pylint: disable=C0415
+
+    uvicorn.run(dash_app, host="0.0.0.0", port=8000)
+
+
+def validate_input_file(path: str) -> str:
+    """Return validated input file path or raise on invalid input."""
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"Input file not found: {path}")
+    return path
+
+
+def validate_csv_path(path: str) -> str:
+    """Return validated CSV path or raise on invalid input."""
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"CSV file not found: {path}")
+    if not path.lower().endswith(".csv"):
+        raise ValueError(f"Input file is not CSV: {path}")
+    return path
+
+
+def validate_model_dir(path: str) -> str:
+    """Return validated model directory or raise on invalid target, creating parents."""
+    normalized = os.path.abspath(path)
+    if os.path.exists(normalized) and not os.path.isdir(normalized):
+        raise NotADirectoryError(f"Model target is not a directory: {normalized}")
+    parent = os.path.dirname(normalized)
+    if parent and not os.path.isdir(parent):
+        os.makedirs(parent, exist_ok=True)
+    return normalized
+
+
+def analyze_csv(file_path: str, output: Optional[str] = None) -> None:
     """Analyze telemetry from CSV file"""
+    validate_input_file(file_path)
     df = pd.read_csv(file_path)
 
-    from .utils import normalize_columns
+    from .utils import normalize_columns  # noqa: PLC0415
 
     df = normalize_columns(df)
 
@@ -37,7 +79,7 @@ def analyze_csv(file_path: str, output: str = None):
         print(f"📄 Results saved to {output}")
 
 
-def run_can_demo(duration: int = 10):
+def run_can_demo(duration: int = 10) -> None:
     """Run a live CAN bus emulation demo"""
     print(f"Starting CAN Bus Emulation Demo ({duration}s)...")
     sim = CANBatterySimulator()
@@ -66,7 +108,7 @@ def run_can_demo(duration: int = 10):
     print("CAN Demo finished.")
 
 
-def run_dbc_emulate(dbc_path: str = None, duration: int = 10):
+def run_dbc_emulate(dbc_path: Optional[str] = None, duration: int = 10) -> None:
     """Run DBC-driven CAN emulation."""
     if dbc_path:
         print(f"Loading DBC: {dbc_path}")
@@ -84,8 +126,10 @@ def run_dbc_emulate(dbc_path: str = None, duration: int = 10):
     print("DBC Emulation finished.")
 
 
-def train_soh_model(csv_path: str, model_path: str):
+def train_soh_model(csv_path: str, model_path: str) -> None:
     """Train SOH LSTM model from historical CSV data"""
+    validate_csv_path(csv_path)
+    validate_model_dir(model_path)
     print(f"🧠 Training SOH Predictor from {csv_path}...")
     df = pd.read_csv(csv_path)
     predictor = SOHPredictor()
@@ -94,7 +138,7 @@ def train_soh_model(csv_path: str, model_path: str):
     print(f"✅ Model saved to {model_path}")
 
 
-def main():
+def main() -> None:
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(description="EV Battery QA Analysis tool")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
@@ -121,25 +165,44 @@ def main():
     # Dashboard command
     subparsers.add_parser("dashboard", help="Start web dashboard")
 
-    args = parser.parse_args()
+    def _friendly_parser_error(message: str) -> None:
+        raise SystemExit(
+            f"Error: {message}. Run with --help for usage."
+        )
 
-    if args.command == "dashboard":
-        print("🌐 Starting dashboard...")
-        import uvicorn  # pylint: disable=C0415
+    parser.error = _friendly_parser_error
 
-        from dashboard.app import app as dash_app  # pylint: disable=C0415
+    try:
+        args = parser.parse_args()
+    except SystemExit as exc:
+        raise SystemExit(
+            "Usage: ev-qa <command> [options]\n"
+            "Command not recognized: use analyze, can-demo, emulate, train-soh or dashboard.\n"
+            "Run with --help to see available commands."
+        ) from exc
 
-        uvicorn.run(dash_app, host="0.0.0.0", port=8000)
-    elif args.command == "analyze":
-        analyze_csv(args.input, args.output)
-    elif args.command == "can-demo":
-        run_can_demo(args.duration)
-    elif args.command == "emulate":
-        run_dbc_emulate(dbc_path=args.dbc, duration=args.duration)
-    elif args.command == "train-soh":
-        train_soh_model(args.input, args.model_dir)
-    else:
-        parser.print_help()
+    try:
+        if args.command == "dashboard":
+            print_dashboard_start()
+        elif args.command == "analyze":
+            validate_input_file(args.input)
+            analyze_csv(args.input, args.output)
+        elif args.command == "can-demo":
+            run_can_demo(args.duration)
+        elif args.command == "emulate":
+            run_dbc_emulate(dbc_path=args.dbc, duration=args.duration)
+        elif args.command == "train-soh":
+            validate_csv_path(args.input)
+            validate_model_dir(args.model_dir)
+            train_soh_model(args.input, args.model_dir)
+        else:
+            parser.print_help()
+    except (FileNotFoundError, NotADirectoryError, ValueError) as exc:
+        raise SystemExit(f"Error: {exc}. Run with --help for usage.") from exc
+    except KeyboardInterrupt:
+        raise SystemExit("Interrupted.") from None
+    except Exception as exc:  # pragma: no cover - broad catch for CLI UX
+        raise SystemExit(f"Unexpected error: {exc}. Run with --help for usage.") from exc
 
 
 if __name__ == "__main__":

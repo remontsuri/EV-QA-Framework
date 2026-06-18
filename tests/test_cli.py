@@ -441,17 +441,20 @@ class TestMain:
     """Tests for the main() CLI entry point."""
 
     @patch("ev_qa_framework.cli.analyze_csv")
-    def test_analyze_command(self, mock_analyze):
+    @patch("ev_qa_framework.cli.validate_input_file")
+    def test_analyze_command(self, mock_validate_input_file, mock_analyze):
         """'analyze' command calls analyze_csv with correct args."""
         from ev_qa_framework.cli import main
 
         with patch("sys.argv", ["ev-qa", "analyze", "-i", "data.csv"]):
             main()
 
+        mock_validate_input_file.assert_called_once_with("data.csv")
         mock_analyze.assert_called_once_with("data.csv", None)
 
     @patch("ev_qa_framework.cli.analyze_csv")
-    def test_analyze_command_with_output(self, mock_analyze):
+    @patch("ev_qa_framework.cli.validate_input_file")
+    def test_analyze_command_with_output(self, mock_validate_input_file, mock_analyze):
         """'analyze' command with --output flag."""
         from ev_qa_framework.cli import main
 
@@ -461,6 +464,7 @@ class TestMain:
         ):
             main()
 
+        mock_validate_input_file.assert_called_once_with("data.csv")
         mock_analyze.assert_called_once_with("data.csv", "out.json")
 
     @patch("ev_qa_framework.cli.run_can_demo")
@@ -507,7 +511,9 @@ class TestMain:
         mock_dbc.assert_called_once_with(dbc_path="file.dbc", duration=5)
 
     @patch("ev_qa_framework.cli.train_soh_model")
-    def test_train_soh_command(self, mock_train):
+    @patch("ev_qa_framework.cli.validate_csv_path")
+    @patch("ev_qa_framework.cli.validate_model_dir")
+    def test_train_soh_command(self, mock_validate_model_dir, mock_validate_csv_path, mock_train):
         """'train-soh' command calls train_soh_model."""
         from ev_qa_framework.cli import main
 
@@ -517,6 +523,8 @@ class TestMain:
         ):
             main()
 
+        mock_validate_csv_path.assert_called_once_with("hist.csv")
+        mock_validate_model_dir.assert_called_once_with("model_dir")
         mock_train.assert_called_once_with("hist.csv", "model_dir")
 
     def test_dashboard_command(self, capsys):
@@ -561,13 +569,12 @@ class TestStartDashboard:
     """Tests for the dashboard command path in main()."""
 
     def test_dashboard_imports_uvicorn(self):
-        """Verify dashboard command attempts to import uvicorn."""
-        # We test this by checking the source code contains the expected logic
+        """Verify dashboard startup path is present in the public CLI helper."""
         import inspect
 
-        from ev_qa_framework.cli import main
+        from ev_qa_framework.cli import print_dashboard_start
 
-        source = inspect.getsource(main)
+        source = inspect.getsource(print_dashboard_start)
         assert "uvicorn" in source
         assert "dashboard" in source
 
@@ -595,11 +602,11 @@ class TestEdgeCases:
         assert "severity" in data
 
     def test_analyze_csv_nonexistent_output_dir(self, sample_csv, mock_analyzer, tmp_path):
-        """Output to a non-existent directory should raise FileNotFoundError."""
+        """Output to a non-existent directory should raise an OS-level error."""
         from ev_qa_framework.cli import analyze_csv
 
         output_path = str(tmp_path / "nonexistent_dir" / "out.json")
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(OSError):
             analyze_csv(sample_csv, output=output_path)
 
     def test_run_can_demo_negative_duration(self, mock_can_simulator, mock_can_receiver):

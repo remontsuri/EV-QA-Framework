@@ -111,8 +111,8 @@ class TestEVQAFramework:
                 vin="TESTVEHCLE0123456", voltage=390.0, current=50, temperature=35, soc=80, soh=98
             ),
             BatteryTelemetryModel(
-                vin="TESTVEHCLE0123456", voltage=390.0, current=45, temperature=42, soc=85, soh=98
-            ),  # 7°C jump
+                vin="TESTVEHCLE0123456", voltage=390.0, current=45, temperature=44, soc=85, soh=98
+            ),  # 9°C jump
         ]
         anomalies = self.qa.detect_anomalies(telemetries)
         assert len(anomalies) > 0

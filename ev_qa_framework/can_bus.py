@@ -994,7 +994,7 @@ class CANTelemetryReceiver:
         }
         self._hw_interface: CANHardwareInterface | None = None
         self.bus: can.interface.Bus | None = None
-        self.running = False
+        self._running = False
         self._thread: threading.Thread | None = None
 
     @property
@@ -1024,13 +1024,13 @@ class CANTelemetryReceiver:
             except (can.CanError, OSError, ValueError):
                 self.bus = None
 
-        self.running = True
+        self._running = True
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
     def stop(self):
         """Stop receiver."""
-        self.running = False
+        self._running = False
         if self._thread:
             self._thread.join(timeout=3)
 
@@ -1055,7 +1055,7 @@ class CANTelemetryReceiver:
 
     def _run(self):
         """Internal receiver loop."""
-        while self.running:
+        while self._running:
             msg: can.Message | None = None
 
             if self._hw_interface:
