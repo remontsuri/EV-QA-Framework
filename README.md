@@ -51,7 +51,7 @@ No cloud account required. No external dependencies. Just a CSV and a terminal.
 
 **Anomaly detection.** Isolation Forest on voltage/current/temperature streams. Configurable contamination, severity thresholds, estimator count.
 
-**Thermal runaway prediction.** Rule-based heuristics (temperature, delta-temp, anomaly score, chemistry runaway point). CRITICAL trigger defaults at >=85 C, rapid-rise trigger at >10 C/min. Catches overheating before cascade onset. Confidence score clamped to [0, 1].
+**Thermal runaway prediction.** Rule-based heuristics (temperature, delta-temp, anomaly score, chemistry runaway point). CRITICAL trigger defaults at >=130 C, rapid-rise trigger at >10 C/min. Catches overheating before cascade onset. Confidence score clamped to [0, 1].
 
 **SOH prediction.** LSTM-based State of Health forecasting from historical telemetry. Transformer-based prediction via soh_transformer for longer sequences.
 

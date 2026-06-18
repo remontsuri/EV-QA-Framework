@@ -1,6 +1,6 @@
 """
 Simple EV-QA-Framework usage example
-Демонстрирует базовую валидацию телеметрии и ML-детекцию аномалий
+Demonstrates basic telemetry validation and ML anomaly detection
 """
 
 import numpy as np

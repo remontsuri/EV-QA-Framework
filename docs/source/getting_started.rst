@@ -48,7 +48,7 @@ Output is written to ``docs/build/html/``.
 Configuration
 -------------
 
-The framework reads settings from ``settings.yaml`` in the project root.
+The framework uses built-in defaults from ev_qa_framework/config.py. See config.yaml for customization.
 Key configuration sections:
 
 - ``battery`` — cell chemistry, capacity, voltage limits
