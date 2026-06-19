@@ -18,7 +18,20 @@
 ## Installation
 
 ```bash
+# Core (anomaly detection, validation, scoring)
 pip install ev-qa-framework
+
+# With web dashboard
+pip install ev-qa-framework[web]
+
+# With CAN bus support
+pip install ev-qa-framework[can]
+
+# With ML and monitoring
+pip install ev-qa-framework[ml,monitoring]
+
+# Everything
+pip install ev-qa-framework[all]
 ```
 
 ---
@@ -67,7 +80,11 @@ No cloud account required. No external dependencies. Just a CSV and a terminal.
 
 **V2G scenarios.** Vehicle-to-Grid simulation: bidirectional energy flow, grid demand response, cycling impact on battery health, revenue estimation.
 
-**AutoML.** Automated model selection and hyperparameter optimization for SOH prediction and anomaly detection.
+**AutoML.** Automated model selection and hyperparameter optimization for SOH prediction and anomaly detection (RandomForest + GradientBoosting).
+
+**Streaming anomaly detection.** Real-time sliding-window detector for live telemetry feeds with configurable retrain frequency.
+
+**Uncertainty quantification.** Bootstrap confidence intervals on thermal runaway risk scores for safety-critical decision making.
 
 **HIL integration.** Hardware-in-the-Loop interface for physical BMS hardware and test stands via TCP/Serial.
 
