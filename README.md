@@ -2,14 +2,14 @@
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Tests](https://img.shields.io/badge/tests-955%20passed-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-980%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-2.3.1-blue.svg)
+![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
 [![PyPI](https://img.shields.io/pypi/v/ev-qa-framework.svg)](https://pypi.org/project/ev-qa-framework/)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
 
-**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 955 passing tests and a Docker-ready pipeline.**
+**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 980 passing tests and a Docker-ready pipeline.**
 
 22 modules. MIT licensed. Python 3.10+.
 
@@ -139,7 +139,7 @@ ev_qa_framework/
   metrics.py           # Prometheus metrics
   cli.py               # CLI entry point
   chemistries.py       # battery chemistry definitions (LFP, NMC, NCA)
-tests/                  # 955 tests
+tests/                  # 980 tests
 examples/               # sample telemetry and demos
 run_factory_inspection.py  # end-to-end factory QA demo
 `
@@ -150,12 +150,12 @@ run_factory_inspection.py  # end-to-end factory QA demo
 
 | Artifact | Value |
 |---|---|
-| Tests | 955 passing |
+| Tests | 980 passing |
 | Coverage | 93% |
 | CI | Lint + Test + Coverage |
 | License | MIT |
 | Python | 3.10+ |
-| PyPI | ev-qa-framework 2.1.3 |
+| PyPI | ev-qa-framework 2.5.0 |
 
 Regression risk is tracked in tests/. Coverage artifacts (coverage/, junit.xml) are present in the release pipeline.
 
