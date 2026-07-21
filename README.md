@@ -42,7 +42,7 @@ pip install ev-qa-framework[all]
 git clone https://github.com/remontsuri/EV-QA-Framework.git
 cd EV-QA-Framework
 docker compose up -d
-open http://localhost:8081
+# Open http://localhost:8081
 ```
 
 Done. You have a running battery QA workstation:
@@ -132,6 +132,29 @@ uv run python -m ev_qa_framework.cli train-soh -i examples/tesla_model_s_defecti
 
 ---
 
+## Python API
+
+```python
+from ev_qa_framework import EVQAFramework, BatteryTelemetryModel
+
+qa = EVQAFramework("my-qa")
+
+# Validate a single reading
+model = BatteryTelemetryModel(
+    vin="1HGBH41JXMN109186",
+    voltage=396.5, current=50, temperature=35, soc=80, soh=98
+)
+valid, warnings = qa.validate_telemetry(model)
+
+# Analyze a batch of telemetry
+import pandas as pd
+df = pd.read_csv("battery_telemetry.csv")
+results = qa.analyze_telemetry(df)
+print(results["anomalies_detected"], "anomalies found")
+```
+
+---
+
 ## Project structure
 
 `
@@ -156,7 +179,7 @@ ev_qa_framework/
   metrics.py           # Prometheus metrics
   cli.py               # CLI entry point
   chemistries.py       # battery chemistry definitions (LFP, NMC, NCA)
-tests/                  # 980 tests
+tests/                  # 967 tests
 examples/               # sample telemetry and demos
 run_factory_inspection.py  # end-to-end factory QA demo
 `
