@@ -129,13 +129,12 @@
 ## Project Structure
 
 ```
-ev_qa_framework/          # 22 modules — see README.md for full list
+ev_qa_framework/          # 23 modules — see README.md for full list
 tests/                    # 967 tests
 dashboard/                # FastAPI + Grafana
 examples/                 # Example CSV telemetry and DBC files
 docs/                     # Additional documentation
 pyproject.toml            # Project config, dependencies, build system
-uv.lock                   # Reproducible dependency lockfile
 ```
 
 ## Questions?

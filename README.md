@@ -11,7 +11,7 @@
 
 **EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 967 passing tests and a Docker-ready pipeline.**
 
-22 modules. MIT licensed. Python 3.10+.
+23 modules. MIT licensed. Python 3.10+.
 
 ---
 
