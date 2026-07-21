@@ -1,75 +1,9 @@
 """EV-QA-Framework — ML-powered QA Framework for Electric Vehicle & IoT Battery Testing."""
 
-# Module exports
-from . import (
-    automl,
-    battery_scoring,
-    bms_protocol,
-    digital_twin,
-    fleet_analytics,
-    hil,
-    modbus,
-    physics_features,
-    soh_transformer,
-    v2g_scenarios,
-)
+__version__ = "2.5.0"
+
+# Core imports — always available (lightweight)
 from .analysis import AnomalyDetector, EVBatteryAnalyzer
-from .automl import AutoMLAnomaly, AutoMLSOH
-
-# v2.0 module classes
-from .battery_scoring import BatteryScorer
-
-# BMS protocol abstraction layer
-from .bms_protocol import (
-    BMSCANInterface,
-    BMSModbusRTUInterface,
-    BMSModbusTCPInterface,
-    BMSProtocolManager,
-    BMSTelemetry,
-    ProtocolType,
-)
-from .can_bus import (
-    CANBatterySimulator,
-    CANBusOffError,
-    CANConnectionError,
-    CANHardwareInterface,
-    CANHardwareNotFoundError,
-    CANTelemetryReceiver,
-    CANTimeoutError,
-    DBCFileSimulator,
-    HardwareCANError,
-    OBD2Adapter,
-    OBD2ConnectionError,
-    OBD2ProtocolError,
-    detect_can_interfaces,
-    find_available_can_channel,
-    find_hardware_can_interfaces,
-)
-from .cell_balance import CellBalanceAnalyzer
-from .chemistries import (
-    AGING_LFP,
-    AGING_NCA,
-    AGING_NMC,
-    ALL_CHEMISTRIES,
-    OCV_LFP,
-    OCV_NCA,
-    OCV_NMC,
-    THERMAL_LFP,
-    THERMAL_NCA,
-    THERMAL_NMC,
-    AgingModel,
-    BatteryChemistryProfile,
-    CellImbalanceThresholds,
-    ChemistryKey,
-    OCVCurve,
-    SOHDegradationParams,
-    ThermalModel,
-    ThermalParams,
-    get_profile,
-    list_profiles,
-    load_custom_profile_from_file,
-    register_custom_profile,
-)
 from .config import (
     FrameworkConfig,
     MLConfig,
@@ -77,135 +11,128 @@ from .config import (
     get_default_config,
     get_tesla_config,
 )
-from .dbc_parser import DBCParser, builtin_dbc
-from .digital_twin import BatteryDigitalTwin, BatteryState
-from .fleet_analytics import FleetAlert, FleetAnalytics
 from .framework import EVQAFramework
-from .hil import BMSHardwareEmulator, CANMessage, HILInterface, HILTestResult, HILTestRunner
-from .metrics import (
-    battery_anomaly_total,
-    battery_cell_imbalance_max,
-    battery_current_amps,
-    battery_soc_percent,
-    battery_soh_percent,
-    battery_temperature_celsius,
-    battery_voltage_volts,
-)
-
-# Modbus protocol
-from .modbus import (
-    BMS_REGISTER_MAP,
-    ModbusRTUClient,
-    ModbusTCPClient,
-)
 from .models import BatteryCellDataModel, BatteryTelemetryModel
-from .physics_features import PhysicsFeatureExtractor
-from .soh_predictor import SOHPredictor
-from .soh_transformer import SOHTransformer
 from .thermal_runaway import ThermalRunawayPredictor
-from .v2g_scenarios import V2GHealthAnalyzer, V2GScenarioGenerator
 
-__version__ = "2.5.0"
+# Lazy-loaded modules — imported on first access
+_LAZY_IMPORTS: dict[str, str] = {
+    # CAN bus
+    "CANBatterySimulator": ".can_bus",
+    "CANHardwareInterface": ".can_bus",
+    "CANTelemetryReceiver": ".can_bus",
+    "DBCFileSimulator": ".can_bus",
+    "HardwareCANError": ".can_bus",
+    "CANConnectionError": ".can_bus",
+    "CANBusOffError": ".can_bus",
+    "CANTimeoutError": ".can_bus",
+    "CANHardwareNotFoundError": ".can_bus",
+    "OBD2Adapter": ".can_bus",
+    "OBD2ConnectionError": ".can_bus",
+    "OBD2ProtocolError": ".can_bus",
+    "detect_can_interfaces": ".can_bus",
+    "find_hardware_can_interfaces": ".can_bus",
+    "find_available_can_channel": ".can_bus",
+    # DBC
+    "DBCParser": ".dbc_parser",
+    "builtin_dbc": ".dbc_parser",
+    # Cell balance
+    "CellBalanceAnalyzer": ".cell_balance",
+    # Chemistry
+    "BatteryChemistryProfile": ".chemistries",
+    "SOHDegradationParams": ".chemistries",
+    "CellImbalanceThresholds": ".chemistries",
+    "ChemistryKey": ".chemistries",
+    "ALL_CHEMISTRIES": ".chemistries",
+    "OCVCurve": ".chemistries",
+    "OCV_LFP": ".chemistries",
+    "OCV_NMC": ".chemistries",
+    "OCV_NCA": ".chemistries",
+    "AgingModel": ".chemistries",
+    "AGING_LFP": ".chemistries",
+    "AGING_NMC": ".chemistries",
+    "AGING_NCA": ".chemistries",
+    "ThermalParams": ".chemistries",
+    "ThermalModel": ".chemistries",
+    "THERMAL_LFP": ".chemistries",
+    "THERMAL_NMC": ".chemistries",
+    "THERMAL_NCA": ".chemistries",
+    "get_profile": ".chemistries",
+    "list_profiles": ".chemistries",
+    "register_custom_profile": ".chemistries",
+    "load_custom_profile_from_file": ".chemistries",
+    # v2.0 modules
+    "battery_scoring": ".battery_scoring",
+    "physics_features": ".physics_features",
+    "fleet_analytics": ".fleet_analytics",
+    "digital_twin": ".digital_twin",
+    "v2g_scenarios": ".v2g_scenarios",
+    "automl": ".automl",
+    "soh_transformer": ".soh_transformer",
+    "hil": ".hil",
+    "bms_protocol": ".bms_protocol",
+    "modbus": ".modbus",
+    # v2.0 classes
+    "BatteryScorer": ".battery_scoring",
+    "PhysicsFeatureExtractor": ".physics_features",
+    "FleetAnalytics": ".fleet_analytics",
+    "FleetAlert": ".fleet_analytics",
+    "BatteryDigitalTwin": ".digital_twin",
+    "BatteryState": ".digital_twin",
+    "V2GScenarioGenerator": ".v2g_scenarios",
+    "V2GHealthAnalyzer": ".v2g_scenarios",
+    "AutoMLSOH": ".automl",
+    "AutoMLAnomaly": ".automl",
+    "SOHTransformer": ".soh_transformer",
+    "SOHPredictor": ".soh_predictor",
+    "HILInterface": ".hil",
+    "HILTestRunner": ".hil",
+    "HILTestResult": ".hil",
+    "CANMessage": ".hil",
+    "BMSHardwareEmulator": ".hil",
+    "BMSProtocolManager": ".bms_protocol",
+    "BMSTelemetry": ".bms_protocol",
+    "BMSCANInterface": ".bms_protocol",
+    "BMSModbusTCPInterface": ".bms_protocol",
+    "BMSModbusRTUInterface": ".bms_protocol",
+    "ProtocolType": ".bms_protocol",
+    "ModbusTCPClient": ".modbus",
+    "ModbusRTUClient": ".modbus",
+    "BMS_REGISTER_MAP": ".modbus",
+    # Metrics
+    "battery_anomaly_total": ".metrics",
+    "battery_cell_imbalance_max": ".metrics",
+    "battery_current_amps": ".metrics",
+    "battery_soc_percent": ".metrics",
+    "battery_soh_percent": ".metrics",
+    "battery_temperature_celsius": ".metrics",
+    "battery_voltage_volts": ".metrics",
+}
 
-__all__ = [
-    # Core framework
+__all__ = list(_LAZY_IMPORTS.keys()) + [
     "EVQAFramework",
-    # Models
     "BatteryTelemetryModel",
     "BatteryCellDataModel",
-    # Analysis
     "EVBatteryAnalyzer",
     "AnomalyDetector",
-    "SOHPredictor",
     "ThermalRunawayPredictor",
-    # CAN bus
-    "CANBatterySimulator",
-    "CANHardwareInterface",
-    "CANTelemetryReceiver",
-    "DBCFileSimulator",
-    "HardwareCANError",
-    "CANConnectionError",
-    "CANBusOffError",
-    "CANTimeoutError",
-    "CANHardwareNotFoundError",
-    "OBD2Adapter",
-    "OBD2ConnectionError",
-    "OBD2ProtocolError",
-    "detect_can_interfaces",
-    "find_hardware_can_interfaces",
-    "find_available_can_channel",
-    # DBC
-    "DBCParser",
-    "builtin_dbc",
-    # Cell balance
-    "CellBalanceAnalyzer",
-    # Chemistry profiles
-    "BatteryChemistryProfile",
-    "SOHDegradationParams",
-    "CellImbalanceThresholds",
-    "ChemistryKey",
-    "ALL_CHEMISTRIES",
-    # New chemistry models (v2.1)
-    "OCVCurve",
-    "OCV_LFP",
-    "OCV_NMC",
-    "OCV_NCA",
-    "AgingModel",
-    "AGING_LFP",
-    "AGING_NMC",
-    "AGING_NCA",
-    "ThermalParams",
-    "ThermalModel",
-    "THERMAL_LFP",
-    "THERMAL_NMC",
-    "THERMAL_NCA",
-    "get_profile",
-    "list_profiles",
-    "register_custom_profile",
-    "load_custom_profile_from_file",
-    # Configuration
     "FrameworkConfig",
     "SafetyThresholds",
     "MLConfig",
     "get_default_config",
     "get_tesla_config",
-    # v2.0 modules
-    "battery_scoring",
-    "physics_features",
-    "fleet_analytics",
-    "digital_twin",
-    "v2g_scenarios",
-    "automl",
-    "soh_transformer",
-    "hil",
-    "bms_protocol",
-    "modbus",
-    # v2.0 classes
-    "BatteryScorer",
-    "PhysicsFeatureExtractor",
-    "FleetAnalytics",
-    "FleetAlert",
-    "BatteryDigitalTwin",
-    "BatteryState",
-    "V2GScenarioGenerator",
-    "V2GHealthAnalyzer",
-    "AutoMLSOH",
-    "AutoMLAnomaly",
-    "SOHTransformer",
-    "HILInterface",
-    "HILTestRunner",
-    "HILTestResult",
-    "CANMessage",
-    "BMSHardwareEmulator",
-    # BMS protocol
-    "BMSProtocolManager",
-    "BMSTelemetry",
-    "BMSCANInterface",
-    "BMSModbusTCPInterface",
-    "BMSModbusRTUInterface",
-    "ProtocolType",
-    # Modbus
-    "ModbusTCPClient",
-    "ModbusRTUClient",
-    "BMS_REGISTER_MAP",
 ]
+
+
+def __getattr__(name: str):
+    if name in _LAZY_IMPORTS:
+        import importlib
+        module = importlib.import_module(_LAZY_IMPORTS[name], __name__)
+        value = getattr(module, name)
+        globals()[name] = value  # cache for future access
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return __all__

@@ -129,6 +129,7 @@ class EVQAFramework:
         """
         thresholds = self.config.safety_thresholds
         warnings: list[str] = []
+        has_critical = False
 
         # Temperature check
         if telemetry.temperature > thresholds.max_temperature:
@@ -138,7 +139,7 @@ class EVQAFramework:
             )
             logger.warning(msg)
             warnings.append(msg)
-            return False, warnings
+            has_critical = True
 
         if telemetry.temperature < thresholds.min_temperature:
             msg = (
@@ -147,7 +148,7 @@ class EVQAFramework:
             )
             logger.warning(msg)
             warnings.append(msg)
-            return False, warnings
+            has_critical = True
 
         # Voltage check
         if telemetry.voltage < thresholds.min_voltage or telemetry.voltage > thresholds.max_voltage:
@@ -157,7 +158,7 @@ class EVQAFramework:
             )
             logger.warning(msg)
             warnings.append(msg)
-            return False, warnings
+            has_critical = True
 
         # Additional checks (non-critical warnings)
         if telemetry.soc < thresholds.min_soc:
@@ -170,7 +171,7 @@ class EVQAFramework:
             logger.warning(msg)
             warnings.append(msg)
 
-        return True, warnings
+        return not has_critical, warnings
 
     def detect_anomalies(self, telemetry_list: list[BatteryTelemetryModel]) -> list[str]:
         """
