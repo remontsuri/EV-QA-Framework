@@ -204,3 +204,183 @@ class V2GHealthAnalyzer:
             recommendations.append("If V2G is required, limit to emergency use only.")
 
         return recommendations
+
+
+class V2SScenarioGenerator:
+    """Generate Vehicle-to-Station (V2S) and charging station profiles."""
+
+    def __init__(self, battery_capacity_ah: float = 100.0, nominal_voltage: float = 400.0):
+        self.battery_capacity_ah = battery_capacity_ah
+        self.nominal_voltage = nominal_voltage
+
+    def generate_charging_station_profile(
+        self, station_type: str, duration_hours: float = 4
+    ) -> pd.DataFrame:
+        """
+        Generate a charging station power profile.
+
+        Args:
+            station_type: 'ac_slow' (7kW), 'dc_fast' (50kW), 'dc_ultra' (150kW+)
+            duration_hours: duration of the charging session
+
+        Returns:
+            DataFrame with 'current', 'voltage', 'duration_h', 'soc' columns
+        """
+        if station_type == "ac_slow":
+            power_kw = 7.0
+        elif station_type == "dc_fast":
+            power_kw = 50.0
+        elif station_type == "dc_ultra":
+            power_kw = 150.0
+        else:
+            raise ValueError(f"Unknown station type: {station_type}")
+
+        current_a = (power_kw * 1000) / self.nominal_voltage
+        n_samples = int(duration_hours * 60)  # 1-minute resolution
+        time_step_h = 1.0 / 60
+
+        soc = np.linspace(20.0, 95.0, n_samples)
+        voltage = np.full(n_samples, self.nominal_voltage)
+        current = np.full(n_samples, current_a)
+
+        return pd.DataFrame(
+            {
+                "current": current,
+                "voltage": voltage,
+                "duration_h": np.full(n_samples, time_step_h),
+                "soc": soc,
+            }
+        )
+
+    def generate_v2s_dispatch(
+        self, grid_signal: str, duration_hours: int = 24
+    ) -> pd.DataFrame:
+        """
+        Generate a V2S dispatch profile based on grid signal.
+
+        Args:
+            grid_signal: 'peak_shaving', 'frequency_regulation', 'solar_buffering'
+            duration_hours: duration of the dispatch
+
+        Returns:
+            DataFrame with 'current', 'voltage', 'duration_h', 'soc' columns
+        """
+        rng = np.random.default_rng(42)
+        time_step_h = 1.0 / 60  # 1-minute resolution
+        n_samples = int(duration_hours * 60)
+
+        if grid_signal == "peak_shaving":
+            current = np.zeros(n_samples)
+            soc = np.linspace(80.0, 30.0, n_samples)  # discharge from 80% to 30%
+            for i in range(n_samples):
+                hour = (i * time_step_h) % 24
+                if 16 <= hour <= 20:
+                    current[i] = -rng.uniform(50, 100)
+                elif 0 <= hour <= 5:
+                    current[i] = rng.uniform(30, 60)
+        elif grid_signal == "frequency_regulation":
+            current = rng.uniform(-30, 30, n_samples)
+            soc = np.full(n_samples, 50.0)  # maintain mid SOC
+        elif grid_signal == "solar_buffering":
+            current = np.zeros(n_samples)
+            soc = np.linspace(40.0, 90.0, n_samples)  # charge from solar
+            for i in range(n_samples):
+                hour = (i * time_step_h) % 24
+                if 8 <= hour <= 16:
+                    current[i] = rng.uniform(20, 40)
+        else:
+            raise ValueError(f"Unknown grid signal: {grid_signal}")
+
+        voltage = np.full(n_samples, self.nominal_voltage)
+
+        return pd.DataFrame(
+            {
+                "current": current,
+                "voltage": voltage,
+                "duration_h": np.full(n_samples, time_step_h),
+                "soc": soc,
+            }
+        )
+
+
+class ChargingStationSimulator:
+    """Simulate CC-CV Li-ion charging at a station."""
+
+    def __init__(self, battery_capacity_ah: float = 100.0, nominal_voltage: float = 400.0):
+        self.battery_capacity_ah = battery_capacity_ah
+        self.nominal_voltage = nominal_voltage
+
+    def simulate_charging_session(
+        self,
+        station_power_kw: float,
+        initial_soc: float,
+        target_soc: float = 95.0,
+        cell_count: int = 96,
+    ) -> pd.DataFrame:
+        """
+        Simulate a CC-CV charging session.
+
+        Args:
+            station_power_kw: charger power in kW
+            initial_soc: starting SOC in percent
+            target_soc: target SOC in percent
+            cell_count: number of cells in series
+
+        Returns:
+            DataFrame with timestamps, current, voltage, soc, energy_delivered_kwh
+        """
+        if target_soc < initial_soc:
+            raise ValueError("target_soc must be >= initial_soc")
+
+        cell_nominal_voltage = self.nominal_voltage / cell_count
+        cv_voltage_per_cell = cell_nominal_voltage * 1.05  # CV at 105% of nominal
+        max_current_a = (station_power_kw * 1000) / self.nominal_voltage
+
+        # CC-CV parameters
+        cc_fraction = 0.8  # 80% of charge in CC phase
+        soc_cc_end = initial_soc + (target_soc - initial_soc) * cc_fraction
+
+        soc = initial_soc
+        voltage = cell_nominal_voltage * cell_count * 0.9  # start at 90% of nominal
+        current = max_current_a
+        timestamp = 0.0
+        dt = 0.01  # 1-minute time step in hours
+
+        results = []
+
+        while soc < target_soc and timestamp < 100:  # safety limit
+            if soc < soc_cc_end:
+                # Constant Current phase
+                current = max_current_a
+                voltage = min(voltage + 0.05 * dt, cv_voltage_per_cell * cell_count)
+            else:
+                # Constant Voltage phase
+                voltage = cv_voltage_per_cell * cell_count
+                current = max(current * 0.995, 0.1)  # taper current
+
+            # Update SOC
+            soc += (current * dt / self.battery_capacity_ah) * 100
+
+            # Calculate energy delivered
+            energy_kwh = voltage * current * dt / 1000
+
+            results.append(
+                {
+                    "timestamp": timestamp,
+                    "current": current,
+                    "voltage": voltage,
+                    "soc": soc,
+                    "energy_delivered_kwh": energy_kwh,
+                }
+            )
+            timestamp += dt
+
+        return pd.DataFrame(results)
+
+
+__all__ = [
+    "V2GScenarioGenerator",
+    "V2GHealthAnalyzer",
+    "V2SScenarioGenerator",
+    "ChargingStationSimulator",
+]

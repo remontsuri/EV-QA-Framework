@@ -2,14 +2,14 @@
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Tests](https://img.shields.io/badge/tests-967%20passed-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-1053%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
 ![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
 [![PyPI](https://img.shields.io/pypi/v/ev-qa-framework.svg?t=1)](https://pypi.org/project/ev-qa-framework/)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
 
-**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 967 passing tests and a Docker-ready pipeline.**
+**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 1053 passing tests and a Docker-ready pipeline.**
 
 23 modules. MIT licensed. Python 3.10+.
 
@@ -179,7 +179,7 @@ ev_qa_framework/
   metrics.py           # Prometheus metrics
   cli.py               # CLI entry point
   chemistries.py       # battery chemistry definitions (LFP, NMC, NCA)
-tests/                  # 967 tests
+tests/                  # 1053 tests
 examples/               # sample telemetry and demos
 run_factory_inspection.py  # end-to-end factory QA demo
 `
@@ -190,7 +190,7 @@ run_factory_inspection.py  # end-to-end factory QA demo
 
 | Artifact | Value |
 |---|---|
-| Tests | 967 passing |
+| Tests | 1053 passing |
 | Coverage | 93% |
 | CI | Lint + Test + Coverage |
 | License | MIT |
@@ -206,6 +206,6 @@ Regression risk is tracked in tests/. Coverage artifacts (coverage/, junit.xml) 
 - [x] GitHub Actions CI badge + nightly coverage job
 - [x] Grafana dashboard import JSON + provisioning
 - [x] public PyPI release
-- [ ] real BMS telemetry adapters (Tesla, BYD, Nio)
-- [ ] V2S + charging-station scenarios
-- [ ] integration with Vector CANoe / CANalyzer
+- [x] real BMS telemetry adapters (Tesla, BYD, Nio)
+- [x] V2S + charging-station scenarios
+- [x] integration with Vector CANoe / CANalyzer

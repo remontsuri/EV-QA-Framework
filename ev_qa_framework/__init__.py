@@ -81,6 +81,8 @@ _LAZY_IMPORTS: dict[str, str] = {
     "BatteryState": ".digital_twin",
     "V2GScenarioGenerator": ".v2g_scenarios",
     "V2GHealthAnalyzer": ".v2g_scenarios",
+    "V2SScenarioGenerator": ".v2g_scenarios",
+    "ChargingStationSimulator": ".v2g_scenarios",
     "AutoMLSOH": ".automl",
     "AutoMLAnomaly": ".automl",
     "SOHTransformer": ".soh_transformer",
@@ -99,6 +101,11 @@ _LAZY_IMPORTS: dict[str, str] = {
     "ModbusTCPClient": ".modbus",
     "ModbusRTUClient": ".modbus",
     "BMS_REGISTER_MAP": ".modbus",
+    # BMS adapters
+    "BaseBMSAdapter": ".bms_adapters",
+    "TeslaBMSAdapter": ".bms_adapters",
+    "BYDBMSAdapter": ".bms_adapters",
+    "NioBMSAdapter": ".bms_adapters",
     # Metrics
     "battery_anomaly_total": ".metrics",
     "battery_cell_imbalance_max": ".metrics",
@@ -107,6 +114,8 @@ _LAZY_IMPORTS: dict[str, str] = {
     "battery_soh_percent": ".metrics",
     "battery_temperature_celsius": ".metrics",
     "battery_voltage_volts": ".metrics",
+    # Vector export
+    "VectorExporter": ".vector_export",
 }
 
 __all__ = list(_LAZY_IMPORTS.keys()) + [

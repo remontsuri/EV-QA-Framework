@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.5.0] - 2026-07-21
 
+### Added
+- **BMS adapters**: Tesla, BYD, Nio real-world CAN telemetry adapters (61 tests)
+- **V2S scenarios**: Vehicle-to-Station simulation, charging station profiles (AC/DC/fast/ultra), CC-CV charging simulator (15 tests)
+- **Vector export**: CANoe/CANalyzer ASC/BLF export and import (10 tests)
+- **Python API**: Quick-start example in README
+
 ### Fixed
 - **framework.py**: Removed `asyncio.run()` on synchronous method (TypeError at runtime)
 - **analysis.py**: `analyze_telemetry()` returns error dict instead of None for small datasets

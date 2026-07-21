@@ -130,7 +130,7 @@
 
 ```
 ev_qa_framework/          # 23 modules — see README.md for full list
-tests/                    # 967 tests
+tests/                    # 1053 tests
 dashboard/                # FastAPI + Grafana
 examples/                 # Example CSV telemetry and DBC files
 docs/                     # Additional documentation
