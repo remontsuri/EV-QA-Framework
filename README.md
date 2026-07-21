@@ -5,7 +5,7 @@
 ![Tests](https://img.shields.io/badge/tests-967%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
 ![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
-[![PyPI](https://img.shields.io/pypi/v/ev-qa-framework.svg)](https://pypi.org/project/ev-qa-framework/)
+[![PyPI](https://img.shields.io/pypi/v/ev-qa-framework.svg?t=1)](https://pypi.org/project/ev-qa-framework/)
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
 
