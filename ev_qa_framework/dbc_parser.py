@@ -77,8 +77,9 @@ class DBCParser:
     def __init__(self, filepath: str):
         # Path traversal prevention
         import os as _os
+
         self.filepath = _os.path.realpath(filepath)
-        _allowed = ('.dbc', '.txt', '.csv')
+        _allowed = (".dbc", ".txt", ".csv")
         if not self.filepath.lower().endswith(_allowed):
             raise ValueError(f"DBC file must have extension {_allowed}, got: {filepath}")
         if not _os.path.isfile(self.filepath):

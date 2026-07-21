@@ -1,6 +1,5 @@
 """Unit test for Tesla analysis script"""
 
-import json
 import pathlib
 
 from examples.test_tesla_battery import analyze_tesla_battery

@@ -22,7 +22,6 @@ WEIGHT_CELL_BALANCE = 0.20
 WEIGHT_THERMAL = 0.25  # Thermal contribution — weighted higher for EV safety
 
 
-
 # ---------------------------------------------------------------------------
 # Grade boundaries
 # ---------------------------------------------------------------------------
@@ -199,12 +198,11 @@ class BatteryScorer:
 
         if soh < 60:
             recs.append(
-                "CRITICAL: SOH is very low. Consider battery replacement or " "deep diagnostic."
+                "CRITICAL: SOH is very low. Consider battery replacement or deep diagnostic."
             )
         elif soh < 75:
             recs.append(
-                "WARNING: SOH is degraded. Schedule capacity test and "
-                "reduce fast-charge frequency."
+                "WARNING: SOH is degraded. Schedule capacity test and reduce fast-charge frequency."
             )
 
         if anomaly < 60:
@@ -220,12 +218,11 @@ class BatteryScorer:
 
         if balance < 60:
             recs.append(
-                "CRITICAL: Severe cell imbalance. Perform cell balancing " "procedure immediately."
+                "CRITICAL: Severe cell imbalance. Perform cell balancing procedure immediately."
             )
         elif balance < 80:
             recs.append(
-                "WARNING: Cell imbalance detected. Schedule balancing "
-                "service at next maintenance."
+                "WARNING: Cell imbalance detected. Schedule balancing service at next maintenance."
             )
 
         if thermal < 60:
@@ -266,6 +263,7 @@ class BatteryScorer:
             return score
         except Exception as e:
             import logging
+
             logging.getLogger(__name__).warning("Scoring component failed: %s", e)
             return 50.0
 
@@ -282,6 +280,7 @@ class BatteryScorer:
             return 30.0
         except Exception as e:
             import logging
+
             logging.getLogger(__name__).warning("Scoring component failed: %s", e)
             return 50.0
 
@@ -294,5 +293,6 @@ class BatteryScorer:
             return mapping.get(level, 100.0)
         except Exception as e:
             import logging
+
             logging.getLogger(__name__).warning("Scoring component failed: %s", e)
             return 50.0

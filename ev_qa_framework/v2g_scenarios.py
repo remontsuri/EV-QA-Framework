@@ -147,8 +147,7 @@ class V2GHealthAnalyzer:
             "score_delta": v2g_score["score"] - baseline_score["score"],
             "baseline_soh": baseline_score.get("soh_score", 0),
             "v2g_soh": v2g_score.get("soh_score", 0),
-            "soh_delta": v2g_score.get("soh_score", 0)
-            - baseline_score.get("soh_score", 0),
+            "soh_delta": v2g_score.get("soh_score", 0) - baseline_score.get("soh_score", 0),
             "baseline_grade": baseline_score["grade"],
             "v2g_grade": v2g_score["grade"],
         }

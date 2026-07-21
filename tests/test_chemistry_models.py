@@ -5,7 +5,6 @@ Validates chemistry-specific models against published datasheet data
 and verifies physical correctness of the models.
 """
 
-import json
 import os
 import tempfile
 
@@ -24,7 +23,6 @@ from ev_qa_framework.chemistries import (
     THERMAL_NMC,
     AgingModel,
     OCVCurve,
-    SOHDegradationParams,
     ThermalModel,
     ThermalParams,
     get_profile,

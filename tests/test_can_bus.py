@@ -2,11 +2,11 @@
 Test module for CAN Bus integration (legacy compatibility).
 """
 
-from unittest.mock import MagicMock, call, patch
+import time
+from unittest.mock import MagicMock, patch
 
 import can
 import pytest
-import time
 
 from ev_qa_framework.can_bus import (
     CANBatterySimulator,
@@ -23,16 +23,18 @@ class TestCANSymbolEncoding:
     def test_voltage_roundtrip(self):
         voltage = 405.3
         v_scaled = int(voltage * 10)
-        data = bytes([
-            (v_scaled >> 8) & 0xFF,
-            v_scaled & 0xFF,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ])
+        data = bytes(
+            [
+                (v_scaled >> 8) & 0xFF,
+                v_scaled & 0xFF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ]
+        )
         recovered = ((data[0] << 8) | data[1]) / 10.0
         assert abs(recovered - voltage) < 0.1
 

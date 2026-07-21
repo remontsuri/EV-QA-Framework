@@ -26,7 +26,6 @@ CELL_IMBALANCE_WARNING: float = 0.05
 CELL_IMBALANCE_CRITICAL: float = 0.1
 
 
-
 class EVBatteryAnalyzer:
     """
     ML-based EV battery telemetry analyzer using the Isolation Forest algorithm.
@@ -200,7 +199,6 @@ class EVBatteryAnalyzer:
             "gradient_attack": gradient,
         }
 
-
     def _detect_gradient_attack(self, df: pd.DataFrame) -> dict:
         """Detect slow monotonic drifts that evade IsolationForest.
 
@@ -229,11 +227,12 @@ class EVBatteryAnalyzer:
                     "monotonicity": round(monotonicity, 3),
                     "total_drift": round(total_drift, 4),
                     "drift_per_sample": round(drift_per_sample, 6),
-                    "direction": "increasing" if pos_ratio > neg_ratio else "decreasing"
+                    "direction": "increasing" if pos_ratio > neg_ratio else "decreasing",
                 }
         if len(mono_features) >= 2:
             result["gradient_detected"] = True
         return result
+
     def _assess_severity(self, scores: np.ndarray) -> str:
         """
         Assess the severity level of detected anomalies.

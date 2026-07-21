@@ -3,7 +3,7 @@ x-common-env: &common-env
   PYTHONDONTWRITEBYTECODE: "1"
 
 x-common-labels: &common-labels
-  com.ev-qa.framework: "2.0.0"
+  com.ev-qa.framework: "2.5.0"
   com.ev-qa.managed-by: "docker-compose"
 
 services:
@@ -76,7 +76,7 @@ services:
     container_name: ev-qa-grafana
     environment:
       <<: *common-env
-      GF_SECURITY_ADMIN_PASSWORD: {GRAFANA_PASSWORD:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
     networks:

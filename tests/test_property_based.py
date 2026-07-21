@@ -1,7 +1,5 @@
 """Property-based tests using Hypothesis for EV-QA-Framework."""
 
-import numpy as np
-import pandas as pd
 from hypothesis import given, settings
 from hypothesis import strategies as st
 

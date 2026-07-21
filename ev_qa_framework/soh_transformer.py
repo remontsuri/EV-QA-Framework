@@ -234,9 +234,7 @@ class SOHTransformer:
         data = df[features].values
 
         if len(data) < self.sequence_length:
-            raise ValueError(
-                f"Need at least {self.sequence_length} data points, " f"got {len(data)}"
-            )
+            raise ValueError(f"Need at least {self.sequence_length} data points, got {len(data)}")
 
         scaled_data = self._feature_scaler.transform(data)
 

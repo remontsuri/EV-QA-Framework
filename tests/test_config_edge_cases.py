@@ -10,18 +10,15 @@ Covers:
 - DEFAULT_CONFIG and TESLA_CONFIG constants
 """
 
-import json
 import os
 import tempfile
 
-import pytest
-
 from ev_qa_framework.config import (
-    get_default_config,
-    get_tesla_config,
     FrameworkConfig,
     MLConfig,
     SafetyThresholds,
+    get_default_config,
+    get_tesla_config,
 )
 
 

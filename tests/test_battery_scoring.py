@@ -14,7 +14,6 @@ import pandas as pd
 import pytest
 
 from ev_qa_framework.battery_scoring import (
-    GRADE_THRESHOLDS,
     BatteryScorer,
 )
 

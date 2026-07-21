@@ -13,10 +13,6 @@ Uses:
   - ev_qa_framework.config.FrameworkConfig for thresholds
 """
 
-import math
-
-import pytest
-
 from ev_qa_framework.config import FrameworkConfig, SafetyThresholds
 from ev_qa_framework.framework import EVQAFramework
 from ev_qa_framework.models import BatteryTelemetryModel
@@ -78,7 +74,6 @@ class TestUN383MechanicalShock:
             }
             for i in range(10)
         ]
-        import asyncio
 
         results = qa.run_test_suite(data)
         assert results["failed"] == 0
@@ -98,7 +93,6 @@ class TestUN383MechanicalShock:
             },  # spike > max_voltage
             {"voltage": 390.0, "current": 50.0, "temperature": 35.0, "soc": 80.0, "soh": 98.0},
         ]
-        import asyncio
 
         results = qa.run_test_suite(data)
         assert results["failed"] >= 1
@@ -116,7 +110,6 @@ class TestUN383MechanicalShock:
                 "soh": 98.0,
             },  # 20°C jump
         ]
-        import asyncio
 
         results = qa.run_test_suite(data)
         assert results["failed"] >= 1
@@ -192,7 +185,6 @@ class TestUN383ShortCircuitDetection:
                 "soh": 98.0,
             },  # near-short
         ]
-        import asyncio
 
         results = qa.run_test_suite(data)
         # The low-voltage entry should fail validation
@@ -252,7 +244,6 @@ class TestIEC62660CycleLife:
             }
             for i in range(5)
         ]
-        import asyncio
 
         results = qa.run_test_suite(data)
         assert results["total_tests"] == 5
@@ -272,7 +263,6 @@ class TestIEC62660CycleLife:
             }
             for i in range(5)
         ]
-        import asyncio
 
         qa.run_test_suite(data)
         # Last entries have SOH < 70% — they should still pass validation

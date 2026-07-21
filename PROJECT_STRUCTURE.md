@@ -1,9 +1,9 @@
 # EV-QA-Framework — Project Structure
 
-> **Version:** 2.1.0  
+> **Version:** 2.5.0  
 > **Python:** ≥3.10  
 > **License:** MIT  
-> **Generated:** 2025-06-13
+> **Generated:** 2026-07-21
 
 ---
 

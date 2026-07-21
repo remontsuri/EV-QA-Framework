@@ -1154,7 +1154,7 @@ class DBCFileSimulator:
             connected = self._hw_interface.connect()
             if not connected:
                 logger.warning(
-                    "Hardware CAN not available for DBC simulator, " "running in log-only mode"
+                    "Hardware CAN not available for DBC simulator, running in log-only mode"
                 )
                 self._hw_interface = None
         else:

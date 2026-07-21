@@ -12,7 +12,6 @@ Tests cover:
 - Graceful handling when TensorFlow is not installed (mocked)
 """
 
-import importlib
 import os
 import sys
 import types
@@ -22,7 +21,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ev_qa_framework.soh_transformer import SOHTransformer, _import_tensorflow
+from ev_qa_framework.soh_transformer import SOHTransformer
 
 # ---------------------------------------------------------------------------
 # Helpers

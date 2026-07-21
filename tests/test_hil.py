@@ -1,13 +1,8 @@
 """Tests for HIL interface."""
 
-import time
-from unittest.mock import MagicMock, patch
-
-import numpy as np
 import pandas as pd
 import pytest
 
-from ev_qa_framework.config import FrameworkConfig
 from ev_qa_framework.hil import (
     BMSHardwareEmulator,
     CANMessage,

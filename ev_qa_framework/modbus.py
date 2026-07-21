@@ -308,7 +308,7 @@ def _parse_read_response(pdu: bytes, function_code: int, expected_count: int) ->
 
     if received_fc != function_code:
         raise ModbusResponseError(
-            f"Unexpected function code: 0x{received_fc:02X} " f"(expected 0x{function_code:02X})"
+            f"Unexpected function code: 0x{received_fc:02X} (expected 0x{function_code:02X})"
         )
 
     byte_count = pdu[1]
@@ -316,7 +316,7 @@ def _parse_read_response(pdu: bytes, function_code: int, expected_count: int) ->
 
     if byte_count != expected_count * 2:
         raise ModbusResponseError(
-            f"Unexpected byte count: {byte_count} " f"(expected {expected_count * 2})"
+            f"Unexpected byte count: {byte_count} (expected {expected_count * 2})"
         )
 
     if len(data) < byte_count:
@@ -507,7 +507,7 @@ class ModbusClient(ABC):
         """
         if name not in BMS_REGISTER_MAP:
             raise ModbusConfigurationError(
-                f"Unknown register name: {name}. " f"Available: {list(BMS_REGISTER_MAP.keys())}"
+                f"Unknown register name: {name}. Available: {list(BMS_REGISTER_MAP.keys())}"
             )
         reg = BMS_REGISTER_MAP[name]
         raw = self.read_holding_registers(reg["address"], reg["count"])
@@ -857,8 +857,7 @@ class ModbusRTUClient(ModbusClient):
             body = self._serial.read(remaining)
             if len(body) < remaining:
                 raise ModbusTimeoutError(
-                    f"RTU response incomplete: got {len(body) + 3} bytes, "
-                    f"expected {remaining + 3}"
+                    f"RTU response incomplete: got {len(body) + 3} bytes, expected {remaining + 3}"
                 )
 
             frame = header + body

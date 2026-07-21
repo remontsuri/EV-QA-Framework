@@ -9,7 +9,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/remontsuri/EV-QA-Framework)](https://github.com/remontsuri/EV-QA-Framework/releases)
 
 
-**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 980 passing tests and a Docker-ready pipeline.**
+**EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 967 passing tests and a Docker-ready pipeline.**
 
 22 modules. MIT licensed. Python 3.10+.
 
@@ -54,7 +54,7 @@ Done. You have a running battery QA workstation:
 - compliance testing against 6 international standards
 - live dashboard with Prometheus metrics
 
-No cloud account required. No external dependencies. Just a CSV and a terminal.
+No cloud account required. No external services needed. Just a CSV and a terminal.
 
 ---
 
@@ -127,7 +127,7 @@ uv run python -m ev_qa_framework.cli emulate --dbc my_battery.dbc --duration 60
 Train SOH model:
 
 ```bash
-uv run python -m ev_qa_framework.cli train-soh -d examples/tesla_battery_qa_test.py
+uv run python -m ev_qa_framework.cli train-soh -i examples/tesla_model_s_defective.csv -m /tmp/soh_model
 ```
 
 ---

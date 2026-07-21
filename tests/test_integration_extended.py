@@ -9,17 +9,14 @@ Covers:
 - Multi-module data flow: models -> config -> framework -> results
 """
 
-import asyncio
 import os
 import tempfile
 
-import numpy as np
 import pandas as pd
 import pytest
 
-from ev_qa_framework.analysis import EVBatteryAnalyzer
-from ev_qa_framework.config import FrameworkConfig, SafetyThresholds
-from ev_qa_framework.dbc_parser import DBCParser, battery_dbc_content, builtin_dbc
+from ev_qa_framework.config import FrameworkConfig
+from ev_qa_framework.dbc_parser import builtin_dbc
 from ev_qa_framework.framework import EVQAFramework
 from ev_qa_framework.models import BatteryTelemetryModel, validate_telemetry
 

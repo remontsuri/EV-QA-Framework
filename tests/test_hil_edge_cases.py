@@ -11,7 +11,6 @@ Covers:
 - HILTestRunner generate_hil_report
 """
 
-import numpy as np
 import pandas as pd
 import pytest
 

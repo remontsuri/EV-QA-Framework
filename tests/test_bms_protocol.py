@@ -13,12 +13,9 @@ Tests cover:
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from ev_qa_framework.bms_protocol import (
     BMSCANInterface,
     # Interfaces
-    BMSInterface,
     BMSModbusRTUInterface,
     BMSModbusTCPInterface,
     # Manager
@@ -31,7 +28,6 @@ from ev_qa_framework.bms_protocol import (
     ProtocolType,
     _auto_detect_serial_ports,
     scan_can_interfaces,
-    scan_modbus_rtu,
     scan_modbus_tcp,
 )
 

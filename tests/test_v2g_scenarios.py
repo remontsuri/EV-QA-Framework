@@ -3,7 +3,6 @@
 import pandas as pd
 import pytest
 
-from ev_qa_framework.config import FrameworkConfig
 from ev_qa_framework.v2g_scenarios import V2GHealthAnalyzer, V2GScenarioGenerator
 
 

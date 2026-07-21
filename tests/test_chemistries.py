@@ -2,7 +2,6 @@
 Tests for Battery Chemistry Profiles module and config integration.
 """
 
-import json
 import os
 import tempfile
 
@@ -20,10 +19,10 @@ from ev_qa_framework.chemistries import (
     register_custom_profile,
 )
 from ev_qa_framework.config import (
-    get_default_config,
-    get_tesla_config,
     FrameworkConfig,
     SafetyThresholds,
+    get_default_config,
+    get_tesla_config,
 )
 
 
@@ -200,7 +199,9 @@ class TestFrameworkConfigChemistryIntegration:
         """DEFAULT_CONFIG should have chemistry=nmc and NMC-derived thresholds."""
         assert get_default_config().chemistry == "nmc"
         # NMC 96s: 3.0 * 96 = 288.0 V
-        assert get_default_config().safety_thresholds.min_voltage == pytest.approx(240.0)  # FIX: was 288.0
+        assert get_default_config().safety_thresholds.min_voltage == pytest.approx(
+            240.0
+        )  # FIX: was 288.0
         # 4.2 * 96 = 403.2 V
         assert get_default_config().safety_thresholds.max_voltage == pytest.approx(403.2)
         # NMC charge temp max = 45.0, discharge temp min = -20.0
@@ -212,7 +213,9 @@ class TestFrameworkConfigChemistryIntegration:
         assert get_tesla_config().chemistry == "nca"
         assert get_tesla_config().cells_in_series == 108
         # NCA 108s: 3.0 * 108 = 324.0 V
-        assert get_tesla_config().safety_thresholds.min_voltage == pytest.approx(270.0)  # FIX: was 324.0
+        assert get_tesla_config().safety_thresholds.min_voltage == pytest.approx(
+            270.0
+        )  # FIX: was 324.0
         # 4.2 * 108 = 453.6 V
         assert get_tesla_config().safety_thresholds.max_voltage == pytest.approx(453.6)
 

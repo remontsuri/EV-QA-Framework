@@ -39,6 +39,8 @@ env/
 .coverage
 .pytest_cache/
 htmlcov/
+.ruff_cache/
+.hypothesis/
 
 # OS
 .DS_Store
@@ -46,3 +48,22 @@ Thumbs.db
 
 # Results
 results/
+
+# Non-essential for Docker build
+notebooks/
+research/
+examples/
+docs/
+scripts/
+tests/
+api/
+.github/
+.pre-commit-config.yaml
+.readthedocs.yaml
+.tox/
+tox.ini
+Makefile
+Dockerfile
+docker-compose.yml
+*.md
+!README.md

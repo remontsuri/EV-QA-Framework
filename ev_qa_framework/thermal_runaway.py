@@ -46,10 +46,10 @@ class ThermalRunawayPredictor:
             self.rule_weights.update(rule_weights)
 
         self.thresholds = {
-            "critical_temp": 130.0,      # Thermal runaway onset (~130°C)
+            "critical_temp": 130.0,  # Thermal runaway onset (~130°C)
             "critical_risk": 10.0,
-            "critical_dtdt": 10.0,       # °C per sample (1 Hz sampling = °C/s)
-            "high_temp": 80.0,           # Elevated temperature threshold for fast-charge scenarios
+            "critical_dtdt": 10.0,  # °C per sample (1 Hz sampling = °C/s)
+            "high_temp": 80.0,  # Elevated temperature threshold for fast-charge scenarios
             "high_risk": 5.0,
             "medium_risk": 2.0,
         }

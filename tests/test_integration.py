@@ -3,7 +3,6 @@ Integration tests for EV-QA-Framework.
 Checks interaction of all components: Config -> Framework -> Model -> Results.
 """
 
-import asyncio
 import os
 import tempfile
 

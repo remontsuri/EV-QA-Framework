@@ -10,7 +10,6 @@ AI-powered battery management system testing framework with pytest,
 CAN protocol support, telemetry monitoring, and ML-based anomaly detection.
 """
 
-import atexit
 import logging
 import signal
 from typing import Any
@@ -24,6 +23,7 @@ from .config import FrameworkConfig
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class _ShutdownHandler:
     _cleanups = []
 
@@ -34,6 +34,7 @@ class _ShutdownHandler:
     @classmethod
     def shutdown(cls, signum=None, frame=None):
         import logging
+
         _log = logging.getLogger(__name__)
         for fn in cls._cleanups:
             try:
@@ -47,10 +48,6 @@ class _ShutdownHandler:
 def _setup_signal_handlers():
     signal.signal(signal.SIGTERM, _ShutdownHandler.shutdown)
     signal.signal(signal.SIGINT, _ShutdownHandler.shutdown)
-
-
-_setup_signal_handlers()
-
 
 
 from .models import BatteryTelemetryModel
@@ -74,6 +71,9 @@ class EVQAFramework:
         self.telemetry_data: list[BatteryTelemetryModel] = []
         # generic results dictionary with mixed values
         self.test_results: dict[str, Any] = {}
+
+        # Setup signal handlers on first instantiation
+        _setup_signal_handlers()
 
         # Load configuration
         self.config = config if config is not None else FrameworkConfig()
@@ -105,7 +105,6 @@ class EVQAFramework:
             f"Initialized {self.name} with ML analyzer (contamination={self.config.ml_config.contamination})"
         )
 
-
     def health_check(self) -> dict:
         """Return health status for HTTP /health endpoint."""
         status = {
@@ -119,6 +118,7 @@ class EVQAFramework:
             },
         }
         return status
+
     def validate_telemetry(self, telemetry: BatteryTelemetryModel) -> tuple[bool, list[str]]:
         """
         Validate battery telemetry against safety thresholds.
@@ -303,5 +303,6 @@ if __name__ == "__main__":
 
     # Run tests
     import json
+
     result = qa.run_test_suite(test_data)
     print(json.dumps(result, indent=2))

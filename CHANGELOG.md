@@ -5,6 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-07-21
+
+### Fixed
+- **framework.py**: Removed `asyncio.run()` on synchronous method (TypeError at runtime)
+- **analysis.py**: `analyze_telemetry()` returns error dict instead of None for small datasets
+- **analysis.py**: `load_model()` correctly marks model as fitted after restoration
+- **v2g_scenarios.py**: Fixed key mismatch (`components.soh` → `soh_score`)
+- **release.yml**: Fixed version variable case (`Version` → `VERSION`)
+
+### Changed
+- Version synced to 2.5.0 across pyproject.toml, __init__.py, Dockerfile, README
+- ruff target-version updated from py39 to py310
+- Removed Python 3.9 classifier (project requires 3.10+)
+- Removed unused imports (asyncio, json, warnings)
+- CI workflow: `uv sync --no-dev --frozen` → `uv sync --frozen` for test job
+- docker-compose.yml: Grafana password env var syntax fixed, version label updated
+- .dockerignore: Added exclusions for notebooks/, research/, examples/, docs/
+- pyproject.toml: Moved fastapi/uvicorn/websockets/jinja2 to optional [web] extra
+- pyproject.toml: Removed F401 from global ruff ignore
+- Deleted requirements.txt (contradicted pyproject.toml)
+- Deleted .gitlab-ci.yml (GitLab CI on GitHub project)
+- Deleted redundant tests_soc_soh_cross/ directory
+- Deleted Russian-language config/README.md and examples/config_usage_example.py
+- Updated SECURITY.md supported versions to 2.5.x
+- Updated CONTRIBUTING.md test count to 967
+- Updated PROJECT_STRUCTURE.md version to 2.5.0
+
+## [2.4.0] - 2026-06-18
+
+### Fixed
+- Round 2 roast findings: version drift, streaming perf, error swallowing, min samples
+- README threshold, settings.yaml ref, demo English
+
+### Added
+- vehicle_id metrics, health endpoint, factory configs
+- GradientBoosting AutoML, StreamingAnomalyDetector, uncertainty quantification
+- Optional extras (ml, hardware, web, can, monitoring)
+- SIGTERM/SIGINT handler with correct logger name
+
+## [2.3.1] - 2026-06-18
+
+### Fixed
+- All 27 roast findings verified and fixed
+
+## [2.3.0] - 2026-06-18
+
+### Fixed
+- Complete roast: all HIGH + MEDIUM + LOW findings
+
+## [2.2.0] - 2026-06-18
+
+### Fixed
+- Full roast completion: all findings fixed
+
+## [2.1.5] - 2026-06-18
+
+### Fixed
+- Roast fixes: security, docs, code quality
+
+## [2.1.4] - 2026-06-18
+
+### Fixed
+- Kanban audit fixes + README cleanup
+
+## [2.1.3] - 2026-06-15
+
+### Fixed
+- Docs & CI alignment
+
+## [2.1.0] - 2026-06-12
+
+### Added
+- Chemistry data fix & security hardening
+
 ## [2.0.0] - 2026-06-10
 
 ### Added — New Modules (10)

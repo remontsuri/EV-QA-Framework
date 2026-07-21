@@ -54,4 +54,4 @@ def require_columns(df: pd.DataFrame, required: list[str]) -> None:
     """Raise ValueError if any required column is missing."""
     missing = [c for c in required if c not in df.columns]
     if missing:
-        raise ValueError(f"Missing required columns: {missing}. " f"Available: {list(df.columns)}")
+        raise ValueError(f"Missing required columns: {missing}. Available: {list(df.columns)}")

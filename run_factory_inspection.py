@@ -20,8 +20,6 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, "/opt/data/EV-QA-Framework")
-
 from ev_qa_framework.analysis import AnomalyDetector, EVBatteryAnalyzer
 from ev_qa_framework.cell_balance import CellBalanceAnalyzer
 from ev_qa_framework.chemistries import ChemistryKey

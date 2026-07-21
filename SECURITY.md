@@ -4,8 +4,9 @@
 
 | Version | Supported |
 |---------|-----------|
-| 2.0.x   | Active |
-| 1.1.x   | Security fixes only |
+| 2.5.x   | Active |
+| 2.0.x   | Security fixes only |
+| 1.1.x   | End of life |
 | 1.0.x   | End of life |
 | < 1.0   | End of life |
 

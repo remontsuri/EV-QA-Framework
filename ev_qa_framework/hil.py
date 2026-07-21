@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd

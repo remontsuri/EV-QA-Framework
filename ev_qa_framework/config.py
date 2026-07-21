@@ -48,7 +48,9 @@ class SafetyThresholds:
 
     # Charge and health thresholds
     min_soc: float = 10.0  # Low charge warning
-    critical_soh: float = 50.0  # Critical battery health (was 70.0 — too high, 70% is warning level)
+    critical_soh: float = (
+        50.0  # Critical battery health (was 70.0 — too high, 70% is warning level)
+    )
 
     # Current threshold (optional)
     max_current: float | None = 500.0  # Maximum safe current

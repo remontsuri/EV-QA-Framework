@@ -22,8 +22,7 @@ def _import_tensorflow() -> Any:
     """Lazy-import tensorflow to avoid hard dependency at module level."""
     if os.environ.get("_EV_SIMULATE_MISSING_TF") == "1":
         raise ImportError(
-            "TensorFlow is required for SOHPredictor. "
-            "Install it via: pip install tensorflow>=2.15"
+            "TensorFlow is required for SOHPredictor. Install it via: pip install tensorflow>=2.15"
         )
     try:
         import tensorflow as tf
@@ -31,8 +30,7 @@ def _import_tensorflow() -> Any:
         return tf
     except ImportError as exc:
         raise ImportError(
-            "TensorFlow is required for SOHPredictor. "
-            "Install it via: pip install tensorflow>=2.15"
+            "TensorFlow is required for SOHPredictor. Install it via: pip install tensorflow>=2.15"
         ) from exc
 
 
@@ -85,7 +83,6 @@ class SOHPredictor:
         data = df[features + [target_col]].values
 
         self._feature_scaler.fit(data[:, :-1])
-        self._feature_scaler.transform(data[:, :-1])
 
         self.scaler.fit(data)
         scaled = self.scaler.transform(data)
@@ -119,9 +116,7 @@ class SOHPredictor:
         features = ["voltage", "current", "temperature"]
 
         if len(recent_telemetry) < self.sequence_length:
-            raise ValueError(
-                f"Need at least {self.sequence_length} data points"
-            )
+            raise ValueError(f"Need at least {self.sequence_length} data points")
 
         data = recent_telemetry[features].to_numpy()[-self.sequence_length :]
 

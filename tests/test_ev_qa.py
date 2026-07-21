@@ -118,7 +118,6 @@ class TestEVQAFramework:
         assert len(anomalies) > 0
         assert "Sharp temperature jump" in anomalies[0]
 
-
     def test_run_test_suite_sync(self):
         """Test async test suite execution"""
         test_data = [
@@ -129,7 +128,6 @@ class TestEVQAFramework:
         assert results["total_tests"] == 2
         assert results["passed"] == 2
         assert results["failed"] == 0
-
 
     def test_run_test_suite_with_failures(self):
         """Test test suite with invalid data"""

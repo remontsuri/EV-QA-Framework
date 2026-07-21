@@ -60,8 +60,6 @@ class BatteryTelemetryModel(BaseModel):
             LOGGER.warning("Negative temperature %s°C", v)
         return v
 
-
-
     @model_validator(mode="after")
     def check_soc_soh_plausibility(self) -> "BatteryTelemetryModel":
         """Enforce physically plausible SOC and SOH relationships."""

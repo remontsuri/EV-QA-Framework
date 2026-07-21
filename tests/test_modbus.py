@@ -13,7 +13,7 @@ Tests cover:
 
 import socket
 import struct
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -23,13 +23,11 @@ from ev_qa_framework.modbus import (
     # Constants / Enums
     FunctionCode,
     # Clients
-    ModbusClient,
     ModbusConfigurationError,
     ModbusConnectionError,
     ModbusCRCError,
     # Exceptions
     ModbusError,
-    ModbusExceptionCode,
     ModbusResponseError,
     ModbusRTUClient,
     ModbusTCPClient,

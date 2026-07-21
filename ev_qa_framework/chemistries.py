@@ -476,7 +476,7 @@ OCV_LFP = OCVCurve(
     name="LFP (LiFePO₄) OCV",
     soc_points=[0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 85, 90, 95, 100],
     ocv_points=[
-        2.50,   # LFP min OCV at 0% SOC (~2.5V)
+        2.50,  # LFP min OCV at 0% SOC (~2.5V)
         2.80,
         3.00,
         3.10,
@@ -489,7 +489,7 @@ OCV_LFP = OCVCurve(
         3.26,
         3.28,
         3.32,
-        3.45,   # LFP OCV transition region
+        3.45,  # LFP OCV transition region
         3.65,
     ],
 )
@@ -500,7 +500,7 @@ OCV_NMC = OCVCurve(
     name="NMC (LiNiMnCoO₂) OCV",
     soc_points=[0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 85, 90, 95, 100],
     ocv_points=[
-        3.00,   # NMC min OCV at 0% SOC (~3.0V)
+        3.00,  # NMC min OCV at 0% SOC (~3.0V)
         3.20,
         3.35,
         3.45,
@@ -513,7 +513,7 @@ OCV_NMC = OCVCurve(
         3.92,
         3.98,
         4.08,
-        4.15,   # NMC OCV at 95% SOC
+        4.15,  # NMC OCV at 95% SOC
         4.20,
     ],
 )
@@ -524,8 +524,8 @@ OCV_NCA = OCVCurve(
     name="NCA (LiNiCoAlO₂) OCV",
     soc_points=[0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 85, 90, 95, 100],
     ocv_points=[
-        3.00,   # NCA min OCV at 0% SOC (~3.0V)
-        3.20,   # NCA OCV at 5% SOC (~3.2-3.3V)
+        3.00,  # NCA min OCV at 0% SOC (~3.0V)
+        3.20,  # NCA OCV at 5% SOC (~3.2-3.3V)
         3.30,
         3.42,
         3.52,
@@ -537,7 +537,7 @@ OCV_NCA = OCVCurve(
         3.92,
         3.98,
         4.08,
-        4.15,   # NCA OCV at 95% SOC
+        4.15,  # NCA OCV at 95% SOC
         4.20,
     ],
 )
@@ -894,7 +894,7 @@ PROFILE_LFP_CATL = BatteryChemistryProfile(
     overcharge_voltage=3.8,
     overdischarge_voltage=2.3,
     thermal_runaway_temp=250.0,  # LFP thermal runaway onset (~200-250°C)
-    gas_venting_temp=130.0,      # LFP gas venting onset (~130°C)
+    gas_venting_temp=130.0,  # LFP gas venting onset (~130°C)
     soh_params=SOHDegradationParams(
         cycle_life_min=2000,
         cycle_life_max=5000,
@@ -924,7 +924,7 @@ PROFILE_NMC_STANDARD = BatteryChemistryProfile(
         "good power. Most common EV chemistry. Used in LG Chem, Samsung SDI packs."
     ),
     cell_nominal_voltage=3.7,
-    cell_min_voltage=2.5,       # Min cell voltage (2.5V for NMC/NCA)
+    cell_min_voltage=2.5,  # Min cell voltage (2.5V for NMC/NCA)
     cell_max_voltage=4.2,
     cell_max_charge_current=1.0,
     cell_max_discharge_current=3.0,
@@ -936,9 +936,9 @@ PROFILE_NMC_STANDARD = BatteryChemistryProfile(
     temp_optimal_min=15.0,
     temp_optimal_max=35.0,
     overcharge_voltage=4.25,
-    overdischarge_voltage=2.5,       # NMC overdischarge threshold (2.5V)
-    thermal_runaway_temp=150.0,      # NMC thermal runaway onset (~150°C)
-    gas_venting_temp=120.0,          # NMC gas venting onset (~120°C)
+    overdischarge_voltage=2.5,  # NMC overdischarge threshold (2.5V)
+    thermal_runaway_temp=150.0,  # NMC thermal runaway onset (~150°C)
+    gas_venting_temp=120.0,  # NMC gas venting onset (~120°C)
     soh_params=SOHDegradationParams(
         cycle_life_min=1000,
         cycle_life_max=2000,
@@ -969,7 +969,7 @@ PROFILE_NCA_TESLA = BatteryChemistryProfile(
         "Slightly shorter cycle life than NMC."
     ),
     cell_nominal_voltage=3.6,
-    cell_min_voltage=2.5,       # Min cell voltage (2.5V for NMC/NCA)
+    cell_min_voltage=2.5,  # Min cell voltage (2.5V for NMC/NCA)
     cell_max_voltage=4.2,
     cell_max_charge_current=1.0,
     cell_max_discharge_current=3.0,
@@ -981,9 +981,9 @@ PROFILE_NCA_TESLA = BatteryChemistryProfile(
     temp_optimal_min=15.0,
     temp_optimal_max=35.0,
     overcharge_voltage=4.25,
-    overdischarge_voltage=2.5,       # NCA overdischarge threshold (2.5V)
-    thermal_runaway_temp=140.0,      # NCA thermal runaway onset (~140°C, lower than NMC)
-    gas_venting_temp=120.0,          # NCA gas venting onset (~120°C)
+    overdischarge_voltage=2.5,  # NCA overdischarge threshold (2.5V)
+    thermal_runaway_temp=140.0,  # NCA thermal runaway onset (~140°C, lower than NMC)
+    gas_venting_temp=120.0,  # NCA gas venting onset (~120°C)
     soh_params=SOHDegradationParams(
         cycle_life_min=500,
         cycle_life_max=1000,

@@ -598,11 +598,9 @@ class TestTensorFlowImport:
         importlib.reload(sys.modules["ev_qa_framework.soh_predictor"])
         # If we get here, no ImportError at module level
 
-
-# ---------------------------------------------------------------------------
-# 8. _import_tensorflow function tests
-# ---------------------------------------------------------------------------
-
+    # ---------------------------------------------------------------------------
+    # 8. _import_tensorflow function tests
+    # ---------------------------------------------------------------------------
 
     def test_returns_module_when_available(self):
         """When TF is available, _import_tensorflow returns the module."""
@@ -642,4 +640,3 @@ class TestTensorFlowImport:
                 sys.modules["tensorflow.keras.layers"] = saved_layers
             if saved_models is not None:
                 sys.modules["tensorflow.keras.models"] = saved_models
-

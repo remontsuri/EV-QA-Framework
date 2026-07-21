@@ -9,10 +9,7 @@ Covers:
 - scan functions (with mocking)
 """
 
-import platform
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from ev_qa_framework.bms_protocol import (
     BMSProtocolManager,

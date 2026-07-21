@@ -166,9 +166,7 @@ def main() -> None:
     subparsers.add_parser("dashboard", help="Start web dashboard")
 
     def _friendly_parser_error(message: str) -> None:
-        raise SystemExit(
-            f"Error: {message}. Run with --help for usage."
-        )
+        raise SystemExit(f"Error: {message}. Run with --help for usage.")
 
     parser.error = _friendly_parser_error
 
