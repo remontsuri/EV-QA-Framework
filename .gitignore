@@ -63,3 +63,4 @@ Thumbs.db
 build_tmp_old/
 tesla_battery_report.json
 results.json
+uv.lock
