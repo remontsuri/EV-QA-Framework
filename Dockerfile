@@ -1,5 +1,5 @@
 # ============================================================
-# EV-QA-Framework v2.0.0 — Production Dockerfile
+# EV-QA-Framework v2.5.0 — Production Dockerfile
 # ============================================================
 
 FROM python:3.12-slim

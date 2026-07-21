@@ -5,13 +5,11 @@ from __future__ import annotations
 Machine learning module for anomaly detection in battery telemetry.
 """
 
+import json
 import logging
 import os
-import warnings
 from datetime import datetime
 from typing import Any
-
-import json
 
 import numpy as np
 import pandas as pd
@@ -134,7 +132,13 @@ class EVBatteryAnalyzer:
 
         MIN_SAMPLES = 10
         if len(df) < MIN_SAMPLES:
-            return None
+            return {
+                "total_samples": len(df),
+                "anomalies_detected": 0,
+                "anomaly_percentage": 0.0,
+                "severity": "UNKNOWN",
+                "error": f"Insufficient data: {len(df)} samples < {MIN_SAMPLES} minimum",
+            }
 
         # Step 1: Select only numeric features for analysis
         # SOC is not used for detection as it is a dependent variable
@@ -314,6 +318,8 @@ class EVBatteryAnalyzer:
         analyzer.scaler.mean_ = np.load(base + "_scaler_mean.npy")
         analyzer.scaler.scale_ = np.load(base + "_scaler_scale.npy")
         analyzer.scaler.n_features_in_ = len(analyzer.scaler.mean_)
+        # Mark as fitted — scaler params are restored from saved state
+        analyzer._is_fitted = True
 
         save_time = bundle.get("save_timestamp", "Unknown")
         logger.info("Model loaded: %s (saved: %s)", base, save_time)

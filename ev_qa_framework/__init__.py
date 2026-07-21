@@ -70,7 +70,13 @@ from .chemistries import (
     load_custom_profile_from_file,
     register_custom_profile,
 )
-from .config import get_default_config, get_tesla_config, FrameworkConfig, MLConfig, SafetyThresholds
+from .config import (
+    FrameworkConfig,
+    MLConfig,
+    SafetyThresholds,
+    get_default_config,
+    get_tesla_config,
+)
 from .dbc_parser import DBCParser, builtin_dbc
 from .digital_twin import BatteryDigitalTwin, BatteryState
 from .fleet_analytics import FleetAlert, FleetAnalytics
@@ -99,7 +105,7 @@ from .soh_transformer import SOHTransformer
 from .thermal_runaway import ThermalRunawayPredictor
 from .v2g_scenarios import V2GHealthAnalyzer, V2GScenarioGenerator
 
-__version__ = "2.3.1"
+__version__ = "2.5.0"
 
 __all__ = [
     # Core framework

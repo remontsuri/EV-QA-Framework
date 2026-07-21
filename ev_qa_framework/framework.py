@@ -10,11 +10,9 @@ AI-powered battery management system testing framework with pytest,
 CAN protocol support, telemetry monitoring, and ML-based anomaly detection.
 """
 
-import asyncio
-import json
+import atexit
 import logging
 import signal
-import atexit
 from typing import Any
 
 import pandas as pd
@@ -304,5 +302,6 @@ if __name__ == "__main__":
     ]
 
     # Run tests
-    result = asyncio.run(qa.run_test_suite(test_data))
+    import json
+    result = qa.run_test_suite(test_data)
     print(json.dumps(result, indent=2))

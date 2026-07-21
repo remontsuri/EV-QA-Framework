@@ -145,10 +145,10 @@ class V2GHealthAnalyzer:
             "baseline_score": baseline_score["score"],
             "v2g_score": v2g_score["score"],
             "score_delta": v2g_score["score"] - baseline_score["score"],
-            "baseline_soh": baseline_score.get("components", {}).get("soh", 0),
-            "v2g_soh": v2g_score.get("components", {}).get("soh", 0),
-            "soh_delta": v2g_score.get("components", {}).get("soh", 0)
-            - baseline_score.get("components", {}).get("soh", 0),
+            "baseline_soh": baseline_score.get("soh_score", 0),
+            "v2g_soh": v2g_score.get("soh_score", 0),
+            "soh_delta": v2g_score.get("soh_score", 0)
+            - baseline_score.get("soh_score", 0),
             "baseline_grade": baseline_score["grade"],
             "v2g_grade": v2g_score["grade"],
         }

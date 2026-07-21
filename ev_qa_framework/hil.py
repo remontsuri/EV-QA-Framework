@@ -296,9 +296,10 @@ class HILTestRunner:
             HILTestResult
         """
         test_name = test_profile.get("name", "unnamed_test")
-        voltage_range = test_profile.get("voltage_range")
-        current_profile = test_profile.get("current_profile")
-        temperature_range = test_profile.get("temperature_range")
+        # TODO: forward these parameters to the emulator for realistic simulation
+        _voltage_range = test_profile.get("voltage_range")
+        _current_profile = test_profile.get("current_profile")
+        _temperature_range = test_profile.get("temperature_range")
         start_time = time.time()
         messages_sent = 0
         messages_received = 0

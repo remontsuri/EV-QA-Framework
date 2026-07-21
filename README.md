@@ -2,7 +2,7 @@
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Tests](https://img.shields.io/badge/tests-980%20passed-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-967%20passed-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)
 ![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
 [![PyPI](https://img.shields.io/pypi/v/ev-qa-framework.svg)](https://pypi.org/project/ev-qa-framework/)
@@ -167,7 +167,7 @@ run_factory_inspection.py  # end-to-end factory QA demo
 
 | Artifact | Value |
 |---|---|
-| Tests | 980 passing |
+| Tests | 967 passing |
 | Coverage | 93% |
 | CI | Lint + Test + Coverage |
 | License | MIT |
