@@ -62,5 +62,10 @@ Thumbs.db
 *.egg-info.old/
 build_tmp_old/
 tesla_battery_report.json
+tesla_factory_report.*
+calibration_recommendations.json
+real_data.csv
+simulated.csv
+generate_report.py
 results.json
 uv.lock

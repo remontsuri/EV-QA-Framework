@@ -2,7 +2,10 @@
 
 Decodes Nio battery management system CAN frames.
 
-CAN ID mapping:
+WARNING: CAN IDs are community reverse-engineered values, not manufacturer-documented.
+Verify against your specific vehicle model and firmware version.
+
+CAN ID mapping (community-sourced):
     0x1A0 — pack voltage (V)
     0x1A1 — pack current (A)
     0x1A2 — temperature sensors (°C)
@@ -54,26 +57,6 @@ class NioBMSAdapter(BaseBMSAdapter):
     def __init__(self, channel: str = "can0", bitrate: int = 500_000):
         super().__init__(channel=channel, bitrate=bitrate)
         self._latest: dict[int, bytes] = {}
-
-    def connect(self) -> bool:
-        """Connect to CAN bus. Lazy-imports python-can."""
-        try:
-            import can  # noqa: F401
-
-            self._bus = can.interface.Bus(
-                channel=self.channel,
-                interface="socketcan",
-                bitrate=self.bitrate,
-            )
-            self._connected = True
-            logger.info("Nio BMS connected on %s", self.channel)
-            return True
-        except ImportError:
-            logger.warning("python-can not installed; cannot connect to CAN hardware")
-            return False
-        except Exception as e:
-            logger.warning("Nio BMS connection failed: %s", e)
-            return False
 
     def disconnect(self) -> None:
         """Disconnect from CAN bus."""
@@ -149,7 +132,7 @@ class NioBMSAdapter(BaseBMSAdapter):
             "manufacturer": "nio",
             "protocol": "nio_can",
             "can_ids": self.can_ids,
-            "description": "Nio Battery Swap BMS CAN decoder",
+            "description": "Nio BMS CAN decoder",
         }
 
 

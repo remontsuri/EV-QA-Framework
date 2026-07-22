@@ -2,7 +2,10 @@
 
 Decodes BYD battery management system CAN frames.
 
-CAN ID mapping (extended 29-bit):
+WARNING: CAN IDs are community reverse-engineered values, not manufacturer-documented.
+Verify against your specific vehicle model and firmware version.
+
+CAN ID mapping (extended 29-bit, community-sourced):
     0x1806E5F4 — pack voltage
     0x1806E5F5 — current and temperature
     0x1806E5F6 — individual cell voltages
@@ -60,26 +63,6 @@ class BYDBMSAdapter(BaseBMSAdapter):
     def __init__(self, channel: str = "can0", bitrate: int = 500_000):
         super().__init__(channel=channel, bitrate=bitrate)
         self._latest: dict[int, bytes] = {}
-
-    def connect(self) -> bool:
-        """Connect to CAN bus. Lazy-imports python-can."""
-        try:
-            import can  # noqa: F401
-
-            self._bus = can.interface.Bus(
-                channel=self.channel,
-                interface="socketcan",
-                bitrate=self.bitrate,
-            )
-            self._connected = True
-            logger.info("BYD BMS connected on %s", self.channel)
-            return True
-        except ImportError:
-            logger.warning("python-can not installed; cannot connect to CAN hardware")
-            return False
-        except Exception as e:
-            logger.warning("BYD BMS connection failed: %s", e)
-            return False
 
     def disconnect(self) -> None:
         """Disconnect from CAN bus."""

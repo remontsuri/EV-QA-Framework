@@ -31,7 +31,7 @@ class BaseBMSAdapter(ABC):
     manufacturer: str = "generic"
     can_ids: dict[str, int] = {}
 
-    def __init__(self, channel: str = "vcan0", bitrate: int = 500_000):
+    def __init__(self, channel: str = "can0", bitrate: int = 500_000):
         self.channel = channel
         self.bitrate = bitrate
         self._bus = None
@@ -41,13 +41,35 @@ class BaseBMSAdapter(ABC):
     def is_connected(self) -> bool:
         return self._connected
 
-    @abstractmethod
     def connect(self) -> bool:
         """Establish CAN bus connection. Lazy-imports python-can."""
+        try:
+            import can  # noqa: F401
 
-    @abstractmethod
+            self._bus = can.interface.Bus(
+                channel=self.channel,
+                interface="socketcan",
+                bitrate=self.bitrate,
+            )
+            self._connected = True
+            logger.info("%s BMS connected on %s", self.manufacturer, self.channel)
+            return True
+        except ImportError:
+            logger.warning("python-can not installed; cannot connect to CAN hardware")
+            return False
+        except Exception as e:
+            logger.warning("%s BMS connection failed: %s", self.manufacturer, e)
+            return False
+
     def disconnect(self) -> None:
         """Close CAN bus connection."""
+        if self._bus:
+            try:
+                self._bus.shutdown()
+            except Exception:
+                pass
+            self._bus = None
+        self._connected = False
 
     @abstractmethod
     def read_telemetry(self) -> BMSTelemetry:
@@ -74,42 +96,44 @@ class BaseBMSAdapter(ABC):
 
 def unpack_u8(data: bytes, offset: int = 0) -> int:
     """Unpack unsigned 8-bit integer from CAN data."""
+    if len(data) < offset + 1:
+        raise ValueError(f"Data too short: need {offset + 1} bytes, got {len(data)}")
     return data[offset]
 
 
 def unpack_u16_be(data: bytes, offset: int = 0) -> int:
     """Unpack unsigned 16-bit big-endian from CAN data."""
+    if len(data) < offset + 2:
+        raise ValueError(f"Data too short: need {offset + 2} bytes, got {len(data)}")
     return struct.unpack_from(">H", data, offset)[0]
 
 
 def unpack_u16_le(data: bytes, offset: int = 0) -> int:
     """Unpack unsigned 16-bit little-endian from CAN data."""
+    if len(data) < offset + 2:
+        raise ValueError(f"Data too short: need {offset + 2} bytes, got {len(data)}")
     return struct.unpack_from("<H", data, offset)[0]
-
-
-def unpack_u32_be(data: bytes, offset: int = 0) -> int:
-    """Unpack unsigned 32-bit big-endian from CAN data."""
-    return struct.unpack_from(">I", data, offset)[0]
-
-
-def unpack_u32_le(data: bytes, offset: int = 0) -> int:
-    """Unpack unsigned 32-bit little-endian from CAN data."""
-    return struct.unpack_from("<I", data, offset)[0]
 
 
 def unpack_i16_be(data: bytes, offset: int = 0) -> int:
     """Unpack signed 16-bit big-endian from CAN data."""
+    if len(data) < offset + 2:
+        raise ValueError(f"Data too short: need {offset + 2} bytes, got {len(data)}")
     return struct.unpack_from(">h", data, offset)[0]
 
 
 def unpack_i16_le(data: bytes, offset: int = 0) -> int:
     """Unpack signed 16-bit little-endian from CAN data."""
+    if len(data) < offset + 2:
+        raise ValueError(f"Data too short: need {offset + 2} bytes, got {len(data)}")
     return struct.unpack_from("<h", data, offset)[0]
 
 
-def unpack_i32_be(data: bytes, offset: int = 0) -> int:
-    """Unpack signed 32-bit big-endian from CAN data."""
-    return struct.unpack_from(">i", data, offset)[0]
+def unpack_u32_be(data: bytes, offset: int = 0) -> int:
+    """Unpack unsigned 32-bit big-endian from CAN data."""
+    if len(data) < offset + 4:
+        raise ValueError(f"Data too short: need {offset + 4} bytes, got {len(data)}")
+    return struct.unpack_from(">I", data, offset)[0]
 
 
 def clamp(value: float, lo: float, hi: float) -> float:
