@@ -141,7 +141,7 @@ EV-QA-Framework/
 | `test_tesla_script.py` | — | Tesla script scenarios |
 | `test_v2g_scenarios.py` | v2g_scenarios | V2G scenario tests |
 
-**Total: 38 test files, ~592 tests, 86% coverage**
+**Total: 42 test files, ~1053 tests, 93% coverage**
 
 ---
 

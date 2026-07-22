@@ -124,7 +124,7 @@ class SOHPredictor:
         x_input = np.expand_dims(scaled_feat, axis=0)
         prediction_scaled = self.model.predict(x_input, verbose=0)
 
-        # inverse_transform требует ту же размерность, на которой учили scaler
+        # inverse_transform requires same dimensionality as scaler was fitted on
         dummy = np.zeros((1, 4))
         dummy[0, -1] = float(np.asarray(prediction_scaled).reshape(-1)[0])
         prediction = self.scaler.inverse_transform(dummy)[0, -1]
