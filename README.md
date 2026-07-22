@@ -11,7 +11,7 @@
 
 **EV Battery QA Framework — detect thermal runaway, validate BMS telemetry, comply with UN 38.3 / IEC 62660 / GB 38031, and ship with 1053 passing tests and a Docker-ready pipeline.**
 
-23 modules. MIT licensed. Python 3.10+.
+28 modules. MIT licensed. Python 3.10+.
 
 ---
 
@@ -91,6 +91,12 @@ No cloud account required. No external services needed. Just a CSV and a termina
 **Compliance testing.** UN 38.3, IEC 62660, SAE J2464, ISO 12405, GB/T 31484, GB/T 31486, GB 38031.
 
 **Observability.** Prometheus /metrics endpoint, Grafana dashboard, HTML coverage reports, JUnit XML.
+
+**Real BMS adapters.** Tesla, BYD, and Nio CAN telemetry decoding from production battery management systems.
+
+**V2S + charging.** Vehicle-to-Station simulation, AC/DC/ultra-fast charging profiles, CC-CV Li-ion charging curves.
+
+**Vector CANoe/CANalyzer.** Export CAN traces to ASC/BLF formats, import back for analysis in Vector tools.
 
 ---
 
@@ -173,12 +179,14 @@ ev_qa_framework/
   physics_features.py  # electrochemical/thermal feature extraction
   fleet_analytics.py   # fleet-wide analytics and benchmarking
   digital_twin.py      # real-time battery digital twin
-  v2g_scenarios.py     # Vehicle-to-Grid simulation
+  v2g_scenarios.py     # V2G + V2S + charging station simulation
   automl.py            # automated model selection and HPO
   hil.py               # Hardware-in-the-Loop interface
   metrics.py           # Prometheus metrics
   cli.py               # CLI entry point
   chemistries.py       # battery chemistry definitions (LFP, NMC, NCA)
+  vector_export.py     # Vector CANoe/CANalyzer ASC/BLF export
+  bms_adapters/        # real BMS adapters (Tesla, BYD, Nio)
 tests/                  # 1053 tests
 examples/               # sample telemetry and demos
 run_factory_inspection.py  # end-to-end factory QA demo
